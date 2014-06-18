@@ -155,7 +155,7 @@ infixr 5 ×
 infixr 4 <.>
 {-# INLINE (<.>) #-}
 
--- | For people who likes nicely aligned code and does not mind messing with
+-- | For people who like nicely aligned code and do not mind messing with
 -- editor key-maps: here a version of '(<.>)' that uses a unicode symbol
 --
 -- The hex value of the UTF-8 character ⊙ is 0x2299.
