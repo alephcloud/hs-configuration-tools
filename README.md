@@ -23,10 +23,10 @@ provided:
 
 1.  a default value,
 
-2.  a 'FromJSON' instance that yields a function that takes a value and
+2.  a `FromJSON` instance that yields a function that takes a value and
     updates that value with the parsed values,
 
-3.  a 'ToJSON' instance, and
+3.  a `ToJSON` instance, and
 
 4.  an options parser that yields a function that takes a value and updates
     that value with the values provided as command line options.
@@ -400,10 +400,7 @@ integrated into this package.
 
 *   Nicer errors messages if parsing fails.
 
-*   Supper JSON encoded configuration files.
-
-*   Integrate with version control and cabal (e.g. options for joing
-    versions of all dependencies and build flags).
+*   Suport JSON encoded configuration files.
 
 *   Support mode where JSON/YAML parsing fails when unexpected
     properties are encountered.
