@@ -14,7 +14,7 @@ Author:              Lars Kuhtz <lars@alephcloud.com>
 Maintainer:          Lars Kuhtz <lars@alephcloud.com>
 Copyright:           Copyright (c) 2014 AlephCloud, Inc.
 Category:            AlephCloud
-Build-type:          Simple
+Build-type:          Custom
 
 cabal-version:  >= 1.10
 
@@ -29,16 +29,23 @@ Library
     exposed-modules:
         -- Configuration.Utils.FromJsonWithDef
         Configuration.Utils
+        Configuration.Utils.Setup
+
+    other-modules:
+        PkgInfo
 
     build-depends:
+        Cabal >= 1.20.0.1,
         aeson >= 0.7.0.6,
         attoparsec >= 0.11.3.4,
         base >= 4.7 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10.4.0,
+        directory >= 1.2.1.0,
         errors >= 1.4.3,
         lens >= 4.1.2.1,
         optparse-applicative >= 0.8.1,
+        process >= 1.2.0.0,
         text >= 1.1.1.2,
         time >= 1.4,
         unordered-containers >= 0.2.4.0,
@@ -50,6 +57,19 @@ Test-Suite url-example
     type: exitcode-stdio-1.0
     default-language: Haskell2010
     main-is: Example.hs
+    hs-source-dirs: examples
+
+    build-depends:
+        base >= 4.7 && < 5.0,
+        base-unicode-symbols >= 0.2.2.4,
+        configuration-tools
+
+    ghc-options: -Wall
+
+Test-Suite trivial
+    type: exitcode-stdio-1.0
+    default-language: Haskell2010
+    main-is: Trivial.hs
     hs-source-dirs: examples
 
     build-depends:

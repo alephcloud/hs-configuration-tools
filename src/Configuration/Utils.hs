@@ -81,6 +81,8 @@ module Configuration.Utils
 
 -- * Running an Configured Application
 , runWithConfiguration
+, PkgInfo
+, runWithPkgInfoConfiguration
 
 -- * Applicative Option Parsing with Default Values
 , MParser
@@ -112,6 +114,7 @@ import Data.Aeson.Types (Parser)
 import qualified Data.ByteString.Char8 as B8
 import Data.Char
 import qualified Data.HashMap.Strict as H
+import Data.Maybe
 import Data.Monoid
 import Data.Monoid.Unicode
 import qualified Data.Text as T
@@ -341,14 +344,16 @@ pAppConfiguration d = AppConfiguration
 mainOptions
     ∷ ∀ α . FromJSON (α → α)
     ⇒ ProgramInfo α
+    → (∀ β . Maybe (MParser β))
     → O.ParserInfo (AppConfiguration α)
-mainOptions ProgramInfo{..} = O.info optionParser
-    $ O.fullDesc
-    ⊕ O.progDesc _piDescription
+mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
+    $ O.progDesc _piDescription
+    ⊕ O.fullDesc
     ⊕ maybe mempty O.header _piHelpHeader
     ⊕ maybe mempty O.footer _piHelpFooter
   where
-    optionParser = O.helper
+    optionParser = fromMaybe (pure id) pkgInfoParser
+        <*> O.helper
         <*> (over mainConfig <$> _piOptionParser)
         <*> pAppConfiguration _piDefaultConfiguration
 
@@ -379,7 +384,91 @@ runWithConfiguration appInfo mainFunction = do
         then B8.putStrLn ∘ Yaml.encode $ conf ^. mainConfig
         else mainFunction $ conf ^. mainConfig
   where
-    mainOpts = mainOptions appInfo
+    mainOpts = mainOptions appInfo Nothing
+    parserPrefs = O.prefs
+        $ O.disambiguate
+        ⊕ O.showHelpOnError
+
+-- -------------------------------------------------------------------------- --
+-- Main Configuration with Package Info
+
+pPkgInfo ∷ PkgInfo → MParser α
+pPkgInfo (sinfo, detailedInfo, version, license) =
+    infoO <*> detailedInfoO <*> versionO <*> licenseO
+  where
+    infoO = infoOption sinfo
+        $ O.long "info"
+        ⊕ O.short 'i'
+        ⊕ O.help "Print program info message and exit"
+        ⊕ O.value id
+    detailedInfoO = infoOption detailedInfo
+        $ O.long "long-info"
+        ⊕ O.help "Print detailed program info message and exit"
+        ⊕ O.value id
+    versionO = infoOption version
+        $ O.long "version"
+        ⊕ O.short 'v'
+        ⊕ O.help "Print version string and exit"
+        ⊕ O.value id
+    licenseO = infoOption license
+        $ O.long "license"
+        ⊕ O.help "Print license of the program and exit"
+        ⊕ O.value id
+
+-- | @(info message, detailed info message, version string, license text)@
+--
+type PkgInfo =
+    ( String
+      -- info message
+    , String
+      -- detailed info message
+    , String
+      -- version string
+    , String
+      -- license text
+    )
+
+-- | Run an IO action with a configuration that is obtained by updating the
+-- given default configuration the values defined via command line arguments.
+--
+-- In addition to the options defined by the given options parser the following
+-- options are recognized:
+--
+-- [@--config-file, -c@]
+--     Parse the given file path as a (partial) configuration in YAML
+--     format.
+--
+-- [@--print-config, -p@]
+--     Print the final parsed configuration to standard out and exit.
+--
+-- [@--help, -h@]
+--     Print a help message and exit.
+--
+-- [@--version, -v@]
+--     Print the version of the application and exit.
+--
+-- [@--info, -i@]
+--     Print a short info message for the application and exit.
+--
+-- [@--long-inf@]
+--     Print a detailed info message for the application and exit.
+--
+-- [@--license@]
+--     Print the text of the lincense of the application and exit.
+--
+runWithPkgInfoConfiguration
+    ∷ (FromJSON (α → α), ToJSON α)
+    ⇒ ProgramInfo α
+    → PkgInfo
+    → (α → IO ())
+    → IO ()
+runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
+    conf ← O.customExecParser parserPrefs mainOpts
+    if conf ^. printConfig
+        then B8.putStrLn ∘ Yaml.encode $ conf ^. mainConfig
+        else mainFunction $ conf ^. mainConfig
+  where
+    mainOpts = mainOptions appInfo (Just $ pPkgInfo pkgInfo)
     parserPrefs = O.prefs
         $ O.disambiguate
         ⊕ O.showHelpOnError

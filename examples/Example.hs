@@ -17,6 +17,10 @@ import Data.Monoid.Unicode
 
 import Prelude.Unicode
 
+-- This assume usage of cabal with custom Setup.hs
+--
+import PkgInfo_url_example
+
 -- | Specification of the authentication section of a URL.
 --
 data Auth = Auth
@@ -99,8 +103,24 @@ pHttpURL = pure id
 mainInfo ∷ ProgramInfo HttpURL
 mainInfo = programInfo "HTTP URL" pHttpURL defaultHttpURL
 
+-- This version assumes usage of cabal with custom Setup.hs
+--
 main ∷ IO ()
-main = runWithConfiguration mainInfo $ \conf → do
+main = runWithPkgInfoConfiguration mainInfo pkgInfo $ \conf → do
+    putStrLn
+        $ "http://"
+        ⊕ conf ^. auth ∘ user
+        ⊕ ":"
+        ⊕ conf ^. auth ∘ pwd
+        ⊕ "@"
+        ⊕ conf ^. domain
+        ⊕ "/"
+        ⊕ conf ^. path
+
+-- This version does not rely on cabal
+--
+main_ ∷ IO ()
+main_ = runWithConfiguration mainInfo $ \conf → do
     putStrLn
         $ "http://"
         ⊕ conf ^. auth ∘ user

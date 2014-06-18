@@ -5,8 +5,15 @@ This package provides a collection of utils on top of the packages
 optparse-applicative, aeson, and yaml, for configuring libraries and
 applications in a composable way.
 
-The main feature is the integration of command line option parsing and
-configuration files.
+The main features are
+
+1.   configuration management through integration of command line option
+     parsing and configuration files and
+2.   a `Setup.hs` file that generates a `PkgInfo` module that provides
+     information about the package and the build.
+
+Configuration Management
+========================
 
 The purpose is to make management of configurations easy by providing an
 idiomatic style of defining and deploying configurations.
@@ -28,6 +35,19 @@ The package provides operators and functions that make the implmentation of
 these entities easy for the common case that the configurations are encoded
 mainly as nested records.
 
+In addition to the user defined command line option the following
+options are recognized by the application:
+
+`--config-file, -c`
+:    Parse the given file as a (partial) configuration file in YAML format.
+
+`print-config, -p`
+:    Print the parsed configuration that would otherwise be used by the
+     application to standard out in YAML format and exit.
+
+`--help, -h`
+:   Print a help message and exit.
+
 The operators assume that lenses for the configuration record types are
 provided.
 
@@ -35,7 +55,7 @@ An complete usage example can be found in the file @example/Example.hs@ of the
 cabal package.
 
 Usage Example
-=============
+-------------
 
 ~~~{.haskell}
 {-# LANGUAGE UnicodeSyntax #-}
@@ -184,6 +204,78 @@ main = runWithConfiguration mainInfo $ \conf → do
         ⊕ conf ^. path
 ~~~
 
+Package and Build Information
+=============================
+
+The module `Configuration.Utils.Setup`{.haskell} contains an example
+`Setup.hs`{.haskell} script that hooks into the cabal build process at the end
+of the configuration phase and generates for each a module with package
+information for each component of the cabal pacakge.
+
+The modules are created in the *autogen* build directory where also the *Path_*
+module is created by cabal's simple build setup. This is usually the directory
+`./dist/build/autogen`.
+
+For a library component the module is named just `PkgInfo`{.haskell}. For all
+other components the module is name `PkgInfo_COMPONENT_NAME`{.haskell} where
+`COMPONENT_NAME` is the name of the component with `-` characters replaced by
+`_`.
+
+    For instance, if a cabal package contains a library and an executable that
+    is called *my-app*, the following modules are created: `PkgInfo`{.haskell}
+    and `PkgInfo_my_app`{.haskell}.
+
+In order to use the feature with your own package the code of the module
+`Configuration.Utils.Setup`{.haskell} from the file
+`./src/Configuration/Utils/Setup.hs`{.shell} must be placed into a file called
+`Setup.hs` in the root directory of your package. In addition the value of the
+`Build-Type` field in the package description (cabal) file must be set to
+`Custom`:
+
+> Build-Type: Custom
+
+You can integrate the information provided by the `PkgInfo` modules with the
+command line interface of an application by importing the respective module for
+the component and using the `runWithPkgInfoConfiguration`{.haskell} function
+from the module `Configuration.Utils`{.haskell} as show in the following
+example:
+
+~~~{.haskell}
+{-# LANGUAGE UnicodeSyntax #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
+
+module Main
+( main
+) where
+
+import Configuration.Utils
+import PkgInfo
+
+instance FromJSON (() → ()) where parseJSON _ = pure id
+
+mainInfo ∷ ProgramInfo ()
+mainInfo = programInfo "Hello World" (pure id) ()
+
+main ∷ IO ()
+main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello world"
+~~~
+
+With that the resulting application supports the following additional command
+line options:
+
+`--version, -v`
+:    Print the version of the application and exit.
+
+`--info, -i`
+:   Print a short info message for the application and exit.
+
+`--long-info`
+:   Print a detailed info message for the application and exit.
+
+`--license`
+:   Print the text of the lincense of the application and exit.
+
 TODO
 ====
 
@@ -192,6 +284,9 @@ more features.
 
 Most of these features are already implemented elsewhere but not yet
 integrated into this package.
+
+*   Teach optparse-applicative to not print usage-message for
+    info options.
 
 *   Simplify specification of Configuration data types by
     integrating the aeson instances and the option parser.
