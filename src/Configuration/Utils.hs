@@ -94,6 +94,7 @@ module Configuration.Utils
 , (%.:)
 
 -- * Misc Utils
+, (%)
 , (×)
 , (<.>)
 , (⊙)
@@ -130,6 +131,15 @@ import System.IO.Unsafe (unsafePerformIO)
 -- | This operator is an alternative for '($)' with a higher precedence which
 -- makes it suitable for usage within Applicative style funtors without the need
 -- to add parenthesis.
+--
+(%) ∷ (α → β) → α → β
+(%) = ($)
+infixr 5 %
+{-# INLINE (%) #-}
+
+-- | This operator is a UTF-8 version of '(%)' which is an alternative for '($)'
+-- with a higher precedence which makes it suitable for usage within Applicative
+-- style funtors without the need to add parenthesis.
 --
 -- The hex value of the UTF-8 character × is 0x00d7.
 --
