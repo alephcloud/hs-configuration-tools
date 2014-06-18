@@ -215,8 +215,8 @@ main = runWithConfiguration mainInfo $ \conf → do
 Package and Build Information
 =============================
 
-The module `Configuration.Utils.Setup`{.haskell} contains an example
-`Setup.hs`{.haskell} script that hooks into the cabal build process at the end
+The module `Configuration.Utils.Setup` contains an example
+`Setup.hs` script that hooks into the cabal build process at the end
 of the configuration phase and generates for each a module with package
 information for each component of the cabal pacakge.
 
@@ -224,18 +224,18 @@ The modules are created in the *autogen* build directory where also the *Path_*
 module is created by cabal's simple build setup. This is usually the directory
 `./dist/build/autogen`.
 
-For a library component the module is named just `PkgInfo`{.haskell}. For all
-other components the module is name `PkgInfo_COMPONENT_NAME`{.haskell} where
+For a library component the module is named just `PkgInfo`. For all
+other components the module is name `PkgInfo_COMPONENT_NAME` where
 `COMPONENT_NAME` is the name of the component with `-` characters replaced by
 `_`.
 
 For instance, if a cabal package contains a library and an executable that
-is called *my-app*, the following modules are created: `PkgInfo`{.haskell}
-and `PkgInfo_my_app`{.haskell}.
+is called *my-app*, the following modules are created: `PkgInfo`
+and `PkgInfo_my_app`.
 
 In order to use the feature with your own package the code of the module
-`Configuration.Utils.Setup`{.haskell} from the file
-`./src/Configuration/Utils/Setup.hs`{.shell} must be placed into a file called
+`Configuration.Utils.Setup` from the file
+`./src/Configuration/Utils/Setup.hs` must be placed into a file called
 `Setup.hs` in the root directory of your package. In addition the value of the
 `Build-Type` field in the package description (cabal) file must be set to
 `Custom`:
@@ -244,8 +244,8 @@ In order to use the feature with your own package the code of the module
 
 You can integrate the information provided by the `PkgInfo` modules with the
 command line interface of an application by importing the respective module for
-the component and using the `runWithPkgInfoConfiguration`{.haskell} function
-from the module `Configuration.Utils`{.haskell} as show in the following
+the component and using the `runWithPkgInfoConfiguration` function
+from the module `Configuration.Utils` as show in the following
 example:
 
 ~~~{.haskell}
@@ -283,6 +283,99 @@ line options:
 
 `--license`
 :   Print the text of the lincense of the application and exit.
+
+Here is the example output of `--long-info` for the example
+`examples/Trivial.hs`:
+
+~~~{.shell}
+trivial-0.1 (package configuration-tools-0.1 revision f6ec3e5)
+Copyright (c) 2014 AlephCloud, Inc.
+
+Author: Lars Kuhtz <lars@alephcloud.com>
+License: MIT
+Homepage: https://github.com/alephcloud/hs-configuration-tools
+Build with: ghc-7.8.2 (x86_64-osx)
+Build flags:
+
+Dependencies:
+    Cabal-1.21.0.0 (BSD3)
+    MonadRandom-0.1.13 (OtherLicense)
+    aeson-0.7.0.6 (BSD3)
+    ansi-terminal-0.6.1.1 (BSD3)
+    ansi-wl-pprint-0.6.7.1 (BSD3)
+    array-0.5.0.0 (BSD3)
+    attoparsec-0.11.3.4 (BSD3)
+    base-4.7.0.0 (BSD3)
+    base-unicode-symbols-0.2.2.4 (BSD3)
+    bifunctors-4.1.1.1 (BSD3)
+    rts-1.0 (BSD3)
+    bytestring-0.10.4.0 (BSD3)
+    comonad-4.2 (BSD3)
+    conduit-1.1.2.1 (MIT)
+    containers-0.5.5.1 (BSD3)
+    contravariant-0.5.1 (BSD3)
+    deepseq-1.3.0.2 (BSD3)
+    directory-1.2.1.0 (BSD3)
+    distributive-0.4.3.2 (BSD3)
+    dlist-0.7.0.1 (BSD3)
+    either-4.1.2 (BSD3)
+    errors-1.4.7 (BSD3)
+    exceptions-0.6.1 (BSD3)
+    filepath-1.3.0.2 (BSD3)
+    free-4.7.1 (BSD3)
+    ghc-prim-0.3.1.0 (BSD3)
+    hashable-1.2.2.0 (BSD3)
+    integer-gmp-0.5.1.0 (BSD3)
+    lens-4.1.2.1 (BSD3)
+    lifted-base-0.2.2.2 (BSD3)
+    mmorph-1.0.3 (BSD3)
+    monad-control-0.3.3.0 (BSD3)
+    mtl-2.1.3.1 (BSD3)
+    nats-0.2 (BSD3)
+    old-locale-1.0.0.6 (BSD3)
+    optparse-applicative-0.8.1 (BSD3)
+    parallel-3.2.0.4 (BSD3)
+    prelude-extras-0.4 (BSD3)
+    pretty-1.1.1.1 (BSD3)
+    primitive-0.5.3.0 (BSD3)
+    process-1.2.0.0 (BSD3)
+    profunctors-4.0.4 (BSD3)
+    random-1.0.1.1 (BSD3)
+    reflection-1.4 (BSD3)
+    resourcet-1.1.2.2 (BSD3)
+    safe-0.3.4 (BSD3)
+    scientific-0.3.2.0 (BSD3)
+    semigroupoids-4.0.2 (BSD3)
+    semigroups-0.14 (BSD3)
+    split-0.2.2 (BSD3)
+    syb-0.4.1 (BSD3)
+    tagged-0.7.2 (BSD3)
+    template-haskell-2.9.0.0 (BSD3)
+    text-1.1.1.2 (BSD3)
+    time-1.4.2 (BSD3)
+    transformers-0.3.0.0 (BSD3)
+    transformers-base-0.4.2 (BSD3)
+    transformers-compat-0.1.1.1 (BSD3)
+    unix-2.7.0.1 (BSD3)
+    unordered-containers-0.2.4.0 (BSD3)
+    utf8-string-0.3.8 (BSD3)
+    vector-0.10.9.1 (BSD3)
+    void-0.6.1 (BSD3)
+    yaml-0.8.8.3 (BSD3)
+    zlib-0.5.4.1 (BSD3)
+
+
+Available options:
+  -i,--info                Print program info message and exit
+  --long-info              Print detailed program info message and exit
+  -v,--version             Print version string and exit
+  --license                Print license of the program and exit
+  -h,--help                Show this help text
+  -p,--print-config        Print the parsed configuration to standard out and
+                           exit
+  -c,--config-file FILE    Configuration file for backend services in YAML
+                           fromat
+~~~
 
 TODO
 ====
