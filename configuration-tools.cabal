@@ -43,11 +43,11 @@ Library
         bytestring >= 0.10.4.0,
         directory >= 1.2.1.0,
         errors >= 1.4.3,
-        lens >= 4.1.2.1,
         optparse-applicative >= 0.8.1,
         process >= 1.2.0.0,
         text >= 1.1.1.2,
-        time >= 1.4,
+        -- time >= 1.4,
+        transformers >= 0.3.0.0,
         unordered-containers >= 0.2.4.0,
         yaml >= 0.8.8.3
 

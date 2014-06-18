@@ -65,7 +65,6 @@ We start with some language extensions and imports.
 ~~~{.haskell}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module Main
@@ -78,16 +77,24 @@ import Prelude.Unicode
 ~~~
 
 Next we define types for the configuration of our application. In this contrived
-example these are the types for a simplified version of HTTP URLs. We also
-derive lenses for the configuration types.
-
+example these are the types for a simplified version of HTTP URLs.
 ~~~{.haskell}
 data Auth = Auth
     { _user :: !String
     , _pwd :: !String
     }
+~~~
 
-$(makeLenses ''Auth)
+We have to define lenses for the configuration types. Here we do it explicitely.
+Alternatively one could have used TemplateHaskell along with `makeLenses` from
+the module `Control.Lens` from the lens package.
+
+~~~{.haskell}
+user :: Functor f => (String -> f String) -> Auth -> f Auth
+user f s = (\u → s { _user = u }) <$> f (_user s)
+
+pwd :: Functor f => (String -> f String) -> Auth -> f Auth
+pwd f s = (\p -> s { _pwd = p }) <$> f (_pwd s)
 ~~~
 
 We must provide a default value. If there is no reasonable default the
@@ -121,8 +128,8 @@ when the user provides the `--print-config` command line option.
 ~~~{.haskell}
 instance ToJSON Auth where
     toJSON a = object
-        [ "user" .= (a ^. user)
-        , "pwd" .=  (a ^. pwd)
+        [ "user" .= _user a
+        , "pwd" .= _pwd a
         ]
 ~~~
 
@@ -154,7 +161,14 @@ data HttpURL = HttpURL
     , _path :: !String
     }
 
-$(makeLenses ''HttpURL)
+auth :: Functor f => (Auth -> f Auth) -> HttpURL -> f HttpURL
+auth f s = (\u → s { _auth = u }) <$> f (_auth s)
+
+domain :: Functor f => (String -> f String) -> HttpURL -> f HttpURL
+domain f s = (\u → s { _domain = u }) <$> f (_domain s)
+
+path :: Functor f => (String -> f String) -> HttpURL -> f HttpURL
+path f s = (\u → s { _path = u }) <$> f (_path s)
 
 defaultHttpURL :: HttpURL
 defaultHttpURL = HttpURL
@@ -171,9 +185,9 @@ instance FromJSON (HttpURL -> HttpURL) where
 
 instance ToJSON HttpURL where
     toJSON a = object
-        [ "auth" .= (a ^. auth)
-        , "domain" .= (a ^. domain)
-        , "path" .= (a ^. path)
+        [ "auth" .= _auth a
+        , "domain" .= _domain a
+        , "path" .= _path a
         ]
 
 pHttpURL :: MParser HttpURL
@@ -202,13 +216,13 @@ main :: IO ()
 main = runWithConfiguration mainInfo $ \conf -> do
     putStrLn
         $ "http://"
-        <> conf ^. auth ∘ user
-        <> ":"
-        <> conf ^. auth ∘ pwd
-        <> "@"
-        <> conf ^. domain
-        <> "/"
-        <> conf ^. path
+        ⊕ (_user . _auth) conf
+        ⊕ ":"
+        ⊕ (_pwd . _auth) conf
+        ⊕ "@"
+        ⊕ _domain conf
+        ⊕ "/"
+        ⊕ _path conf
 ~~~
 
 Package and Build Information

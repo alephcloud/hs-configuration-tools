@@ -6,7 +6,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 
@@ -99,21 +98,20 @@ module Configuration.Utils
 , (<.>)
 , (⊙)
 , dropAndUncaml
+, Lens'
 
 -- * Reexports
 , module Data.Aeson
 , module Options.Applicative
-, makeLenses
-, (^.)
 ) where
 
 import Control.Error (fmapL)
-import Control.Lens hiding ((.=), (<.>), argument)
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import qualified Data.ByteString.Char8 as B8
 import Data.Char
+import Data.Functor.Identity
 import qualified Data.HashMap.Strict as H
 import Data.Maybe
 import Data.Monoid
@@ -127,6 +125,29 @@ import qualified Options.Applicative as O
 import Prelude.Unicode
 
 import System.IO.Unsafe (unsafePerformIO)
+
+-- -------------------------------------------------------------------------- --
+-- Lenses
+
+-- Just what we need of van Laarhoven Lenses
+--
+-- These few lines of code do safe us a lot of dependencies
+
+lens ∷ Functor φ ⇒ (β → α) → (β → α → β) → (α → φ α) → β → φ β
+lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
+
+over ∷ ((α → Identity α) → β → Identity β) → (α → α) → β → β
+over s f = runIdentity . s (Identity . f)
+
+set ∷ ((α → Identity α) → β → Identity β) → α → β → β
+set s a = runIdentity . s (const $ Identity a)
+
+-- | This is the same type as the type from the lens library.
+--
+type Lens' β α = Functor φ ⇒ (α → φ α) → β → φ β
+
+-- -------------------------------------------------------------------------- --
+-- Useful Operators
 
 -- | This operator is an alternative for '($)' with a higher precedence which
 -- makes it suitable for usage within Applicative style funtors without the need
@@ -192,7 +213,14 @@ infixr 4 ⊙
 --     , _pwd ∷ !String
 --     }
 --
--- $(makeLenses ''Auth)
+-- user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- user f s = (\u → s { _user = u }) <$> f (_user s)
+--
+-- pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
+--
+-- -- or with lenses and TemplateHaskell just:
+-- -- $(makeLenses ''Auth)
 --
 -- pAuth ∷ MParser Auth
 -- pAuth = pure id
@@ -206,7 +234,7 @@ infixr 4 ⊙
 --        ⊕ help "password for user"
 -- @
 --
-(.::) ∷ (Alternative φ, Applicative φ) ⇒ Setter' α β → φ β → φ (α → α)
+(.::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ β → φ (α → α)
 (.::) a opt = set a <$> opt <|> pure id
 infixr 5 .::
 {-# INLINE (.::) #-}
@@ -222,7 +250,17 @@ infixr 5 .::
 --     , _domain ∷ !String
 --     }
 --
--- $(makeLenses ''HttpURL)
+-- auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- auth f s = (\u → s { _auth = u }) <$> f (_auth s)
+--
+-- domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- domain f s = (\u → s { _domain = u }) <$> f (_domain s)
+--
+-- path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- path f s = (\u → s { _path = u }) <$> f (_path s)
+--
+-- -- or with lenses and TemplateHaskell just:
+-- -- $(makeLenses ''HttpURL)
 --
 -- pHttpURL ∷ MParser HttpURL
 -- pHttpURL = pure id
@@ -233,7 +271,7 @@ infixr 5 .::
 --         ⊕ help "HTTP domain"
 -- @
 --
-(%::) ∷ (Alternative φ, Applicative φ) ⇒ Setter' α β → φ (β → β) → φ (α → α)
+(%::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ (β → β) → φ (α → α)
 (%::) a opt = over a <$> opt <|> pure id
 infixr 5 %::
 {-# INLINE (%::) #-}
@@ -260,7 +298,14 @@ dropAndUncaml i l
 --     , _pwd ∷ !String
 --     }
 --
--- $(makeLenses ''Auth)
+-- user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- user f s = (\u → s { _user = u }) <$> f (_user s)
+--
+-- pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
+--
+-- -- or with lenses and TemplateHaskell just:
+-- -- $(makeLenses ''Auth)
 --
 -- instance FromJSON (Auth → Auth) where
 --     parseJSON = withObject "Auth" $ \o → pure id
@@ -268,7 +313,7 @@ dropAndUncaml i l
 --         ⊙ pwd ..: "pwd" × o
 -- @
 --
-(..:) ∷ FromJSON β ⇒ Setter' α β → T.Text → Object → Parser (α → α)
+(..:) ∷ FromJSON β ⇒ Lens' α β → T.Text → Object → Parser (α → α)
 (..:) s k o = case H.lookup k o of
     Nothing → pure id
     Just v → set s <$> parseJSON v
@@ -284,7 +329,17 @@ infix 6 ..:
 --     , _domain ∷ !String
 --     }
 --
--- $(makeLenses ''HttpURL)
+-- auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- auth f s = (\u → s { _auth = u }) <$> f (_auth s)
+--
+-- domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- domain f s = (\u → s { _domain = u }) <$> f (_domain s)
+--
+-- path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- path f s = (\u → s { _path = u }) <$> f (_path s)
+--
+-- -- or with lenses and TemplateHaskell just:
+-- -- $(makeLenses ''HttpURL)
 --
 -- instance FromJSON (HttpURL → HttpURL) where
 --     parseJSON = withObject "HttpURL" $ \o → pure id
@@ -292,7 +347,7 @@ infix 6 ..:
 --         ⊙ domain ..: "domain" × o
 -- @
 --
-(%.:) ∷ FromJSON (β → β) ⇒ Setter' α β → T.Text → Object → Parser (α → α)
+(%.:) ∷ FromJSON (β → β) ⇒ Lens' α β → T.Text → Object → Parser (α → α)
 (%.:) s k o = case H.lookup k o of
     Nothing → pure id
     Just v → over s <$> parseJSON v
@@ -315,7 +370,20 @@ data ProgramInfo α = ProgramInfo
       -- ^ default configuration
     }
 
-$(makeLenses ''ProgramInfo)
+piDescription ∷ Lens' (ProgramInfo α) String
+piDescription = lens _piDescription $ \s a → s { _piDescription = a}
+
+piHelpHeader ∷ Lens' (ProgramInfo α) (Maybe String)
+piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a}
+
+piHelpFooter ∷ Lens' (ProgramInfo α) (Maybe String)
+piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a}
+
+piOptionParser ∷ Lens' (ProgramInfo α) (MParser α)
+piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a}
+
+piDefaultConfiguration ∷ Lens' (ProgramInfo α) α
+piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a}
 
 programInfo ∷ String → MParser α → α → ProgramInfo α
 programInfo desc parser defaultConfig = ProgramInfo
@@ -331,7 +399,11 @@ data AppConfiguration α = AppConfiguration
     , _mainConfig ∷ !α
     }
 
-$(makeLenses ''AppConfiguration)
+printConfig ∷ Lens' (AppConfiguration α) Bool
+printConfig = lens _printConfig $ \s a → s { _printConfig = a }
+
+mainConfig ∷ Lens' (AppConfiguration α) α
+mainConfig = lens _mainConfig $ \s a → s { _mainConfig = a }
 
 pAppConfiguration ∷ (FromJSON (α → α)) ⇒ α → O.Parser (AppConfiguration α)
 pAppConfiguration d = AppConfiguration
@@ -390,9 +462,9 @@ runWithConfiguration
     → IO ()
 runWithConfiguration appInfo mainFunction = do
     conf ← O.customExecParser parserPrefs mainOpts
-    if conf ^. printConfig
-        then B8.putStrLn ∘ Yaml.encode $ conf ^. mainConfig
-        else mainFunction $ conf ^. mainConfig
+    if _printConfig conf
+        then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
+        else mainFunction ∘ _mainConfig $ conf
   where
     mainOpts = mainOptions appInfo Nothing
     parserPrefs = O.prefs
@@ -474,9 +546,9 @@ runWithPkgInfoConfiguration
     → IO ()
 runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
     conf ← O.customExecParser parserPrefs mainOpts
-    if conf ^. printConfig
-        then B8.putStrLn ∘ Yaml.encode $ conf ^. mainConfig
-        else mainFunction $ conf ^. mainConfig
+    if _printConfig conf
+        then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
+        else mainFunction ∘ _mainConfig $ conf
   where
     mainOpts = mainOptions appInfo (Just $ pPkgInfo pkgInfo)
     parserPrefs = O.prefs
