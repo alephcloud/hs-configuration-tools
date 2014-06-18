@@ -51,11 +51,16 @@ options are recognized by the application:
 The operators assume that lenses for the configuration record types are
 provided.
 
-An complete usage example can be found in the file @example/Example.hs@ of the
+An complete usage example can be found in the file `example/Example.hs` of the
 cabal package.
 
 Usage Example
 -------------
+
+Remark: there are non-unicode equivalents available in `Configuration.Utils`
+for the UTF-8 operators.
+
+We start with some language extensions and imports.
 
 ~~~{.haskell}
 {-# LANGUAGE UnicodeSyntax #-}
@@ -68,16 +73,15 @@ module Main
 ) where
 
 import Configuration.Utils
-
 import Data.Monoid.Unicode
-
 import Prelude.Unicode
 ~~~
 
-~~~{.haskell}
+Next we define types for the configuration of our application. In this contrived
+example these are the types for a simplified version of HTTP URLs. We also
+derive lenses for the configuration types.
 
--- | Specification of the authentication section of a URL.
---
+~~~{.haskell}
 data Auth = Auth
     { _user ∷ !String
     , _pwd ∷ !String
@@ -86,7 +90,7 @@ data Auth = Auth
 $(makeLenses ''Auth)
 ~~~
 
-First we define a default value. If there is no reasonable default the
+We must provide a default value. If there is no reasonable default the
 respective value could for instance be wrapped into `Maybe`.
 
 ~~~{.haskell}
@@ -97,9 +101,12 @@ defaultAuth = Auth
     }
 ~~~
 
-Next we define an [Aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
+Now we define an [Aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
 instance that yields a function that updates a given `Auth` value with the
-values from the parsed JSON value.
+values from the parsed JSON value. The `⊙` operator is functional composition
+lifted for applicative functors and `×` is a version of `$` with a different
+precedence that helps to reduce the use of paranthesis in applicative style
+code.
 
 ~~~{.haskell}
 instance FromJSON (Auth → Auth) where
@@ -108,7 +115,7 @@ instance FromJSON (Auth → Auth) where
         ⊙ pwd ..: "pwd" × o
 ~~~
 
-The 'ToJSON' instance is needed to print the configuration (as YAML document)
+The `ToJSON` instance is needed to print the configuration (as YAML document)
 when the user provides the `--print-config` command line option.
 
 ~~~{.haskell}
@@ -119,11 +126,12 @@ instance ToJSON Auth where
         ]
 ~~~
 
-Finally, we define an command line option parser using the machinery from
+Finally we define a command line option parser using the machinery from
 the [optparse-applicative](https://hackage.haskell.org/package/optparse-applicative)
 package. Similar to the `FromJSON` instance the parser does not yield a value
 directly but instead yields a function that updates a given `Auth` value with
-the value from the command line.
+the value from the command line. The `⊕` is a single spaced UTF-8 version of
+the infix monoidal concatenation operator `<>`.
 
 ~~~{.haskell}
 pAuth ∷ MParser Auth
@@ -136,7 +144,7 @@ pAuth = pure id
         ⊕ help "password for user"
 ~~~
 
-The following definiton for the `HttpURL` are similar to definitions for
+The following definitons for the `HttpURL` are similar to definitions for
 the `Auth` type above. In addition it is demonstrated how define nested
 configuration types.
 
@@ -221,9 +229,9 @@ other components the module is name `PkgInfo_COMPONENT_NAME`{.haskell} where
 `COMPONENT_NAME` is the name of the component with `-` characters replaced by
 `_`.
 
-    For instance, if a cabal package contains a library and an executable that
-    is called *my-app*, the following modules are created: `PkgInfo`{.haskell}
-    and `PkgInfo_my_app`{.haskell}.
+> For instance, if a cabal package contains a library and an executable that
+> is called *my-app*, the following modules are created: `PkgInfo`{.haskell}
+> and `PkgInfo_my_app`{.haskell}.
 
 In order to use the feature with your own package the code of the module
 `Configuration.Utils.Setup`{.haskell} from the file
@@ -232,7 +240,7 @@ In order to use the feature with your own package the code of the module
 `Build-Type` field in the package description (cabal) file must be set to
 `Custom`:
 
-> Build-Type: Custom
+    Build-Type: Custom
 
 You can integrate the information provided by the `PkgInfo` modules with the
 command line interface of an application by importing the respective module for
