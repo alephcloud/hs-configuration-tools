@@ -229,9 +229,9 @@ other components the module is name `PkgInfo_COMPONENT_NAME`{.haskell} where
 `COMPONENT_NAME` is the name of the component with `-` characters replaced by
 `_`.
 
-> For instance, if a cabal package contains a library and an executable that
-> is called *my-app*, the following modules are created: `PkgInfo`{.haskell}
-> and `PkgInfo_my_app`{.haskell}.
+For instance, if a cabal package contains a library and an executable that
+is called *my-app*, the following modules are created: `PkgInfo`{.haskell}
+and `PkgInfo_my_app`{.haskell}.
 
 In order to use the feature with your own package the code of the module
 `Configuration.Utils.Setup`{.haskell} from the file
