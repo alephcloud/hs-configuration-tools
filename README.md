@@ -57,8 +57,8 @@ cabal package.
 Usage Example
 -------------
 
-Remark: there are non-unicode equivalents available in `Configuration.Utils`
-for the UTF-8 operators.
+Remark: there are unicode equivalents for some operators available in
+`Configuration.Utils` that lead to better aligned and more readable code.
 
 We start with some language extensions and imports.
 
@@ -83,8 +83,8 @@ derive lenses for the configuration types.
 
 ~~~{.haskell}
 data Auth = Auth
-    { _user ∷ !String
-    , _pwd ∷ !String
+    { _user :: !String
+    , _pwd :: !String
     }
 
 $(makeLenses ''Auth)
@@ -94,7 +94,7 @@ We must provide a default value. If there is no reasonable default the
 respective value could for instance be wrapped into `Maybe`.
 
 ~~~{.haskell}
-defaultAuth ∷ Auth
+defaultAuth :: Auth
 defaultAuth = Auth
     { _user = ""
     , _pwd = ""
@@ -103,16 +103,16 @@ defaultAuth = Auth
 
 Now we define an [Aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
 instance that yields a function that updates a given `Auth` value with the
-values from the parsed JSON value. The `⊙` operator is functional composition
-lifted for applicative functors and `×` is a version of `$` with a different
+values from the parsed JSON value. The `<.>` operator is functional composition
+lifted for applicative functors and `%` is a version of `$` with a different
 precedence that helps to reduce the use of paranthesis in applicative style
 code.
 
 ~~~{.haskell}
-instance FromJSON (Auth → Auth) where
-    parseJSON = withObject "Auth" $ \o → pure id
-        ⊙ user ..: "user" × o
-        ⊙ pwd ..: "pwd" × o
+instance FromJSON (Auth -> Auth) where
+    parseJSON = withObject "Auth" $ \o -> pure id
+        <.> user ..: "user" % o
+        <.> pwd ..: "pwd" % o
 ~~~
 
 The `ToJSON` instance is needed to print the configuration (as YAML document)
@@ -130,18 +130,17 @@ Finally we define a command line option parser using the machinery from
 the [optparse-applicative](https://hackage.haskell.org/package/optparse-applicative)
 package. Similar to the `FromJSON` instance the parser does not yield a value
 directly but instead yields a function that updates a given `Auth` value with
-the value from the command line. The `⊕` is a single spaced UTF-8 version of
-the infix monoidal concatenation operator `<>`.
+the value from the command line.
 
 ~~~{.haskell}
-pAuth ∷ MParser Auth
+pAuth :: MParser Auth
 pAuth = pure id
-    ⊙ user .:: strOption
-        × long "user"
-        ⊕ help "user name"
-    ⊙ pwd .:: strOption
-        × long "pwd"
-        ⊕ help "password for user"
+    <.> user .:: strOption
+        % long "user"
+        <> help "user name"
+    <.> pwd .:: strOption
+        % long "pwd"
+        <> help "password for user"
 ~~~
 
 The following definitons for the `HttpURL` are similar to definitions for
@@ -150,25 +149,25 @@ configuration types.
 
 ~~~{.haskell}
 data HttpURL = HttpURL
-    { _auth ∷ !Auth
-    , _domain ∷ !String
-    , _path ∷ !String
+    { _auth :: !Auth
+    , _domain :: !String
+    , _path :: !String
     }
 
 $(makeLenses ''HttpURL)
 
-defaultHttpURL ∷ HttpURL
+defaultHttpURL :: HttpURL
 defaultHttpURL = HttpURL
     { _auth = defaultAuth
     , _domain = ""
     , _path = ""
     }
 
-instance FromJSON (HttpURL → HttpURL) where
-    parseJSON = withObject "HttpURL" $ \o → pure id
-        ⊙ auth %.: "auth" × o
-        ⊙ domain ..: "domain" × o
-        ⊙ path ..: "path" × o
+instance FromJSON (HttpURL -> HttpURL) where
+    parseJSON = withObject "HttpURL" $ \o -> pure id
+        <.> auth %.: "auth" % o
+        <.> domain ..: "domain" % o
+        <.> path ..: "path" % o
 
 instance ToJSON HttpURL where
     toJSON a = object
@@ -177,17 +176,17 @@ instance ToJSON HttpURL where
         , "path" .= (a ^. path)
         ]
 
-pHttpURL ∷ MParser HttpURL
+pHttpURL :: MParser HttpURL
 pHttpURL = pure id
-    ⊙ auth %:: pAuth
-    ⊙ domain .:: strOption
-        × long "domain"
-        ⊕ short 'd'
-        ⊕ help "HTTP domain"
-    ⊙ path .:: strOption
-        × long "path"
-        ⊕ short 'p'
-        ⊕ help "HTTP URL path"
+    <.> auth %:: pAuth
+    <.> domain .:: strOption
+        % long "domain"
+        <> short 'd'
+        <> help "HTTP domain"
+    <.> path .:: strOption
+        % long "path"
+        <> short 'p'
+        <> help "HTTP URL path"
 ~~~
 
 Once the configuration value and the related functions and instances is defined
@@ -196,20 +195,20 @@ use with the `runWithConfiguratin` function to wrap a main function that takes
 an `HttpURL` argument with a configuration file and command line parsing.
 
 ~~~{.haskell}
-mainInfo ∷ ProgramInfo HttpURL
+mainInfo :: ProgramInfo HttpURL
 mainInfo = programInfo "HTTP URL" pHttpURL defaultHttpURL
 
-main ∷ IO ()
-main = runWithConfiguration mainInfo $ \conf → do
+main :: IO ()
+main = runWithConfiguration mainInfo $ \conf -> do
     putStrLn
         $ "http://"
-        ⊕ conf ^. auth ∘ user
-        ⊕ ":"
-        ⊕ conf ^. auth ∘ pwd
-        ⊕ "@"
-        ⊕ conf ^. domain
-        ⊕ "/"
-        ⊕ conf ^. path
+        <> conf ^. auth ∘ user
+        <> ":"
+        <> conf ^. auth ∘ pwd
+        <> "@"
+        <> conf ^. domain
+        <> "/"
+        <> conf ^. path
 ~~~
 
 Package and Build Information
@@ -260,12 +259,12 @@ module Main
 import Configuration.Utils
 import PkgInfo
 
-instance FromJSON (() → ()) where parseJSON _ = pure id
+instance FromJSON (() -> ()) where parseJSON _ = pure id
 
-mainInfo ∷ ProgramInfo ()
+mainInfo :: ProgramInfo ()
 mainInfo = programInfo "Hello World" (pure id) ()
 
-main ∷ IO ()
+main :: IO ()
 main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello world"
 ~~~
 
