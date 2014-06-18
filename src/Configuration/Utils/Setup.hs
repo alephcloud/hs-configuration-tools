@@ -221,5 +221,11 @@ noVcsInfo :: IO (String, String, String)
 noVcsInfo = return ("", "", "")
 
 pkgIdWithLicense :: I.InstalledPackageInfo -> String
-pkgIdWithLicense a = (display . packageId) a ++ " (" ++ (display . I.license) a ++ ")"
+pkgIdWithLicense a = (display . packageId) a
+    ++ " ["
+    ++ (display . I.license) a
+    ++ (if cr /= "" then ", " ++ cr else "")
+    ++ "]"
+  where
+    cr = (unwords . words . I.copyright) a
 
