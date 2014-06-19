@@ -431,3 +431,5 @@ are planned.
 
 *   Loading of configurations from URLs.
 
+*   Include default values in help message.
+
