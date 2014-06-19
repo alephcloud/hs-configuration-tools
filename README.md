@@ -2,21 +2,23 @@ Overview
 ========
 
 This package provides a collection of utils on top of the packages
-optparse-applicative, aeson, and yaml, for configuring libraries and
+[optparse-applicative](http://hackage.haskell.org/package/optparse-applicative),
+[aeson](http://hackage.haskell.org/package/aeson), and
+[yaml](http://hackage.haskell.org/package/yaml) for configuring libraries and
 applications in a composable way.
 
 The main features are
 
 1.   configuration management through integration of command line option
      parsing and configuration files and
-2.   a `Setup.hs` file that generates a `PkgInfo` module that provides
-     information about the package and the build.
+2.   a `Setup.hs` file that generates a `PkgInfo` module for each component
+     of a package that provide information about the package and the build.
 
 Configuration Management
 ========================
 
-The purpose is to make management of configurations easy by providing an
-idiomatic style of defining and deploying configurations.
+The goal of this package is to make management of configurations easy by
+providing an idiomatic style of defining and deploying configurations.
 
 For each data type that is used as a configuration type the following must be
 provided:
@@ -32,24 +34,25 @@ provided:
     that value with the values provided as command line options.
 
 The package provides operators and functions that make the implmentation of
-these entities easy for the common case that the configurations are encoded
-mainly as nested records.
+these requisites easy for the common case that the configuration is encoded
+mainly through nested records.
 
-In addition to the user defined command line option the following
+In addition to the user defined command line options the following
 options are recognized by the application:
 
 `--config-file, -c`
-:    Parse the given file as a (partial) configuration file in YAML format.
+:    parses the given file as a (partial) configuration in YAML format.
 
 `print-config, -p`
-:    Print the parsed configuration that would otherwise be used by the
-     application to standard out in YAML format and exit.
+:    configures the application and prints the configuration in YAML format
+     to standard out and exits. The printed configuration is exactly the
+     configuration that otherwise would be used to run the application.
 
 `--help, -h`
-:   Print a help message and exit.
+:   prints a help message and exits.
 
-The operators assume that lenses for the configuration record types are
-provided.
+The operators assume that [lenses](http://hackage.haskell.org/package/lens)
+are provided for field of the configuration record types.
 
 An complete usage example can be found in the file `example/Example.hs` of the
 cabal package.
@@ -60,10 +63,9 @@ Usage Example
 Remark: there are unicode equivalents for some operators available in
 `Configuration.Utils` that lead to better aligned and more readable code.
 
-We start with some language extensions and imports.
+We start with language extensions and imports.
 
 ~~~{.haskell}
-{-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 
@@ -72,12 +74,12 @@ module Main
 ) where
 
 import Configuration.Utils
-import Data.Monoid.Unicode
-import Prelude.Unicode
+import Data.Monoid
 ~~~
 
-Next we define types for the configuration of our application. In this contrived
-example these are the types for a simplified version of HTTP URLs.
+Next we define the types that are used for the configuration of our application.
+In this contrived example these types define a simplified version of HTTP URLs.
+
 ~~~{.haskell}
 data Auth = Auth
     { _user :: !String
@@ -87,7 +89,8 @@ data Auth = Auth
 
 We have to define lenses for the configuration types. Here we do it explicitely.
 Alternatively one could have used TemplateHaskell along with `makeLenses` from
-the module `Control.Lens` from the lens package.
+the module `Control.Lens` from the [lens](http://hackage.haskell.org/package/lens)
+package.
 
 ~~~{.haskell}
 user :: Functor f => (String -> f String) -> Auth -> f Auth
@@ -97,8 +100,12 @@ pwd :: Functor f => (String -> f String) -> Auth -> f Auth
 pwd f s = (\p -> s { _pwd = p }) <$> f (_pwd s)
 ~~~
 
+(Note, that the module `Configuration.Utils` defines its own `Lens'` type synonym.
+If you import `Control.Lens` you should hide `Lens'` from either module.)
+
 We must provide a default value. If there is no reasonable default the
-respective value could for instance be wrapped into `Maybe`.
+respective value could, for instance, be wrapped into `Maybe`. Here we
+use the monoid identity value of the type.
 
 ~~~{.haskell}
 defaultAuth :: Auth
@@ -108,7 +115,7 @@ defaultAuth = Auth
     }
 ~~~
 
-Now we define an [Aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
+Now we define an [aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
 instance that yields a function that updates a given `Auth` value with the
 values from the parsed JSON value. The `<.>` operator is functional composition
 lifted for applicative functors and `%` is a version of `$` with a different
@@ -150,9 +157,14 @@ pAuth = pure id
         <> help "password for user"
 ~~~
 
+You may consult the documentation of the
+[optparse-applicative](http://hackage.haskell.org/package/optparse-applicative)
+package for further information on how to define command line options.
+
 The following definitons for the `HttpURL` are similar to definitions for
-the `Auth` type above. In addition it is demonstrated how define nested
-configuration types.
+the `Auth` type above. In addition it is demonstrated how to deal with nested
+configuration types. Mainly the usage of `..:` is replaced by `%.:` and
+`.::` is replaced by `%::`.
 
 ~~~{.haskell}
 data HttpURL = HttpURL
@@ -203,10 +215,10 @@ pHttpURL = pure id
         <> help "HTTP URL path"
 ~~~
 
-Once the configuration value and the related functions and instances is defined
-it can be used to create a `ProgramInfo` value. The `ProgramInfo` value is than
-use with the `runWithConfiguratin` function to wrap a main function that takes
-an `HttpURL` argument with a configuration file and command line parsing.
+Now that everything is set up the configuration can be used to create a
+`ProgramInfo` value. The `ProgramInfo` value is than use with the
+`runWithConfiguratin` function to wrap a main function that takes an `HttpURL`
+argument with configuration file and command line parsing.
 
 ~~~{.haskell}
 mainInfo :: ProgramInfo HttpURL
@@ -228,10 +240,10 @@ main = runWithConfiguration mainInfo $ \conf -> do
 Package and Build Information
 =============================
 
-The module `Configuration.Utils.Setup` contains an example
-`Setup.hs` script that hooks into the cabal build process at the end
-of the configuration phase and generates for each a module with package
-information for each component of the cabal pacakge.
+The module `Configuration.Utils.Setup` contains an example `Setup.hs` script
+that hooks into the cabal build process at the end of the configuration phase
+and generates a module with package information for each component of
+the cabal pacakge.
 
 The modules are created in the *autogen* build directory where also the *Path_*
 module is created by cabal's simple build setup. This is usually the directory
@@ -255,14 +267,22 @@ In order to use the feature with your own package the code of the module
 
     Build-Type: Custom
 
-You can integrate the information provided by the `PkgInfo` modules with the
-command line interface of an application by importing the respective module for
-the component and using the `runWithPkgInfoConfiguration` function
-from the module `Configuration.Utils` as show in the following
-example:
+If the configuration-tools package is already installed in the system where
+the build is done, instead of copy and pasting the `Setup.hs` module, the
+following can be used as `Setup.hs` script:
 
 ~~~{.haskell}
-{-# LANGUAGE UnicodeSyntax #-}
+module Main (main) where
+
+import Configuration.Utils.Setup
+~~~
+
+You can integrate the information provided by the `PkgInfo` modules with the
+command line interface of an application by importing the respective module for
+the component and using the `runWithPkgInfoConfiguration` function from the
+module `Configuration.Utils` as show in the following example:
+
+~~~{.haskell}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 
@@ -286,19 +306,24 @@ With that the resulting application supports the following additional command
 line options:
 
 `--version, -v`
-:    Print the version of the application and exit.
+:    prints the version of the application and exits.
 
 `--info, -i`
-:   Print a short info message for the application and exit.
+:   prints a short info message for the application and exit.
 
 `--long-info`
-:   Print a detailed info message for the application and exit.
+:   print a detailed info message for the application and exits.
+    Beside component name, package name, version, revision, and copyright
+    the message also contain information about the compiler that
+    was used for the build, the build architecture, build flags,
+    the author, the license type, and a list of all direct and
+    indirect dependencies along with their licenses and copyrights.
 
 `--license`
-:   Print the text of the lincense of the application and exit.
+:   prints the text of the lincense of the application and exits.
 
 Here is the example output of `--long-info` for the example
-`examples/Trivial.hs`:
+`examples/Trivial.hs` from this package:
 
 ~~~{.shell}
 trivial-0.1 (package configuration-tools-0.1 revision 080c27a)
@@ -382,11 +407,8 @@ Available options:
 TODO
 ====
 
-This package is in an early stage of development. I plan to add
-more features.
-
-Most of these features are already implemented elsewhere but not yet
-integrated into this package.
+This package is in an early stage of development and more features
+are planned.
 
 *   Teach optparse-applicative to not print usage-message for
     info options.
