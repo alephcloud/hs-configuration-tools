@@ -48,11 +48,11 @@ extra-source-files:
 
 source-repository head
     type: git
-    location: git@github.com:alephcloud/hs-configuration-tools
+    location: https://github.com/alephcloud/hs-configuration-tools.git
 
 source-repository this
     type: git
-    location: git@github.com:alephcloud/hs-configuration-tools
+    location: https://github.com/alephcloud/hs-configuration-tools.git
     tag: 0.2.1
 
 Library
