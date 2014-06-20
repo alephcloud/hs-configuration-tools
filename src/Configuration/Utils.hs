@@ -365,7 +365,7 @@ pAppConfiguration d = AppConfiguration
         × O.long "config-file"
         ⊕ O.short 'c'
         ⊕ O.metavar "FILE"
-        ⊕ O.help "Configuration file for backend services in YAML fromat"
+        ⊕ O.help "Configuration file in YAML format"
         ⊕ O.eitherReader (\file → fileReader file <*> pure d)
         ⊕ O.value d
   where
