@@ -3,7 +3,7 @@
 -- ------------------------------------------------------ --
 
 Name:                configuration-tools
-Version:             0.2
+Version:             0.2.1
 Synopsis:            Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -53,7 +53,7 @@ source-repository head
 source-repository this
     type: git
     location: git@github.com:alephcloud/hs-configuration-tools
-    tag: 0.2
+    tag: 0.2.1
 
 Library
     hs-source-dirs: src
