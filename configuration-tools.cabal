@@ -29,6 +29,7 @@ Library
     exposed-modules:
         -- Configuration.Utils.FromJsonWithDef
         Configuration.Utils
+        Configuration.Utils.Http
         Configuration.Utils.Setup
 
     other-modules:

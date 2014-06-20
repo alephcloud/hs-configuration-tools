@@ -468,6 +468,14 @@ Available options:
                            fromat
 ~~~
 
+Configuration Types for HTTP Services and Clients
+=================================================
+
+The module `Configuration.Utils.Http` contains some types for configuring HTTP
+services and clients. Currently these types only provide the most basic
+configuration settings. This will probably be extended in the future. Feel free
+to submit patches for missing settings.
+
 TODO
 ====
 
