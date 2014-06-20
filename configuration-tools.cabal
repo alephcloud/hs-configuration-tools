@@ -34,7 +34,7 @@ License-file:        LICENSE
 Author:              Lars Kuhtz <lars@alephcloud.com>
 Maintainer:          Lars Kuhtz <lars@alephcloud.com>
 Copyright:           Copyright (c) 2014 AlephCloud, Inc.
-Category:            Configuration
+Category:            Configuration, Console
 Build-type:          Custom
 
 cabal-version:  >= 1.10
