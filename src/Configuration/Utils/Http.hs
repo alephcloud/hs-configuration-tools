@@ -162,17 +162,17 @@ instance ToJSON HttpServiceConfiguration where
         ]
 
 pHttpServiceConfiguration ∷ String → MParser HttpServiceConfiguration
-pHttpServiceConfiguration serviceName = pure id
+pHttpServiceConfiguration prefix = pure id
     ⊙ hscHost ∘ bs .:: strOption
-        × long (serviceName ⊕ "-host")
-        ⊕ help ("Hostname of " ⊕ serviceName)
+        × long (prefix ⊕ "host")
+        ⊕ help "Hostname of the service"
     ⊙ hscPort .:: option
-        × long (serviceName ⊕ "-port")
-        ⊕ help ("Port of " ⊕ serviceName)
+        × long (prefix ⊕ "port")
+        ⊕ help "Port of the service"
     ⊙ hscInterface ∘ bs .:: option
-        × long (serviceName ⊕ "-interface")
-        ⊕ help ("Port of " ⊕ serviceName)
-    ⊙ (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration (serviceName ⊕ "-")))
+        × long (prefix ⊕ "interface")
+        ⊕ help "Interface of the service"
+    ⊙ (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration prefix))
   where
     bs ∷ Iso' B8.ByteString String
     bs = iso B8.unpack B8.pack
