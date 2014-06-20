@@ -48,7 +48,6 @@ Library
         optparse-applicative >= 0.8.1,
         process >= 1.2.0.0,
         text >= 1.1.1.2,
-        -- time >= 1.4,
         transformers >= 0.3.0.0,
         unordered-containers >= 0.2.4.0,
         yaml >= 0.8.8.3,
