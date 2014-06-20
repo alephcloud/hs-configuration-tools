@@ -4,6 +4,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# OPTIONS_HADDOCK show-extensions #-}
+
 -- | This module contains a @Setup.hs@ script that hooks into the cabal build
 -- process at the end of the configuration phase and generates a module with
 -- package information for each component of the cabal package.

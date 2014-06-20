@@ -6,8 +6,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleInstances #-}
+
+{-# OPTIONS_HADDOCK show-extensions #-}
 
 module Configuration.Utils.Http
 (

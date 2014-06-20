@@ -10,6 +10,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 
+{-# OPTIONS_HADDOCK show-extensions #-}
+
 -- | This module provides a collection of utils on top of the packages
 -- optparse-applicative, aeson, and yaml, for configuring libraries and
 -- applications in a composable way.
@@ -75,6 +77,9 @@ module Configuration.Utils
 , (⊙)
 , dropAndUncaml
 , Lens'
+
+-- * Configuration of Optional Values
+-- $maybe
 
 -- * Reexports
 , module Data.Aeson
@@ -319,21 +324,35 @@ data ProgramInfo α = ProgramInfo
       -- ^ default configuration
     }
 
+-- | Program Description
+--
 piDescription ∷ Lens' (ProgramInfo α) String
 piDescription = lens _piDescription $ \s a → s { _piDescription = a}
 
+-- | Help header
+--
 piHelpHeader ∷ Lens' (ProgramInfo α) (Maybe String)
 piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a}
 
+-- | Help footer
+--
 piHelpFooter ∷ Lens' (ProgramInfo α) (Maybe String)
 piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a}
 
+-- | options parser for configuration (TODO consider using a typeclass for this)
+--
 piOptionParser ∷ Lens' (ProgramInfo α) (MParser α)
 piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a}
 
+-- | default configuration
+--
 piDefaultConfiguration ∷ Lens' (ProgramInfo α) α
 piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a}
 
+-- | Smart constructor for 'ProgramInfo'.
+--
+-- 'piHelpHeader' and 'piHelpFooter' are set to 'Nothing'.
+--
 programInfo ∷ String → MParser α → α → ProgramInfo α
 programInfo desc parser defaultConfig = ProgramInfo
     { _piDescription = desc
@@ -348,9 +367,15 @@ data AppConfiguration α = AppConfiguration
     , _mainConfig ∷ !α
     }
 
+-- | A flag that indicates that the application should
+-- output the effective configuration and exit.
+--
 printConfig ∷ Lens' (AppConfiguration α) Bool
 printConfig = lens _printConfig $ \s a → s { _printConfig = a }
 
+-- | The configuration value that is given to the
+-- application.
+--
 mainConfig ∷ Lens' (AppConfiguration α) α
 mainConfig = lens _mainConfig $ \s a → s { _mainConfig = a }
 
@@ -446,7 +471,13 @@ pPkgInfo (sinfo, detailedInfo, version, license) =
         ⊕ O.help "Print license of the program and exit"
         ⊕ O.value id
 
--- | @(info message, detailed info message, version string, license text)@
+-- | Information about the cabal package. The format is:
+--
+-- @(info message, detailed info message, version string, license text)@
+--
+-- See the documentation of "Configuration.Utils.Setup" for a way
+-- how to generate this information automatically from the package
+-- description during the build process.
 --
 type PkgInfo =
     ( String
@@ -505,10 +536,25 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
         ⊕ O.showHelpOnError
 
 -- -------------------------------------------------------------------------- --
--- Configuration of Optional ('Maybe') Values
+-- Configuration of Optional Values
 
--- | Optional configuration values are supposed to be encoded by wrapping
+-- $maybe
+-- Optional configuration values are supposed to be encoded by wrapping
 -- the respective type with 'Maybe'.
+--
+-- For this the following orphan 'FromJSON' instance is provided:
+--
+-- > instance (FromJSON (a -> a), FromJSON a) => FromJSON (Maybe a -> Maybe a)
+-- >     parseJSON Null = pure (const Nothing)
+-- >     parseJSON v = f <$> parseJSON v <*> parseJSON v
+-- >       where
+-- >         f g _ Nothing = Just g
+-- >         f _ g (Just x) = Just (g x)
+--
+-- (Using an orphan instance is generally problematic but convenient in
+-- this case. It's unlikely that an instance for this type is needed elsewhere.
+-- If this is an issue for you, please let me know. In that case we can define a
+-- new type for optional configuration values.)
 --
 -- The semantics are as follows:
 --
@@ -516,25 +562,23 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- * If the parsed configuration value is not 'Null' then the result is
 --   an update function that
 --
---     * updates the given default value if the given default value is @Just x@
+--     * updates the given default value if this value is @Just x@
 --       or
 --     * is a constant function that returns the value that is parsed
 --       from the configuration using the 'FromJSON' instance for the
 --       configuration type.
 --
--- Note, that this instance requires an 'FromJSON' instance for
--- the option configuration type itself as well as a 'FromJSON' instance
--- for an update function of the configuration type. The former can
--- be defined by means of the latter as follows:
+-- Note, that this instance requires an 'FromJSON' instance for the
+-- configuration type itself as well as a 'FromJSON' instance for the update
+-- function of the configuration type. The former can be defined by means of the
+-- latter as follows:
 --
--- @
--- instance FromJSON MyType where
---     parseJSON v = parseJSON v <*> pure defaultMyType
--- @
+-- > instance FromJSON MyType where
+-- >     parseJSON v = parseJSON v <*> pure defaultMyType
 --
--- This instance will cause the usage of 'defaultMyType' as default
--- value if the default value that is given to the configuration
--- parser is 'Nothing' and the parsed configuration is not 'Null'.
+-- This instance will cause the usage of 'defaultMyType' as default value if the
+-- default value that is given to the configuration parser is 'Nothing' and the
+-- parsed configuration is not 'Null'.
 --
 instance (FromJSON (a -> a), FromJSON a) => FromJSON (Maybe a -> Maybe a) where
 

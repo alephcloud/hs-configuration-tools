@@ -4,6 +4,8 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# OPTIONS_HADDOCK show-extensions #-}
+
 -- | This module contains a @Setup.hs@ script that hooks into the cabal build
 -- process at the end of the configuration phase and generates a module with
 -- package information for each component of the cabal package.
@@ -21,9 +23,8 @@
 -- called /my-app/, the following modules are created: @PkgInfo@ and
 -- @PkgInfo_my_app@.
 --
--- /____________________________________________________________________________/
 --
--- /USAGE AS SETUP SCRIPT/
+-- = Usage as Setup Script
 --
 -- There are two ways how this module can be used:
 --
@@ -42,9 +43,8 @@
 --
 -- > Build-Type: Custom
 --
--- /____________________________________________________________________________/
 --
--- /INTEGRATION WITH "Configuration.Utils"/
+-- = Integration With "Configuration.Utils"
 --
 -- You can integrate the information provided by the @PkgInfo@ modules with the
 -- command line interface of an application by importing the respective module

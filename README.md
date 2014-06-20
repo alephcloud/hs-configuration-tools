@@ -277,10 +277,10 @@ that has the following behavior:
 If the parsed configuration value is 'Null' the resulting function constantly
 returns `Nothing`. Otherwise
 
-*   then function does an pointwise update using the `FromJSON` instance for
+*   the function does an pointwise update using the `FromJSON` instance for
     `a -> a` when applied to `Just a` and
-*   the function returns uses the `FromJSON` instance for `a` to return
-    the parsed `a` value when applied to 'Nothing'.
+*   the function uses the `FromJSON` instance for `a` to return the parsed `a`
+    value when applied to 'Nothing'.
 
 The `FromJSON a` instance may either require that the parsed configuration fully
 specifies the value of `a` (and raise a failure otherwise) or the `FromJSON a`
