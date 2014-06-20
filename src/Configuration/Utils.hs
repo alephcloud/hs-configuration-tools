@@ -10,7 +10,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-
 -- | This module provides a collection of utils on top of the packages
 -- optparse-applicative, aeson, and yaml, for configuring libraries and
 -- applications in a composable way.
@@ -43,30 +42,6 @@
 --
 -- An complete usage example can be found in the file @example/Example.hs@
 -- of the cabal package.
---
--- TODO (most of these features are already implemented but not yet
--- integrated into this package)
---
--- * Simplify specification of Configuration data types by
---   integrating the aeson instances and the option parser.
---
--- * Include help text as comments in YAML serialization of configuration
---   values.
---
--- * Provide operators (or at least examples) for more scenarios
---   (like required options)
---
--- * Nicer errors messages if parsing fails.
---
--- * Supper JSON encoded configuration files.
---
--- * Integrate with version control and cabal (e.g. options for joing
---   versions of all dependencies and build flags).
---
--- * Support mode where JSON/YAML parsing fails when unexpected
---   properties are encountered.
---
--- * Loading of configurations from URLs.
 --
 module Configuration.Utils
 (
@@ -140,7 +115,7 @@ import System.IO.Unsafe (unsafePerformIO)
 infixr 5 %
 {-# INLINE (%) #-}
 
--- | This operator is a UTF-8 version of '(%)' which is an alternative for '($)'
+-- | This operator is a UTF-8 version of '%' which is an alternative for '$'
 -- with a higher precedence which makes it suitable for usage within Applicative
 -- style funtors without the need to add parenthesis.
 --
@@ -169,7 +144,7 @@ infixr 4 <.>
 {-# INLINE (<.>) #-}
 
 -- | For people who like nicely aligned code and do not mind messing with
--- editor key-maps: here a version of '(<.>)' that uses a unicode symbol
+-- editor key-maps: here a version of '<.>' that uses a unicode symbol
 --
 -- The hex value of the UTF-8 character ⊙ is 0x2299.
 --
@@ -271,7 +246,7 @@ dropAndUncaml i l
     | otherwise = let (h:t) = drop i l
         in toLower h : concatMap (\x → if isUpper x then "-" ⊕ [toLower x] else [x]) t
 
--- | A variant of the aeson operator '(.:)' that creates a parser
+-- | A variant of the aeson operator '.:' that creates a parser
 -- that updates a setter with the parsed value.
 --
 -- @
@@ -302,7 +277,7 @@ dropAndUncaml i l
 infix 6 ..:
 {-# INLINE (..:) #-}
 
--- | A variant of the aeson operator '(.:)' that creates a parser
+-- | A variant of the aeson operator '.:' that creates a parser
 -- that modifies a setter with a parsed function.
 --
 -- @
