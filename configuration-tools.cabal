@@ -33,6 +33,7 @@ Library
 
     other-modules:
         PkgInfo
+        Configuration.Utils.Internal
 
     build-depends:
         Cabal >= 1.20.0.1,
@@ -49,7 +50,8 @@ Library
         -- time >= 1.4,
         transformers >= 0.3.0.0,
         unordered-containers >= 0.2.4.0,
-        yaml >= 0.8.8.3
+        yaml >= 0.8.8.3,
+        profunctors >= 4.0.4
 
     ghc-options: -Wall
 

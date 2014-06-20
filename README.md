@@ -237,6 +237,70 @@ main = runWithConfiguration mainInfo $ \conf -> do
         ⊕ _path conf
 ~~~
 
+Using Sum Types as Configuration Types
+======================================
+
+Sum types can not be used as configuration types in the same way as product types.
+The reason is that the nondeterminism in the choice of a term for the type is
+not restricted to the choosen constructor arguments but in addition there
+is non-determinism in the choice of the constructor, too.
+
+An update function for a product type can be defined pointwise as a mapping from
+constructor parameters to values. An update for a sum type must take the
+constructor context into account. In terms of the lens library this is reflected
+by using `Lens`es for product types and `Prism`s for sum types. Therefore a
+configuration that defines an update function for a sum types must also specify
+the constructor context. Moreover, when applied to a given default value the
+function may not be applicable at all if the default value uses a different
+constructor context than what the update assumes.
+
+For the future we plan to provide a general solution for configurations of sum
+types which would be based on the possibility to define default values for more
+than a single constructor. For now one must restrict configurations of sum types
+to yield constant values instead of point-wise (partial) updates. In practice
+this means that for a type `a` one has to provide an `FromJSON` instance for `a`
+and use the `..:` operator. Similarly for the option parser one has to define a
+parser that yields an `a` and use it with the `.::` operator.
+
+Optional Configuration Values
+-----------------------------
+
+For configuration values of type `Maybe a`, though being sum types, we provide
+an orphan[^1] `FromJSON` instance of the form
+
+~~~{.haskell}
+instance (FromJSON a, FromJSON (a -> a)) => FromJSON (Maybe a -> Maybe a)
+~~~
+
+that has the following behavior:
+
+If the parsed configuration value is 'Null' the resulting function constantly
+returns `Nothing`. Otherwise
+
+*   then function does an pointwise update using the `FromJSON` instance for
+    `a -> a` when applied to `Just a` and
+*   the function returns uses the `FromJSON` instance for `a` to return
+    the parsed `a` value when applied to 'Nothing'.
+
+The `FromJSON a` instance may either require that the parsed configuration fully
+specifies the value of `a` (and raise a failure otherwise) or the `FromJSON a`
+instance may do an pointwise update of a hardcoded default value based on
+the existing `FromJSON (a -> a)` instance.
+
+For instance, assuming that there is already an `FromJSON` instance for `MyType
+-> MyType` and a default value `defaultMyType` the following pattern can be
+used:
+
+~~~{.haskell}
+instance FromJSON MyType where
+    parseJSON v = parseJSON v <*> defaultMyType
+~~~
+
+[^1]: Using an orphan instance is generally problematic but convenient in
+      this case. It's unlike that such an instance is needed elsewhere. If this
+      is an issue for you, please let me know. In that case we can define a new
+      type for optional configuration values.
+
 Package and Build Information
 =============================
 
@@ -415,6 +479,27 @@ are planned.
 
 *   Simplify specification of Configuration data types by
     integrating the aeson instances and the option parser.
+
+*   Come up with a storry for sum types. We may use the following approach: The
+    definition of the default should include alternate values for each
+    constructor. Effectively, this means to map the sum type onto a product type
+    by interpreting the summands as factors. For mapping back from the product
+    type to the original sum type one has to provide a choice of the
+    constructor. Intuitively, a sum type can be represented as a tree where the
+    leafs partition the type into classes of value with the same constructors.
+    By providing a default value for each such class partial configurations that
+    are defined through point-wise updates can always be applied in a meaningful
+    way.
+
+    We may use GHC Generics to derive the type for representing default values
+    for all constructure classes. We can then define an operator that allows to
+    construct the generic default value by combining values for the different
+    constructors of the original sum type.
+
+    The definition of the JSON instances and option parsers would use prisms
+    that would update a value only for supported constructor contexts. In
+    addition we may provide a way to configure the choice of a particular
+    constructor.
 
 *   Include help text as comments in YAML serialization of configuration
     values.

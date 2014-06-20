@@ -8,6 +8,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 
 -- | This module provides a collection of utils on top of the packages
@@ -105,13 +106,14 @@ module Configuration.Utils
 , module Options.Applicative
 ) where
 
+import Configuration.Utils.Internal
+
 import Control.Error (fmapL)
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import qualified Data.ByteString.Char8 as B8
 import Data.Char
-import Data.Functor.Identity
 import qualified Data.HashMap.Strict as H
 import Data.Maybe
 import Data.Monoid
@@ -127,29 +129,9 @@ import Prelude.Unicode
 import System.IO.Unsafe (unsafePerformIO)
 
 -- -------------------------------------------------------------------------- --
--- Lenses
-
--- Just what we need of van Laarhoven Lenses
---
--- These few lines of code do safe us a lot of dependencies
-
-lens ∷ Functor φ ⇒ (β → α) → (β → α → β) → (α → φ α) → β → φ β
-lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
-
-over ∷ ((α → Identity α) → β → Identity β) → (α → α) → β → β
-over s f = runIdentity . s (Identity . f)
-
-set ∷ ((α → Identity α) → β → Identity β) → α → β → β
-set s a = runIdentity . s (const $ Identity a)
-
--- | This is the same type as the type from the lens library.
---
-type Lens' β α = Functor φ ⇒ (α → φ α) → β → φ β
-
--- -------------------------------------------------------------------------- --
 -- Useful Operators
 
--- | This operator is an alternative for '($)' with a higher precedence which
+-- | This operator is an alternative for '$' with a higher precedence which
 -- makes it suitable for usage within Applicative style funtors without the need
 -- to add parenthesis.
 --
@@ -554,4 +536,55 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
     parserPrefs = O.prefs
         $ O.disambiguate
         ⊕ O.showHelpOnError
+
+-- -------------------------------------------------------------------------- --
+-- Configuration of Optional ('Maybe') Values
+
+-- | Optional configuration values are supposed to be encoded by wrapping
+-- the respective type with 'Maybe'.
+--
+-- The semantics are as follows:
+--
+-- * If the parsed configuration value is 'Null' the result is 'Nothing'.
+-- * If the parsed configuration value is not 'Null' then the result is
+--   an update function that
+--
+--     * updates the given default value if the given default value is @Just x@
+--       or
+--     * is a constant function that returns the value that is parsed
+--       from the configuration using the 'FromJSON' instance for the
+--       configuration type.
+--
+-- Note, that this instance requires an 'FromJSON' instance for
+-- the option configuration type itself as well as a 'FromJSON' instance
+-- for an update function of the configuration type. The former can
+-- be defined by means of the latter as follows:
+--
+-- @
+-- instance FromJSON MyType where
+--     parseJSON v = parseJSON v <*> pure defaultMyType
+-- @
+--
+-- This instance will cause the usage of 'defaultMyType' as default
+-- value if the default value that is given to the configuration
+-- parser is 'Nothing' and the parsed configuration is not 'Null'.
+--
+instance (FromJSON (a -> a), FromJSON a) => FromJSON (Maybe a -> Maybe a) where
+
+    -- | If the configuration explicitly requires 'Null' the result
+    -- is 'Nothing'.
+    --
+    parseJSON Null = pure (const Nothing)
+
+    -- | If the default value is @(Just x)@ and the configuration
+    -- provides and update function @f@ then result is @Just f@.
+    --
+    -- If the default value is 'Nothing' and the configuration
+    -- is parsed using a parser for a constant value (and not
+    -- an update function).
+    --
+    parseJSON v = f <$> parseJSON v <*> parseJSON v
+      where
+        f g _ Nothing = Just g
+        f _ g (Just x) = Just (g x)
 
