@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/alephcloud/hs-configuration-tools.svg?branch=master)](https://travis-ci.org/alephcloud/hs-configuration-tools)
+
 Overview
 ========
 
