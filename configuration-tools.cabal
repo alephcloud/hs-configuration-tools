@@ -37,7 +37,7 @@ Copyright:           Copyright (c) 2014 AlephCloud, Inc.
 Category:            Configuration, Console
 Build-type:          Custom
 
-cabal-version:  >= 1.10
+cabal-version:  >= 1.20
 
 extra-doc-files:
     README.md,
@@ -69,7 +69,7 @@ Library
         Configuration.Utils.Internal
 
     build-depends:
-        Cabal >= 1.20.0.1,
+        Cabal >= 1.20,
         aeson >= 0.7.0.6,
         attoparsec >= 0.11.3.4,
         base >= 4.6 && < 5.0,
