@@ -7,7 +7,28 @@ Version:             0.1
 Synopsis:            Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
+    .
+    This package provides a collection of utils on top of the packages
+    <http://hackage.haskell.org/package/optparse-applicative optparse-applicative>,
+    <http://hackage.haskell.org/package/aeson aeson>, and
+    <http://hackage.haskell.org/package/yaml yaml> for configuring libraries and
+    applications in a convenient and composable way.
+    .
+    The main features are
+    .
+    1. configuration management through integration of command line option
+       parsing and configuration files and
+    .
+    2. a @Setup.hs@ file that generates a @PkgInfo@ module for each component
+       of a package that provides information about the package and the build.
+    .
+    Documentation on how to use this package can be found in the
+    <https://github.com/alephcloud/hs-configuration-tools/blob/master/README.md README>
+    and in the API documentation of the modules "Configuration.Utils" and
+    "Configuration.Utils.Setup".
+
 Homepage:            https://github.com/alephcloud/hs-configuration-tools
+Bug-reports:         https://github.com/alephcloud/hs-configuration-tools/issues
 License:             MIT
 License-file:        LICENSE
 Author:              Lars Kuhtz <lars@alephcloud.com>
@@ -17,6 +38,10 @@ Category:            Configuration
 Build-type:          Custom
 
 cabal-version:  >= 1.10
+
+extra-doc-files:
+    README.md,
+    CHANGELOG.md
 
 source-repository head
     type: git
