@@ -61,7 +61,6 @@ Library
         Configuration.Utils.Setup
 
     other-modules:
-        PkgInfo
         Configuration.Utils.Internal
 
     build-depends:
