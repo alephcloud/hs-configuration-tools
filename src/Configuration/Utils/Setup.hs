@@ -4,14 +4,97 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
--- | Rename this module to @Main@ when used directly
--- as @Setup.hs@ script.
+-- | This module contains a @Setup.hs@ script that hooks into the cabal build
+-- process at the end of the configuration phase and generates a module with
+-- package information for each component of the cabal package.
 --
--- Alternatively, when the configuration-tools package is
--- installed this module can be imported into a Setup.hs
--- script.
+-- The modules are created in the /autogen/ build directory where also the
+-- @Path_@ module is created by cabal's simple build setup. This is usually the
+-- directory @.\/dist\/build\/autogen@.
 --
-module Configuration.Utils.Setup where
+-- For a library component the module is named just @PkgInfo@. For all other
+-- components the module is named @PkgInfo_COMPONENT_NAME@ where
+-- @COMPONENT_NAME@ is the name of the component with @-@ characters replaced by
+-- @_@.
+--
+-- For instance, if a cabal package contains a library and an executable that is
+-- called /my-app/, the following modules are created: @PkgInfo@ and
+-- @PkgInfo_my_app@.
+--
+-- /____________________________________________________________________________/
+--
+-- /USAGE AS SETUP SCRIPT/
+--
+-- There are two ways how this module can be used:
+--
+-- 1. Copy the code of this module into a file called @Setup.hs@ in the root
+--    directory of your package.
+--
+-- 2. If the /configuration-tools/ package is already installed in the system
+--    where the build is done, following code can be used as @Setup.hs@ script:
+--
+--    @
+--    module Main (main) where
+--
+--    import Configuration.Utils.Setup
+--    @
+--
+-- With both methods the field @Build-Type@ in the package description (cabal) file
+-- must be set to @Custom@:
+--
+-- > Build-Type: Custom
+--
+-- /____________________________________________________________________________/
+--
+-- /INTEGRATION WITH "Configuration.Utils"/
+--
+-- You can integrate the information provided by the @PkgInfo@ modules with the
+-- command line interface of an application by importing the respective module
+-- for the component and using the
+-- 'Configuration.Utils.runWithPkgInfoConfiguration' function from the module
+-- "Configuration.Utils" as show in the following example:
+--
+-- @
+-- {-# LANGUAGE OverloadedStrings #-}
+-- {-# LANGUAGE FlexibleInstances #-}
+--
+-- module Main
+-- ( main
+-- ) where
+--
+-- import Configuration.Utils
+-- import PkgInfo
+--
+-- instance FromJSON (() -> ()) where parseJSON _ = pure id
+--
+-- mainInfo :: ProgramInfo ()
+-- mainInfo = programInfo "Hello World" (pure id) ()
+--
+-- main :: IO ()
+-- main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello world"
+-- @
+--
+-- With that the resulting application supports the following additional command
+-- line options:
+--
+-- [@--version@, @-v@]
+--     prints the version of the application and exits.
+--
+-- [@--info@, @-i@]
+--     prints a short info message for the application and exits.
+--
+-- [@--long-info@]
+--     print a detailed info message for the application and exits.
+--     Beside component name, package name, version, revision, and copyright
+--     the message also contain information about the compiler that
+--     was used for the build, the build architecture, build flags,
+--     the author, the license type, and a list of all direct and
+--     indirect dependencies along with their licenses and copyrights.
+--
+-- [@--license@]
+--     prints the text of the lincense of the application and exits.
+--
+module Configuration.Utils.Setup (main) where
 
 import Distribution.PackageDescription
 import Distribution.Simple

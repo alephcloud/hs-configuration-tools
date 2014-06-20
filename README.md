@@ -304,17 +304,16 @@ instance FromJSON MyType where
 Package and Build Information
 =============================
 
-The module `Configuration.Utils.Setup` contains an example `Setup.hs` script
-that hooks into the cabal build process at the end of the configuration phase
-and generates a module with package information for each component of
-the cabal pacakge.
+The module `Configuration.Utils.Setup` an example `Setup.hs` script that hooks
+into the cabal build process at the end of the configuration phase and generates
+a module with package information for each component of the cabal pacakge.
 
 The modules are created in the *autogen* build directory where also the *Path_*
 module is created by cabal's simple build setup. This is usually the directory
 `./dist/build/autogen`.
 
 For a library component the module is named just `PkgInfo`. For all
-other components the module is name `PkgInfo_COMPONENT_NAME` where
+other components the module is named `PkgInfo_COMPONENT_NAME` where
 `COMPONENT_NAME` is the name of the component with `-` characters replaced by
 `_`.
 
@@ -322,24 +321,30 @@ For instance, if a cabal package contains a library and an executable that
 is called *my-app*, the following modules are created: `PkgInfo`
 and `PkgInfo_my_app`.
 
-In order to use the feature with your own package the code of the module
-`Configuration.Utils.Setup` from the file
-`./src/Configuration/Utils/Setup.hs` must be placed into a file called
-`Setup.hs` in the root directory of your package. In addition the value of the
-`Build-Type` field in the package description (cabal) file must be set to
-`Custom`:
+Usage as Setup Script
+---------------------
+
+There are two ways how this module can be used:
+
+1.  Copy the code of this module into a file called `Setup.hs` in the root
+    directory of your package.
+
+2.  If the *configuration-tools* package is already installed in the system
+    where the build is done, following code can be used as `Setup.hs` script:
+
+    ~~~{.haskell}
+    module Main (main) where
+
+    import Configuration.Utils.Setup
+    ~~~
+
+With both methods the field `Build-Type` in the package description (cabal) file
+must be set to `Custom`:
 
     Build-Type: Custom
 
-If the configuration-tools package is already installed in the system where
-the build is done, instead of copy and pasting the `Setup.hs` module, the
-following can be used as `Setup.hs` script:
-
-~~~{.haskell}
-module Main (main) where
-
-import Configuration.Utils.Setup
-~~~
+Integration With `Configuration.Utils`
+--------------------------------------
 
 You can integrate the information provided by the `PkgInfo` modules with the
 command line interface of an application by importing the respective module for
@@ -373,7 +378,7 @@ line options:
 :    prints the version of the application and exits.
 
 `--info, -i`
-:   prints a short info message for the application and exit.
+:   prints a short info message for the application and exits.
 
 `--long-info`
 :   print a detailed info message for the application and exits.
