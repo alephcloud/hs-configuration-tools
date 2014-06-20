@@ -164,32 +164,30 @@ infixr 4 ⊙
 --
 -- Example usage:
 --
--- @
--- data Auth = Auth
---     { _user ∷ !String
---     , _pwd ∷ !String
---     }
---
--- user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
--- user f s = (\u → s { _user = u }) <$> f (_user s)
---
--- pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
--- pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
---
--- -- or with lenses and TemplateHaskell just:
--- -- $(makeLenses ''Auth)
---
--- pAuth ∷ MParser Auth
--- pAuth = pure id
---    ⊙ user .:: strOption
---        × long "user"
---        ⊕ short 'u'
---        ⊕ help "user name"
---    ⊙ pwd .:: strOption
---        × long "pwd"
---        ⊕ short 'p'
---        ⊕ help "password for user"
--- @
+-- > data Auth = Auth
+-- >     { _user ∷ !String
+-- >     , _pwd ∷ !String
+-- >     }
+-- >
+-- > user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > user f s = (\u → s { _user = u }) <$> f (_user s)
+-- >
+-- > pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
+-- >
+-- > -- or with lenses and TemplateHaskell just:
+-- > -- $(makeLenses ''Auth)
+-- >
+-- > pAuth ∷ MParser Auth
+-- > pAuth = pure id
+-- >    ⊙ user .:: strOption
+-- >        × long "user"
+-- >        ⊕ short 'u'
+-- >        ⊕ help "user name"
+-- >    ⊙ pwd .:: strOption
+-- >        × long "pwd"
+-- >        ⊕ short 'p'
+-- >        ⊕ help "password for user"
 --
 (.::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ β → φ (α → α)
 (.::) a opt = set a <$> opt <|> pure id
@@ -201,32 +199,30 @@ infixr 5 .::
 --
 -- Example usage:
 --
--- @
--- data HttpURL = HttpURL
---     { _auth ∷ !Auth
---     , _domain ∷ !String
---     }
---
--- auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
--- auth f s = (\u → s { _auth = u }) <$> f (_auth s)
---
--- domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
--- domain f s = (\u → s { _domain = u }) <$> f (_domain s)
---
--- path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
--- path f s = (\u → s { _path = u }) <$> f (_path s)
---
--- -- or with lenses and TemplateHaskell just:
--- -- $(makeLenses ''HttpURL)
---
--- pHttpURL ∷ MParser HttpURL
--- pHttpURL = pure id
---     ⊙ auth %:: pAuth
---     ⊙ domain .:: strOption
---         × long "domain"
---         ⊕ short 'd'
---         ⊕ help "HTTP domain"
--- @
+-- > data HttpURL = HttpURL
+-- >     { _auth ∷ !Auth
+-- >     , _domain ∷ !String
+-- >     }
+-- >
+-- > auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- > auth f s = (\u → s { _auth = u }) <$> f (_auth s)
+-- >
+-- > domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > domain f s = (\u → s { _domain = u }) <$> f (_domain s)
+-- >
+-- > path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > path f s = (\u → s { _path = u }) <$> f (_path s)
+-- >
+-- > -- or with lenses and TemplateHaskell just:
+-- > -- $(makeLenses ''HttpURL)
+-- >
+-- > pHttpURL ∷ MParser HttpURL
+-- > pHttpURL = pure id
+-- >     ⊙ auth %:: pAuth
+-- >     ⊙ domain .:: strOption
+-- >         × long "domain"
+-- >         ⊕ short 'd'
+-- >         ⊕ help "HTTP domain"
 --
 (%::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ (β → β) → φ (α → α)
 (%::) a opt = over a <$> opt <|> pure id
@@ -249,26 +245,24 @@ dropAndUncaml i l
 -- | A variant of the aeson operator '.:' that creates a parser
 -- that updates a setter with the parsed value.
 --
--- @
--- data Auth = Auth
---     { _user ∷ !String
---     , _pwd ∷ !String
---     }
---
--- user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
--- user f s = (\u → s { _user = u }) <$> f (_user s)
---
--- pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
--- pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
---
--- -- or with lenses and TemplateHaskell just:
--- -- $(makeLenses ''Auth)
---
--- instance FromJSON (Auth → Auth) where
---     parseJSON = withObject "Auth" $ \o → pure id
---         ⊙ user ..: "user" × o
---         ⊙ pwd ..: "pwd" × o
--- @
+-- > data Auth = Auth
+-- >     { _user ∷ !String
+-- >     , _pwd ∷ !String
+-- >     }
+-- >
+-- > user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > user f s = (\u → s { _user = u }) <$> f (_user s)
+-- >
+-- > pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
+-- >
+-- > -- or with lenses and TemplateHaskell just:
+-- > -- $(makeLenses ''Auth)
+-- >
+-- > instance FromJSON (Auth → Auth) where
+-- >     parseJSON = withObject "Auth" $ \o → pure id
+-- >         ⊙ user ..: "user" × o
+-- >         ⊙ pwd ..: "pwd" × o
 --
 (..:) ∷ FromJSON β ⇒ Lens' α β → T.Text → Object → Parser (α → α)
 (..:) s k o = case H.lookup k o of
@@ -280,29 +274,27 @@ infix 6 ..:
 -- | A variant of the aeson operator '.:' that creates a parser
 -- that modifies a setter with a parsed function.
 --
--- @
--- data HttpURL = HttpURL
---     { _auth ∷ !Auth
---     , _domain ∷ !String
---     }
---
--- auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
--- auth f s = (\u → s { _auth = u }) <$> f (_auth s)
---
--- domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
--- domain f s = (\u → s { _domain = u }) <$> f (_domain s)
---
--- path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
--- path f s = (\u → s { _path = u }) <$> f (_path s)
---
--- -- or with lenses and TemplateHaskell just:
--- -- $(makeLenses ''HttpURL)
---
--- instance FromJSON (HttpURL → HttpURL) where
---     parseJSON = withObject "HttpURL" $ \o → pure id
---         ⊙ auth %.: "auth" × o
---         ⊙ domain ..: "domain" × o
--- @
+-- > data HttpURL = HttpURL
+-- >     { _auth ∷ !Auth
+-- >     , _domain ∷ !String
+-- >     }
+-- >
+-- > auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- > auth f s = (\u → s { _auth = u }) <$> f (_auth s)
+-- >
+-- > domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > domain f s = (\u → s { _domain = u }) <$> f (_domain s)
+-- >
+-- > path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > path f s = (\u → s { _path = u }) <$> f (_path s)
+-- >
+-- > -- or with lenses and TemplateHaskell just:
+-- > -- $(makeLenses ''HttpURL)
+-- >
+-- > instance FromJSON (HttpURL → HttpURL) where
+-- >     parseJSON = withObject "HttpURL" $ \o → pure id
+-- >         ⊙ auth %.: "auth" × o
+-- >         ⊙ domain ..: "domain" × o
 --
 (%.:) ∷ FromJSON (β → β) ⇒ Lens' α β → T.Text → Object → Parser (α → α)
 (%.:) s k o = case H.lookup k o of

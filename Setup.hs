@@ -33,11 +33,9 @@
 -- 2. If the /configuration-tools/ package is already installed in the system
 --    where the build is done, following code can be used as @Setup.hs@ script:
 --
---    @
---    module Main (main) where
---
---    import Configuration.Utils.Setup
---    @
+--    > module Main (main) where
+--    >
+--    > import Configuration.Utils.Setup
 --
 -- With both methods the field @Build-Type@ in the package description (cabal) file
 -- must be set to @Custom@:
@@ -54,25 +52,23 @@
 -- 'Configuration.Utils.runWithPkgInfoConfiguration' function from the module
 -- "Configuration.Utils" as show in the following example:
 --
--- @
--- {-# LANGUAGE OverloadedStrings #-}
--- {-# LANGUAGE FlexibleInstances #-}
---
--- module Main
--- ( main
--- ) where
---
--- import Configuration.Utils
--- import PkgInfo
---
--- instance FromJSON (() -> ()) where parseJSON _ = pure id
---
--- mainInfo :: ProgramInfo ()
--- mainInfo = programInfo "Hello World" (pure id) ()
---
--- main :: IO ()
--- main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello world"
--- @
+-- > {-# LANGUAGE OverloadedStrings #-}
+-- > {-# LANGUAGE FlexibleInstances #-}
+-- >
+-- > module Main
+-- > ( main
+-- > ) where
+-- >
+-- > import Configuration.Utils
+-- > import PkgInfo
+-- >
+-- > instance FromJSON (() -> ()) where parseJSON _ = pure id
+-- >
+-- > mainInfo :: ProgramInfo ()
+-- > mainInfo = programInfo "Hello World" (pure id) ()
+-- >
+-- > main :: IO ()
+-- > main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello world"
 --
 -- With that the resulting application supports the following additional command
 -- line options:
