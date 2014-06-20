@@ -228,13 +228,13 @@ main :: IO ()
 main = runWithConfiguration mainInfo $ \conf -> do
     putStrLn
         $ "http://"
-        ⊕ (_user . _auth) conf
-        ⊕ ":"
-        ⊕ (_pwd . _auth) conf
-        ⊕ "@"
-        ⊕ _domain conf
-        ⊕ "/"
-        ⊕ _path conf
+        <> (_user . _auth) conf
+        <> ":"
+        <> (_pwd . _auth) conf
+        <> "@"
+        <> _domain conf
+        <> "/"
+        <> _path conf
 ~~~
 
 Using Sum Types as Configuration Types
