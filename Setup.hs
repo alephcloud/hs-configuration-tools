@@ -121,13 +121,13 @@ main = defaultMainWithHooks simpleUserHooks
     { postConf = mkPkgInfoModules
     }
   where
-    mkPkgInfoModules _ _ pkgDesc buildInfo = mapM_ f . map (\(a,_,_) -> a) $ componentsConfigs buildInfo
+    mkPkgInfoModules _ _ pkgDesc bInfo = mapM_ f . map (\(a,_,_) -> a) $ componentsConfigs bInfo
       where
         f cname = case cname of
-            CLibName -> updatePkgInfoModule Nothing pkgDesc buildInfo
-            CExeName s -> updatePkgInfoModule (Just s) pkgDesc buildInfo
-            CTestName s -> updatePkgInfoModule (Just s) pkgDesc buildInfo
-            CBenchName s -> updatePkgInfoModule (Just s) pkgDesc buildInfo
+            CLibName -> updatePkgInfoModule Nothing pkgDesc bInfo
+            CExeName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
+            CTestName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
+            CBenchName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
 
 pkgInfoModuleName :: Maybe String -> String
 pkgInfoModuleName Nothing = "PkgInfo"
@@ -137,8 +137,9 @@ pkgInfoModuleName (Just cn) = "PkgInfo_" ++ map tr cn
     tr c = c
 
 pkgInfoFileName :: Maybe String -> LocalBuildInfo -> FilePath
-pkgInfoFileName cn buildInfo = autogenModulesDir buildInfo ++ "/" ++ pkgInfoModuleName cn ++ ".hs"
+pkgInfoFileName cn bInfo = autogenModulesDir bInfo ++ "/" ++ pkgInfoModuleName cn ++ ".hs"
 
+trim :: String -> String
 trim = f . f
   where f = reverse . dropWhile isSpace
 
@@ -151,7 +152,7 @@ getVCS = do
     else return Nothing
 
 pkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
-pkgInfoModule componentName pkgDesc buildInfo = do
+pkgInfoModule cName pkgDesc bInfo = do
     (tag, revision, branch) <- getVCS >>= \x -> case x of
         Just Mercurial -> hgInfo
         Just Git -> gitInfo
@@ -159,7 +160,7 @@ pkgInfoModule componentName pkgDesc buildInfo = do
 
     let vcsBranch = if branch == "default" || branch == "master" then "" else branch
         vcsVersion = intercalate "-" . filter (/= "") $ [tag, revision, vcsBranch]
-        flags = map fst . filter snd . configConfigurationsFlags . configFlags $ buildInfo
+        flags = map fst . filter snd . configConfigurationsFlags . configFlags $ bInfo
 
     licenseString <- licenseFilesText pkgDesc
 
@@ -167,13 +168,13 @@ pkgInfoModule componentName pkgDesc buildInfo = do
             [ "{-# LANGUAGE OverloadedStrings #-}"
             , "{-# LANGUAGE RankNTypes #-}"
             , ""
-            , "module " <> (pack . pkgInfoModuleName) componentName <> " where"
+            , "module " <> (pack . pkgInfoModuleName) cName <> " where"
             , ""
             , "    import Data.String (IsString)"
             , "    import Data.Monoid"
             , ""
             , "    name :: IsString a => Maybe a"
-            , "    name = " <> maybe "Nothing" (\x -> "Just \"" <> pack x <> "\"") componentName
+            , "    name = " <> maybe "Nothing" (\x -> "Just \"" <> pack x <> "\"") cName
             , ""
             , "    tag :: IsString a => a"
             , "    tag = \"" <> pack tag <> "\""
@@ -191,13 +192,13 @@ pkgInfoModule componentName pkgDesc buildInfo = do
             , "    vcsVersion = \"" <> pack vcsVersion <> "\""
             , ""
             , "    compiler :: IsString a => a"
-            , "    compiler = \"" <> (pack . display . compilerId . compiler) buildInfo <> "\""
+            , "    compiler = \"" <> (pack . display . compilerId . compiler) bInfo <> "\""
             , ""
             , "    flags :: IsString a => [a]"
             , "    flags = " <> (pack . show) flags
             , ""
             , "    arch :: IsString a => a"
-            , "    arch = \"" <> (pack . display . hostPlatform) buildInfo <> "\""
+            , "    arch = \"" <> (pack . display . hostPlatform) bInfo <> "\""
             , ""
             , "    license :: IsString a => a"
             , "    license = \"" <> (pack . display . license) pkgDesc <> "\""
@@ -224,10 +225,10 @@ pkgInfoModule componentName pkgDesc buildInfo = do
             , "    packageVersion = \"" <> (pack . display . packageVersion) pkgDesc <> "\""
             , ""
             , "    dependencies :: IsString a => [a]"
-            , "    dependencies = " <> (pack . show . map (display . packageId) . allPackages . installedPkgs) buildInfo
+            , "    dependencies = " <> (pack . show . map (display . packageId) . allPackages . installedPkgs) bInfo
             , ""
             , "    dependenciesWithLicenses :: IsString a => [a]"
-            , "    dependenciesWithLicenses = " <> (pack . show . map pkgIdWithLicense . allPackages . installedPkgs) buildInfo
+            , "    dependenciesWithLicenses = " <> (pack . show . map pkgIdWithLicense . allPackages . installedPkgs) bInfo
             , ""
             , "    versionString :: (Monoid a, IsString a) => a"
             , "    versionString = case name of"
@@ -257,9 +258,9 @@ pkgInfoModule componentName pkgDesc buildInfo = do
             ]
 
 updatePkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO ()
-updatePkgInfoModule componentName pkgDesc buildInfo = do
-    createDirectoryIfMissing True $ autogenModulesDir buildInfo
-    newFile <- pkgInfoModule componentName pkgDesc buildInfo
+updatePkgInfoModule cName pkgDesc bInfo = do
+    createDirectoryIfMissing True $ autogenModulesDir bInfo
+    newFile <- pkgInfoModule cName pkgDesc bInfo
     let update = B.writeFile fileName newFile
     doesFileExist fileName >>= \x -> if x
     then do
@@ -268,7 +269,7 @@ updatePkgInfoModule componentName pkgDesc buildInfo = do
     else
         update
   where
-    fileName = pkgInfoFileName componentName buildInfo
+    fileName = pkgInfoFileName cName bInfo
 
 licenseFilesText :: PackageDescription -> IO B.ByteString
 licenseFilesText PackageDescription{ licenseFiles = fileNames } =
@@ -288,7 +289,7 @@ hgInfo = do
 gitInfo :: IO (String, String, String)
 gitInfo = do
     tag <- do
-        (exitCode, out, err) <- readProcessWithExitCode "git" ["describe", "--exact-match", "--abbrev=0"] ""
+        (exitCode, out, _err) <- readProcessWithExitCode "git" ["describe", "--exact-match", "--abbrev=0"] ""
         case exitCode of
             ExitSuccess -> return $ trim out
             _ -> return ""
