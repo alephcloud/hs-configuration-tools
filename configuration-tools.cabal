@@ -69,17 +69,17 @@ Library
         Configuration.Utils.Internal
 
     build-depends:
-        Cabal >= 1.20.0.1,
+        Cabal >= 1.18,
         aeson >= 0.7.0.6,
         attoparsec >= 0.11.3.4,
-        base >= 4.7 && < 5.0,
+        base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
-        bytestring >= 0.10.4.0,
+        bytestring >= 0.10.0.2,
         directory >= 1.2.1.0,
         errors >= 1.4.3,
         optparse-applicative >= 0.8.1,
         process >= 1.2.0.0,
-        text >= 1.1.1.2,
+        text >= 1.0,
         transformers >= 0.3.0.0,
         unordered-containers >= 0.2.4.0,
         yaml >= 0.8.8.3,
@@ -94,7 +94,7 @@ Test-Suite url-example
     hs-source-dirs: examples
 
     build-depends:
-        base >= 4.7 && < 5.0,
+        base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         configuration-tools
 
@@ -107,7 +107,7 @@ Test-Suite trivial
     hs-source-dirs: examples
 
     build-depends:
-        base >= 4.7 && < 5.0,
+        base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         configuration-tools
 
