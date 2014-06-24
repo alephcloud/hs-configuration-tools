@@ -73,6 +73,10 @@ module Configuration.Utils
 -- * Misc Utils
 , (%)
 , (×)
+, (<*<)
+, (>*>)
+, (<$<)
+, (>$>)
 , (<.>)
 , (⊙)
 , dropAndUncaml
@@ -140,13 +144,45 @@ infixr 5 ×
 
 -- | Functional composition for applicative functors.
 --
+(<*<) ∷ Applicative φ ⇒ φ (β → γ) → φ (α → β) → φ (α → γ)
+(<*<) a b = pure (.) <*> a <*> b
+infixr 4 <*<
+{-# INLINE (<*<) #-}
+
+-- | Functional composition for applicative functors with its arguments
+-- flipped.
+--
+(>*>) ∷ Applicative φ ⇒ φ (α → β) → φ (β → γ) → φ (α → γ)
+(>*>) = flip (<*<)
+infixr 4 >*>
+{-# INLINE (>*>) #-}
+
+-- | Applicative functional composition between a pure function
+-- and an applicative function.
+--
+(<$<) ∷ Applicative φ ⇒ (β → γ) → φ (α → β) → φ (α → γ)
+(<$<) a b = pure (a .) <*> b
+infixr 4 <$<
+{-# INLINE (<$<) #-}
+
+-- | Applicative functional composition between a pure function
+-- and an applicative function with its arguments flipped.
+--
+(>$>) ∷ Applicative φ ⇒ φ (α → β) → (β → γ) → φ (α → γ)
+(>$>) = flip (<$<)
+infixr 4 >$>
+{-# INLINE (>$>) #-}
+
+-- | Functional composition for applicative functors.
+--
 -- This is a rather popular operator. Due to conflicts (for instance with the
 -- lens package) it may have to be imported qualified.
 --
 (<.>) ∷ Applicative φ ⇒ φ (β → γ) → φ (α → β) → φ (α → γ)
-(<.>) a b = pure (.) <*> a <*> b
+(<.>) = (<*<)
 infixr 4 <.>
 {-# INLINE (<.>) #-}
+{-# DEPRECATED (<.>) "use '<*<' instead" #-}
 
 -- | For people who like nicely aligned code and do not mind messing with
 -- editor key-maps: here a version of '<.>' that uses a unicode symbol
@@ -161,6 +197,7 @@ infixr 4 <.>
 (⊙) = (<.>)
 infixr 4 ⊙
 {-# INLINE (⊙) #-}
+{-# DEPRECATED (⊙) "use '<*<' instead" #-}
 
 -- -------------------------------------------------------------------------- --
 -- Applicative Option Parsing with Default Values
@@ -184,12 +221,12 @@ infixr 4 ⊙
 -- > -- $(makeLenses ''Auth)
 -- >
 -- > pAuth ∷ MParser Auth
--- > pAuth = pure id
--- >    ⊙ user .:: strOption
+-- > pAuth = id
+-- >    <$< user .:: strOption
 -- >        × long "user"
 -- >        ⊕ short 'u'
 -- >        ⊕ help "user name"
--- >    ⊙ pwd .:: strOption
+-- >    <*< pwd .:: strOption
 -- >        × long "pwd"
 -- >        ⊕ short 'p'
 -- >        ⊕ help "password for user"
@@ -222,9 +259,9 @@ infixr 5 .::
 -- > -- $(makeLenses ''HttpURL)
 -- >
 -- > pHttpURL ∷ MParser HttpURL
--- > pHttpURL = pure id
--- >     ⊙ auth %:: pAuth
--- >     ⊙ domain .:: strOption
+-- > pHttpURL = id
+-- >     <$< auth %:: pAuth
+-- >     <*< domain .:: strOption
 -- >         × long "domain"
 -- >         ⊕ short 'd'
 -- >         ⊕ help "HTTP domain"
@@ -265,9 +302,9 @@ dropAndUncaml i l
 -- > -- $(makeLenses ''Auth)
 -- >
 -- > instance FromJSON (Auth → Auth) where
--- >     parseJSON = withObject "Auth" $ \o → pure id
--- >         ⊙ user ..: "user" × o
--- >         ⊙ pwd ..: "pwd" × o
+-- >     parseJSON = withObject "Auth" $ \o → id
+-- >         <$< user ..: "user" × o
+-- >         <*< pwd ..: "pwd" × o
 --
 (..:) ∷ FromJSON β ⇒ Lens' α β → T.Text → Object → Parser (α → α)
 (..:) s k o = case H.lookup k o of
@@ -297,9 +334,9 @@ infix 6 ..:
 -- > -- $(makeLenses ''HttpURL)
 -- >
 -- > instance FromJSON (HttpURL → HttpURL) where
--- >     parseJSON = withObject "HttpURL" $ \o → pure id
--- >         ⊙ auth %.: "auth" × o
--- >         ⊙ domain ..: "domain" × o
+-- >     parseJSON = withObject "HttpURL" $ \o → id
+-- >         <$< auth %.: "auth" × o
+-- >         <*< domain ..: "domain" × o
 --
 (%.:) ∷ FromJSON (β → β) ⇒ Lens' α β → T.Text → Object → Parser (α → α)
 (%.:) s k o = case H.lookup k o of
@@ -544,7 +581,7 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 --
 -- For this the following orphan 'FromJSON' instance is provided:
 --
--- > instance (FromJSON (a -> a), FromJSON a) => FromJSON (Maybe a -> Maybe a)
+-- > instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a)
 -- >     parseJSON Null = pure (const Nothing)
 -- >     parseJSON v = f <$> parseJSON v <*> parseJSON v
 -- >       where
@@ -580,7 +617,7 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- default value that is given to the configuration parser is 'Nothing' and the
 -- parsed configuration is not 'Null'.
 --
-instance (FromJSON (a -> a), FromJSON a) => FromJSON (Maybe a -> Maybe a) where
+instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) where
 
     -- | If the configuration explicitly requires 'Null' the result
     -- is 'Nothing'.

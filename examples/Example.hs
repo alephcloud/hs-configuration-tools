@@ -43,9 +43,9 @@ defaultAuth = Auth
     }
 
 instance FromJSON (Auth → Auth) where
-    parseJSON = withObject "Auth" $ \o → pure id
-        ⊙ user ..: "user" × o
-        ⊙ pwd ..: "pwd" × o
+    parseJSON = withObject "Auth" $ \o → id
+        <$< user ..: "user" × o
+        <*< pwd ..: "pwd" × o
 
 instance ToJSON Auth where
     toJSON a = object
@@ -54,11 +54,11 @@ instance ToJSON Auth where
         ]
 
 pAuth ∷ MParser Auth
-pAuth = pure id
-    ⊙ user .:: strOption
+pAuth = id
+    <$< user .:: strOption
         × long "user"
         ⊕ help "user name"
-    ⊙ pwd .:: strOption
+    <*< pwd .:: strOption
         × long "pwd"
         ⊕ help "password for user"
 
@@ -87,10 +87,10 @@ defaultHttpURL = HttpURL
     }
 
 instance FromJSON (HttpURL → HttpURL) where
-    parseJSON = withObject "HttpURL" $ \o → pure id
-        ⊙ auth %.: "auth" × o
-        ⊙ domain ..: "domain" × o
-        ⊙ path ..: "path" × o
+    parseJSON = withObject "HttpURL" $ \o → id
+        <$< auth %.: "auth" × o
+        <*< domain ..: "domain" × o
+        <*< path ..: "path" × o
 
 instance ToJSON HttpURL where
     toJSON a = object
@@ -100,13 +100,13 @@ instance ToJSON HttpURL where
         ]
 
 pHttpURL ∷ MParser HttpURL
-pHttpURL = pure id
-    ⊙ auth %:: pAuth
-    ⊙ domain .:: strOption
+pHttpURL = id
+    <$< auth %:: pAuth
+    <*< domain .:: strOption
         × long "domain"
         ⊕ short 'd'
         ⊕ help "HTTP domain"
-    ⊙ path .:: strOption
+    <*< path .:: strOption
         × long "path"
         ⊕ short 'p'
         ⊕ help "HTTP URL path"

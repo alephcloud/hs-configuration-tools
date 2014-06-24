@@ -69,9 +69,9 @@ defaultHttpServiceTLSConfiguration = HttpServiceTLSConfiguration
     }
 
 instance FromJSON (HttpServiceTLSConfiguration → HttpServiceTLSConfiguration) where
-    parseJSON = withObject "HttpServiceTLSConfiguration" $ \o → pure id
-        ⊙ hstcCertFile ..: "cert-file" × o
-        ⊙ hstcKeyFile ..: "pem-file" × o
+    parseJSON = withObject "HttpServiceTLSConfiguration" $ \o → id
+        <$< hstcCertFile ..: "cert-file" × o
+        <*< hstcKeyFile ..: "pem-file" × o
 
 -- | This is used as default when wrapped into Maybe and
 --
@@ -96,11 +96,11 @@ instance ToJSON HttpServiceTLSConfiguration where
 -- provided even though TLS is turned off.
 --
 pHttpServiceTLSConfiguration ∷ String → MParser HttpServiceTLSConfiguration
-pHttpServiceTLSConfiguration prefix = pure id
-    ⊙ hstcCertFile .:: strOption
+pHttpServiceTLSConfiguration prefix = id
+    <$< hstcCertFile .:: strOption
         × long (prefix ⊕ "cert-file")
         ⊕ help "File with PEM encoded TLS Certificate"
-    ⊙ hstcKeyFile .:: strOption
+    <*< hstcKeyFile .:: strOption
         × long (prefix ⊕ "key-file")
         ⊕ help "File with PEM encoded TLS key"
 
@@ -145,11 +145,11 @@ defaultHttpServiceConfiguration = HttpServiceConfiguration
     }
 
 instance FromJSON (HttpServiceConfiguration → HttpServiceConfiguration) where
-    parseJSON = withObject "HttpServiceConfiguration" $ \o → pure id
-        ⊙ hscHost ∘ bs ..: "host" × o
-        ⊙ hscPort ..: "port" × o
-        ⊙ hscInterface ∘ bs ..: "interface" × o
-        ⊙ hscUseTLS %.: "use-tls" × o
+    parseJSON = withObject "HttpServiceConfiguration" $ \o → id
+        <$< hscHost ∘ bs ..: "host" × o
+        <*< hscPort ..: "port" × o
+        <*< hscInterface ∘ bs ..: "interface" × o
+        <*< hscUseTLS %.: "use-tls" × o
       where
         bs ∷ Iso' B8.ByteString String
         bs = iso B8.unpack B8.pack
@@ -163,17 +163,17 @@ instance ToJSON HttpServiceConfiguration where
         ]
 
 pHttpServiceConfiguration ∷ String → MParser HttpServiceConfiguration
-pHttpServiceConfiguration prefix = pure id
-    ⊙ hscHost ∘ bs .:: strOption
+pHttpServiceConfiguration prefix = id
+    <$< hscHost ∘ bs .:: strOption
         × long (prefix ⊕ "host")
         ⊕ help "Hostname of the service"
-    ⊙ hscPort .:: option
+    <*< hscPort .:: option
         × long (prefix ⊕ "port")
         ⊕ help "Port of the service"
-    ⊙ hscInterface ∘ bs .:: option
+    <*< hscInterface ∘ bs .:: option
         × long (prefix ⊕ "interface")
         ⊕ help "Interface of the service"
-    ⊙ (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration prefix))
+    <*< (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration prefix))
   where
     bs ∷ Iso' B8.ByteString String
     bs = iso B8.unpack B8.pack
@@ -205,10 +205,10 @@ defaultHttpClientConfiguration = HttpClientConfiguration
     }
 
 instance FromJSON (HttpClientConfiguration → HttpClientConfiguration) where
-    parseJSON = withObject "HttpClientConfiguration" $ \o → pure id
-        ⊙ hccHost ∘ bs ..: "host" × o
-        ⊙ hccPort ..: "port" × o
-        ⊙ hccUseTLS ..: "use-tls" × o
+    parseJSON = withObject "HttpClientConfiguration" $ \o → id
+        <$< hccHost ∘ bs ..: "host" × o
+        <*< hccPort ..: "port" × o
+        <*< hccUseTLS ..: "use-tls" × o
       where
         bs ∷ Iso' B8.ByteString String
         bs = iso B8.unpack B8.pack
@@ -221,14 +221,14 @@ instance ToJSON HttpClientConfiguration where
         ]
 
 pHttpClientConfiguration ∷ String → MParser HttpClientConfiguration
-pHttpClientConfiguration serviceName = pure id
-    ⊙ hccHost ∘ bs .:: strOption
+pHttpClientConfiguration serviceName = id
+    <$< hccHost ∘ bs .:: strOption
         × long (serviceName ⊕ "-host")
         ⊕ help ("Hostname of " ⊕ serviceName)
-    ⊙ hccPort .:: option
+    <*< hccPort .:: option
         × long (serviceName ⊕ "-port")
         ⊕ help ("Port of " ⊕ serviceName)
-    ⊙ hccUseTLS .:: switch
+    <*< hccUseTLS .:: switch
         × long (serviceName ⊕ "-use-tls")
         ⊕ help ("Connect to " ⊕ serviceName ⊕ " via TLS")
   where

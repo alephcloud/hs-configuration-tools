@@ -119,16 +119,16 @@ defaultAuth = Auth
 
 Now we define an [aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
 instance that yields a function that updates a given `Auth` value with the
-values from the parsed JSON value. The `<.>` operator is functional composition
+values from the parsed JSON value. The `<*<` operator is functional composition
 lifted for applicative functors and `%` is a version of `$` with a different
 precedence that helps to reduce the use of paranthesis in applicative style
 code.
 
 ~~~{.haskell}
 instance FromJSON (Auth -> Auth) where
-    parseJSON = withObject "Auth" $ \o -> pure id
-        <.> user ..: "user" % o
-        <.> pwd ..: "pwd" % o
+    parseJSON = withObject "Auth" $ \o -> id
+        <$< user ..: "user" % o
+        <*< pwd ..: "pwd" % o
 ~~~
 
 The `ToJSON` instance is needed to print the configuration (as YAML document)
@@ -150,11 +150,11 @@ the value from the command line.
 
 ~~~{.haskell}
 pAuth :: MParser Auth
-pAuth = pure id
-    <.> user .:: strOption
+pAuth = id
+    <$< user .:: strOption
         % long "user"
         <> help "user name"
-    <.> pwd .:: strOption
+    <*< pwd .:: strOption
         % long "pwd"
         <> help "password for user"
 ~~~
@@ -192,10 +192,10 @@ defaultHttpURL = HttpURL
     }
 
 instance FromJSON (HttpURL -> HttpURL) where
-    parseJSON = withObject "HttpURL" $ \o -> pure id
-        <.> auth %.: "auth" % o
-        <.> domain ..: "domain" % o
-        <.> path ..: "path" % o
+    parseJSON = withObject "HttpURL" $ \o -> id
+        <$< auth %.: "auth" % o
+        <*< domain ..: "domain" % o
+        <*< path ..: "path" % o
 
 instance ToJSON HttpURL where
     toJSON a = object
@@ -205,13 +205,13 @@ instance ToJSON HttpURL where
         ]
 
 pHttpURL :: MParser HttpURL
-pHttpURL = pure id
-    <.> auth %:: pAuth
-    <.> domain .:: strOption
+pHttpURL = id
+    <$< auth %:: pAuth
+    <*< domain .:: strOption
         % long "domain"
         <> short 'd'
         <> help "HTTP domain"
-    <.> path .:: strOption
+    <*< path .:: strOption
         % long "path"
         <> short 'p'
         <> help "HTTP URL path"
