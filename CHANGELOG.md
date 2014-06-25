@@ -1,3 +1,17 @@
+0.2.2
+=====
+
+*   Add Lens `piOptionParserAndDefaultConfiguration` that gives simultaneous
+    accesses to `piOptionParser` and `piDefaultConfiguration` which allows
+    changing the type parameter of `ProgramInfo a`.
+
+*   Introduce function `setProperty`. It is used as the `..:` operator
+    but allows to specify a custom parser for the property value instead
+    of the default `parseJSON` from the `FromJSON` instance.
+
+*   Introduce operators `(<*<)`, `(>*>)`, `(<$<)`, `(>$>)` and deprecate
+    `(⊙)` and `(<.>)`.
+
 0.2.1
 =====
 
