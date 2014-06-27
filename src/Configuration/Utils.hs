@@ -81,6 +81,7 @@ module Configuration.Utils
 , (⊙)
 , dropAndUncaml
 , Lens'
+, Lens
 
 -- * Configuration of Optional Values
 -- $maybe

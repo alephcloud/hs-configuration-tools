@@ -11,6 +11,7 @@ module Configuration.Utils.Internal
 , over
 , set
 , Lens'
+, Lens
 , Iso'
 , iso
 ) where
@@ -27,9 +28,13 @@ import Data.Profunctor
 
 -- | This is the same type as the type from the lens library with the same name.
 --
-type Lens' β α = Functor φ ⇒ (α → φ α) → β → φ β
+type Lens σ τ α β = Functor φ ⇒ (α → φ β) → σ → φ τ
 
-lens ∷ Functor φ ⇒ (β → α) → (β → α → β) → (α → φ α) → β → φ β
+-- | This is the same type as the type from the lens library with the same name.
+--
+type Lens' σ α = Lens σ σ α α
+
+lens ∷ (σ → α) → (σ → β → τ) → Lens σ τ α β
 lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
 
 over ∷ ((α → Identity α) → β → Identity β) → (α → α) → β → β
