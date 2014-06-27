@@ -47,5 +47,5 @@ set s a = runIdentity . s (const $ Identity a)
 --
 type Iso' β α = (Profunctor π, Functor φ) ⇒ π α (φ α) → π β (φ β)
 
-iso :: (β -> α) -> (α -> β) -> Iso' β α
+iso ∷ (β → α) → (α → β) → Iso' β α
 iso f g = dimap f (fmap g)
