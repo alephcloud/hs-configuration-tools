@@ -55,6 +55,7 @@ module Configuration.Utils
 , piHelpFooter
 , piOptionParser
 , piDefaultConfiguration
+, piOptionParserAndDefaultConfiguration
 
 -- * Running an Configured Application
 , runWithConfiguration
@@ -365,27 +366,48 @@ data ProgramInfo α = ProgramInfo
 -- | Program Description
 --
 piDescription ∷ Lens' (ProgramInfo α) String
-piDescription = lens _piDescription $ \s a → s { _piDescription = a}
+piDescription = lens _piDescription $ \s a → s { _piDescription = a }
+{-# INLINE piDescription #-}
 
 -- | Help header
 --
 piHelpHeader ∷ Lens' (ProgramInfo α) (Maybe String)
-piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a}
+piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a }
+{-# INLINE piHelpHeader #-}
 
 -- | Help footer
 --
 piHelpFooter ∷ Lens' (ProgramInfo α) (Maybe String)
-piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a}
+piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a }
+{-# INLINE piHelpFooter #-}
 
 -- | options parser for configuration (TODO consider using a typeclass for this)
 --
 piOptionParser ∷ Lens' (ProgramInfo α) (MParser α)
-piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a}
+piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a }
+{-# INLINE piOptionParser #-}
 
 -- | default configuration
 --
 piDefaultConfiguration ∷ Lens' (ProgramInfo α) α
-piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a}
+piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a }
+{-# INLINE piDefaultConfiguration #-}
+
+-- | 'Lens' for simultaneous query and update of 'piOptionParser' and
+-- 'piDefaultConfiguration'. This supports to change the type of 'ProgramInfo'
+-- with 'over' and 'set'.
+--
+piOptionParserAndDefaultConfiguration ∷ Lens (ProgramInfo α) (ProgramInfo β) (MParser α, α) (MParser β, β)
+piOptionParserAndDefaultConfiguration = lens g $ \s (a,b) → ProgramInfo
+    { _piDescription = _piDescription s
+    , _piHelpHeader = _piHelpHeader s
+    , _piHelpFooter = _piHelpFooter s
+    , _piOptionParser = a
+    , _piDefaultConfiguration = b
+    }
+  where
+    g s = (_piOptionParser s, _piDefaultConfiguration s)
+{-# INLINE piOptionParserAndDefaultConfiguration #-}
 
 -- | Smart constructor for 'ProgramInfo'.
 --
