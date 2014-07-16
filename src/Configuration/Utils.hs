@@ -160,15 +160,15 @@ infixr 4 >*>
 -- | Applicative functional composition between a pure function
 -- and an applicative function.
 --
-(<$<) ∷ Applicative φ ⇒ (β → γ) → φ (α → β) → φ (α → γ)
-(<$<) a b = pure (a .) <*> b
+(<$<) ∷ Functor φ ⇒ (β → γ) → φ (α → β) → φ (α → γ)
+(<$<) a b = (a .) <$> b
 infixr 4 <$<
 {-# INLINE (<$<) #-}
 
 -- | Applicative functional composition between a pure function
 -- and an applicative function with its arguments flipped.
 --
-(>$>) ∷ Applicative φ ⇒ φ (α → β) → (β → γ) → φ (α → γ)
+(>$>) ∷ Functor φ ⇒ φ (α → β) → (β → γ) → φ (α → γ)
 (>$>) = flip (<$<)
 infixr 4 >$>
 {-# INLINE (>$>) #-}
