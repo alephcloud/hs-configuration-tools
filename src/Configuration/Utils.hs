@@ -231,7 +231,6 @@ infixr 4 ⊙
 -- >        ⊕ help "user name"
 -- >    <*< pwd .:: strOption
 -- >        × long "pwd"
--- >        ⊕ short 'p'
 -- >        ⊕ help "password for user"
 --
 (.::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ β → φ (α → α)

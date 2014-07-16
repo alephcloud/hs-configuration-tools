@@ -108,7 +108,6 @@ pHttpURL = id
         ⊕ help "HTTP domain"
     <*< path .:: strOption
         × long "path"
-        ⊕ short 'p'
         ⊕ help "HTTP URL path"
 
 -- | Information about the main Application
