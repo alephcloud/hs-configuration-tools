@@ -68,6 +68,7 @@ module Configuration.Utils
 , (%::)
 
 -- * Parsing of Configuration Files with Default Values
+, setProperty
 , (..:)
 , (%.:)
 
@@ -286,8 +287,46 @@ dropAndUncaml i l
     | otherwise = let (h:t) = drop i l
         in toLower h : concatMap (\x → if isUpper x then "-" ⊕ [toLower x] else [x]) t
 
--- | A variant of the aeson operator '.:' that creates a parser
--- that updates a setter with the parsed value.
+-- | A JSON 'Value' parser for a property of a given
+-- 'Object' that updates a setter with the parsed value.
+--
+-- > data Auth = Auth
+-- >     { _userId ∷ !Int
+-- >     , _pwd ∷ !String
+-- >     }
+-- >
+-- > userId ∷ Functor φ ⇒ (Int → φ Int) → Auth → φ Auth
+-- > userId f s = (\u → s { _userId = u }) <$> f (_userId s)
+-- >
+-- > pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
+-- >
+-- > -- or with lenses and TemplateHaskell just:
+-- > -- $(makeLenses ''Auth)
+-- >
+-- > instance FromJSON (Auth → Auth) where
+-- >     parseJSON = withObject "Auth" $ \o → id
+-- >         <$< setProperty user "user" p o
+-- >         <*< setProperty pwd "pwd" parseJSON o
+-- >       where
+-- >         p = withText "user" $ \case
+-- >             "alice" → pure (0 ∷ Int)
+-- >             "bob" → pure 1
+-- >             e → faile $ "unrecognized user " ⊕ e
+--
+setProperty
+    ∷ Lens' α β -- ^ Lens that into the target that is updated by the parser
+    → T.Text -- ^ the JSON property name
+    → (Value → Parser β) -- ^ the JSON 'Value' parser that is used to parse the value of the property
+    → Object -- ^ the parsed JSON 'Value' 'Object'
+    → Parser (α → α)
+setProperty s k p o = case H.lookup k o of
+    Nothing → pure id
+    Just v → set s <$> p v
+
+-- | A variant of the 'setProperty' that uses the default 'parseJSON' method from the
+-- 'FromJSON' instance to parse the value of the property. Its usage pattern mimics the
+-- usage pattern of the '.:' operator from the aeson library.
 --
 -- > data Auth = Auth
 -- >     { _user ∷ !String
@@ -309,9 +348,7 @@ dropAndUncaml i l
 -- >         <*< pwd ..: "pwd" × o
 --
 (..:) ∷ FromJSON β ⇒ Lens' α β → T.Text → Object → Parser (α → α)
-(..:) s k o = case H.lookup k o of
-    Nothing → pure id
-    Just v → set s <$> parseJSON v
+(..:) s k = setProperty s k parseJSON
 infix 6 ..:
 {-# INLINE (..:) #-}
 
