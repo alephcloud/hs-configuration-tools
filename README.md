@@ -12,9 +12,24 @@ applications in a composable way.
 The main features are
 
 1.   configuration management through integration of command line option
-     parsing and configuration files and
+     parsing and configuration files,
 2.   a `Setup.hs` file that generates a `PkgInfo` module for each component
-     of a package that provide information about the package and the build.
+     of a package that provide information about the package and the build, and
+3.   a set of types for configuration of HTTP services and clients along
+     with aeson instances and command line option parsers.
+
+The ultimate goal for this package is a general framework for
+compositional configuration management for software components.
+Instead of designing such a framework from scratch the approach of this
+package is to first explore design and implementation patterns based
+on practical examples and by gluing together existing technology.
+
+Therefor at the current state this package mostly provides operators and
+coding patterns for writing stylish boilerplate code.
+
+Once we feel that the developed patterns cover a sufficient portion of
+real world requirements we plan to rewrite this package such that
+the boilerplate is hidden behind a clean and simple DSL.
 
 Configuration Management
 ========================
