@@ -1,3 +1,15 @@
+0.2.3
+=====
+
+*   Show the help options in the options summary message.
+
+*   Add `-?` as short version of for `--help` in addition to `-h`.
+
+*   Remove `showHelpOnError` and `disambiguate` from option parser preferences.
+
+*   Added file `INSTALL_ON_WINDOWS.md` with installation instructions for
+    windows to the package.
+
 0.2.2
 =====
 
