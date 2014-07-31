@@ -505,9 +505,17 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
     ⊕ maybe mempty O.footer _piHelpFooter
   where
     optionParser = fromMaybe (pure id) pkgInfoParser
-        <*> O.helper
+        <*> nonHiddenHelper
         <*> (over mainConfig <$> _piOptionParser)
         <*> pAppConfiguration _piDefaultConfiguration
+
+    -- the 'O.helper' option from optparse-applicative is hidden be default
+    -- which seems a bit weired. This option doesn't hide the access to help.
+    nonHiddenHelper = abortOption ShowHelpText
+        × long "help"
+        ⊕ short 'h'
+        ⊕ short '?'
+        ⊕ help "Show this help text"
 
 -- | Run an IO action with a configuration that is obtained by updating the
 -- given default configuration the values defined via command line arguments.
