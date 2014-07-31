@@ -545,9 +545,7 @@ runWithConfiguration appInfo mainFunction = do
         else mainFunction ∘ _mainConfig $ conf
   where
     mainOpts = mainOptions appInfo Nothing
-    parserPrefs = O.prefs
-        $ O.disambiguate
-        ⊕ O.showHelpOnError
+    parserPrefs = O.prefs O.disambiguate
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
@@ -635,9 +633,7 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
         else mainFunction ∘ _mainConfig $ conf
   where
     mainOpts = mainOptions appInfo (Just $ pPkgInfo pkgInfo)
-    parserPrefs = O.prefs
-        $ O.disambiguate
-        ⊕ O.showHelpOnError
+    parserPrefs = O.prefs O.disambiguate
 
 -- -------------------------------------------------------------------------- --
 -- Configuration of Optional Values
