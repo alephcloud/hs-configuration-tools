@@ -642,7 +642,51 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- Optional configuration values are supposed to be encoded by wrapping
 -- the respective type with 'Maybe'.
 --
--- For this the following orphan 'FromJSON' instance is provided:
+-- For simple values the standard 'FromJSON' instance from the aeson
+-- package can be used with the along with  the '..:' operator.
+--
+-- When defining command line option parsers with '.::' and '%::' all
+-- options are optional. When an option is not present on the command
+-- line the default value is used. For 'Maybe' values it is therefore
+-- enough to wrap the parsed value into 'Just'.
+--
+-- > data LogConfig = LogConfig
+-- >    { _logLevel :: !Int
+-- >    , _logFile :: !(Maybe String)
+-- >    }
+-- >
+-- > $(makeLenses ''LogConfig)
+-- >
+-- > defaultLogConfig :: LogConfig
+-- > defaultLogConfig = LogConfig
+-- >     { _logLevel = 1
+-- >     , _logFile = Nothing
+-- >     }
+-- >
+-- > instance FromJSON (LogConfig -> LogConfig) where
+-- >     parseJSON = withObject "LogConfig" $ \o -> id
+-- >         <$< logLevel ..: "LogLevel" % o
+-- >         <*< logFile ..: "LogConfig" % o
+-- >
+-- > instance ToJSON LogConfig where
+-- >     toJSON config = object
+-- >         [ "LogLevel" .= _logLevel config
+-- >         , "LogConfig" .= _logFile config
+-- >         ]
+-- >
+-- > pLogConfig :: MParser LogConfig
+-- > pLogConfig = id
+-- >     <$< logLevel .:: option
+-- >         % long "log-level"
+-- >         % metavar "INTEGER"
+-- >         % help "log level"
+-- >     <*< logFile .:: fmap Just % strOption
+-- >         % long "log-file"
+-- >         % metavar "FILENAME"
+-- >         % help "log file name"
+--
+-- For product-type (record) 'Maybe' values the following orphan 'FromJSON'
+-- instance is provided:
 --
 -- > instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a)
 -- >     parseJSON Null = pure (const Nothing)
