@@ -1,3 +1,11 @@
+0.2.4
+=====
+
+*   Configuration.Utils.Setup: fixed generation of 'PkgInfo' module for
+    package configurations with explict flags.
+
+*   Improved documentation for 'Maybe' values.
+
 0.2.3
 =====
 
