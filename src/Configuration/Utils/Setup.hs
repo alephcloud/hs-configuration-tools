@@ -121,7 +121,7 @@ main = defaultMainWithHooks simpleUserHooks
     { postConf = mkPkgInfoModules
     }
   where
-    mkPkgInfoModules _ _ pkgDesc bInfo = mapM_ f . map (\(a,_,_) -> a) $ componentsConfigs bInfo
+    mkPkgInfoModules _ _ pkgDesc bInfo = mapM_ (f . \(a,_,_) -> a) $ componentsConfigs bInfo
       where
         f cname = case cname of
             CLibName -> updatePkgInfoModule Nothing pkgDesc bInfo
@@ -144,7 +144,7 @@ trim = f . f
   where f = reverse . dropWhile isSpace
 
 getVCS :: IO (Maybe RepoType)
-getVCS = do
+getVCS =
     doesDirectoryExist ".hg" >>= \x0 -> if x0
     then return (Just Mercurial)
     else doesDirectoryExist ".git" >>= \x1 -> if x1
@@ -164,7 +164,7 @@ pkgInfoModule cName pkgDesc bInfo = do
 
     licenseString <- licenseFilesText pkgDesc
 
-    return $ B.intercalate "\n" $
+    return $ B.intercalate "\n"
             [ "{-# LANGUAGE OverloadedStrings #-}"
             , "{-# LANGUAGE RankNTypes #-}"
             , ""
@@ -281,9 +281,9 @@ licenseFilesText PackageDescription{ licenseFiles = fileNames } =
 
 hgInfo :: IO (String, String, String)
 hgInfo = do
-    tag <- fmap trim $ readProcess "hg" ["id", "-r", "max(ancestors(\".\") and tag())", "-t"] ""
-    rev <- fmap trim $ readProcess "hg" ["id", "-i"] ""
-    branch <- fmap trim $ readProcess "hg" ["id", "-b"] ""
+    tag <- trim <$> readProcess "hg" ["id", "-r", "max(ancestors(\".\") and tag())", "-t"] ""
+    rev <- trim <$> readProcess "hg" ["id", "-i"] ""
+    branch <- trim <$> readProcess "hg" ["id", "-b"] ""
     return (tag, rev, branch)
 
 gitInfo :: IO (String, String, String)
@@ -293,8 +293,8 @@ gitInfo = do
         case exitCode of
             ExitSuccess -> return $ trim out
             _ -> return ""
-    rev <- fmap trim $ readProcess "git" ["rev-parse", "--short", "HEAD"] ""
-    branch <- fmap trim $ readProcess "git" ["rev-parse", "--abbrev-ref", "HEAD"] ""
+    rev <- trim <$> readProcess "git" ["rev-parse", "--short", "HEAD"] ""
+    branch <- trim <$> readProcess "git" ["rev-parse", "--abbrev-ref", "HEAD"] ""
     return (tag, rev, branch)
 
 noVcsInfo :: IO (String, String, String)
