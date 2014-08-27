@@ -151,6 +151,9 @@ getVCS =
     then return (Just Git)
     else return Nothing
 
+flagNameStr :: FlagName -> String
+flagNameStr (FlagName s) = s
+
 pkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
 pkgInfoModule cName pkgDesc bInfo = do
     (tag, revision, branch) <- getVCS >>= \x -> case x of
@@ -160,7 +163,7 @@ pkgInfoModule cName pkgDesc bInfo = do
 
     let vcsBranch = if branch == "default" || branch == "master" then "" else branch
         vcsVersion = intercalate "-" . filter (/= "") $ [tag, revision, vcsBranch]
-        flags = map fst . filter snd . configConfigurationsFlags . configFlags $ bInfo
+        flags = map (flagNameStr . fst) . filter snd . configConfigurationsFlags . configFlags $ bInfo
 
     licenseString <- licenseFilesText pkgDesc
 
