@@ -311,10 +311,10 @@ dropAndUncaml i l
 -- >         p = withText "user" $ \case
 -- >             "alice" → pure (0 ∷ Int)
 -- >             "bob" → pure 1
--- >             e → faile $ "unrecognized user " ⊕ e
+-- >             e → fail $ "unrecognized user " ⊕ e
 --
 setProperty
-    ∷ Lens' α β -- ^ Lens that into the target that is updated by the parser
+    ∷ Lens' α β -- ^ a lens into the target that is updated by the parser
     → T.Text -- ^ the JSON property name
     → (Value → Parser β) -- ^ the JSON 'Value' parser that is used to parse the value of the property
     → Object -- ^ the parsed JSON 'Value' 'Object'
