@@ -2,3 +2,10 @@ language: haskell
 ghc:
     - 7.6
     - 7.8
+env:
+    - OPTPARSE_APPLICATIVE_BOUND=0.10
+    - OPTPARSE_APPLICATIVE_BOUND=10
+
+install:
+    - cabal install --only-dependencies --enable-tests --constraint="optparse-applicative<$OPTPARSE_APPLICATIVE_BOUND"
+

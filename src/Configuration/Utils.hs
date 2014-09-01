@@ -9,6 +9,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE CPP #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -108,7 +109,12 @@ import Data.Monoid.Unicode
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 
+#if MIN_VERSION_optparse_applicative(0,10,0)
+import Options.Applicative hiding (Parser, Success)
+#else
 import Options.Applicative hiding (Parser, Success, (&))
+#endif
+
 import qualified Options.Applicative as O
 
 import Prelude.Unicode
@@ -482,6 +488,14 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.short 'p'
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
+#if MIN_VERSION_optparse_applicative(0,10,0)
+    <*> O.option (O.eitherReader $ \file → fileReader file <*> pure d)
+        × O.long "config-file"
+        ⊕ O.short 'c'
+        ⊕ O.metavar "FILE"
+        ⊕ O.help "Configuration file in YAML format"
+        ⊕ O.value d
+#else
     <*> O.nullOption
         × O.long "config-file"
         ⊕ O.short 'c'
@@ -489,6 +503,7 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.help "Configuration file in YAML format"
         ⊕ O.eitherReader (\file → fileReader file <*> pure d)
         ⊕ O.value d
+#endif
   where
     fileReader file = fmapL (\e → "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ show e)
         $ unsafePerformIO (Yaml.decodeFileEither file)
@@ -676,7 +691,11 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- >
 -- > pLogConfig ∷ MParser LogConfig
 -- > pLogConfig = id
+-- > #if MIN_VERSION_optparse-applicative(0,10,0)
+-- >     <$< logLevel .:: option auto
+-- > #else
 -- >     <$< logLevel .:: option
+-- > #endif
 -- >         % long "log-level"
 -- >         % metavar "INTEGER"
 -- >         % help "log level"

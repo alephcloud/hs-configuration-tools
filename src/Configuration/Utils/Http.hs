@@ -7,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE CPP #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -167,10 +168,18 @@ pHttpServiceConfiguration prefix = id
     <$< hscHost ∘ bs .:: strOption
         × long (prefix ⊕ "host")
         ⊕ help "Hostname of the service"
+#if MIN_VERSION_optparse_applicative(0,10,0)
+    <*< hscPort .:: option auto
+#else
     <*< hscPort .:: option
+#endif
         × long (prefix ⊕ "port")
         ⊕ help "Port of the service"
+#if MIN_VERSION_optparse_applicative(0,10,0)
+    <*< hscInterface ∘ bs .:: option auto
+#else
     <*< hscInterface ∘ bs .:: option
+#endif
         × long (prefix ⊕ "interface")
         ⊕ help "Interface of the service"
     <*< (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration prefix))
@@ -225,7 +234,11 @@ pHttpClientConfiguration serviceName = id
     <$< hccHost ∘ bs .:: strOption
         × long (serviceName ⊕ "-host")
         ⊕ help ("Hostname of " ⊕ serviceName)
+#if MIN_VERSION_optparse_applicative(0,10,0)
+    <*< hccPort .:: option auto
+#else
     <*< hccPort .:: option
+#endif
         × long (serviceName ⊕ "-port")
         ⊕ help ("Port of " ⊕ serviceName)
     <*< hccUseTLS .:: switch
