@@ -651,20 +651,20 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- enough to wrap the parsed value into 'Just'.
 --
 -- > data LogConfig = LogConfig
--- >    { _logLevel :: !Int
--- >    , _logFile :: !(Maybe String)
+-- >    { _logLevel ∷ !Int
+-- >    , _logFile ∷ !(Maybe String)
 -- >    }
 -- >
 -- > $(makeLenses ''LogConfig)
 -- >
--- > defaultLogConfig :: LogConfig
+-- > defaultLogConfig ∷ LogConfig
 -- > defaultLogConfig = LogConfig
 -- >     { _logLevel = 1
 -- >     , _logFile = Nothing
 -- >     }
 -- >
--- > instance FromJSON (LogConfig -> LogConfig) where
--- >     parseJSON = withObject "LogConfig" $ \o -> id
+-- > instance FromJSON (LogConfig → LogConfig) where
+-- >     parseJSON = withObject "LogConfig" $ \o → id
 -- >         <$< logLevel ..: "LogLevel" % o
 -- >         <*< logFile ..: "LogConfig" % o
 -- >
@@ -674,7 +674,7 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- >         , "LogConfig" .= _logFile config
 -- >         ]
 -- >
--- > pLogConfig :: MParser LogConfig
+-- > pLogConfig ∷ MParser LogConfig
 -- > pLogConfig = id
 -- >     <$< logLevel .:: option
 -- >         % long "log-level"
