@@ -1,3 +1,8 @@
+0.2.4.1
+=======
+
+*   Support for optparse-applicative >= 0.10.
+
 0.2.4
 =====
 
