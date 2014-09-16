@@ -147,9 +147,9 @@ getVCS :: IO (Maybe RepoType)
 getVCS =
     doesDirectoryExist ".hg" >>= \x0 -> if x0
     then return (Just Mercurial)
-    else doesDirectoryExist ".git" >>= \x1 -> if x1
-    then return (Just Git)
-    else return Nothing
+    else doesDirectoryExist ".git" >>= \x1 -> return $ if x1
+        then Just Git
+        else Nothing
 
 flagNameStr :: FlagName -> String
 flagNameStr (FlagName s) = s
