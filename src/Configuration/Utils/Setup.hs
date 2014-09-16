@@ -26,7 +26,7 @@
 --
 -- = Usage as Setup Script
 --
--- There are two ways how this module can be used:
+-- There are three ways how this module can be used:
 --
 -- 1. Copy the code of this module into a file called @Setup.hs@ in the root
 --    directory of your package.
@@ -38,7 +38,20 @@
 --    >
 --    > import Configuration.Utils.Setup
 --
--- With both methods the field @Build-Type@ in the package description (cabal) file
+-- 3. For usage within a more complex @Setup.hs@ script you shall import this
+--    module qualified and use the 'mkPkgInfoModules' function. For example:
+--
+--    > module Main (main) where
+--    >
+--    > import qualified Configuration.Utils.Setup as ConfTools
+--    >
+--    > main :: IO ()
+--    > main = defaultMainWithHooks simpleUserHooks
+--    >     { postConf = ConfigTools.mkPkgInfoModules (postConf simpleUserHooks)
+--    >     }
+--    >
+--
+-- With all methods the field @Build-Type@ in the package description (cabal) file
 -- must be set to @Custom@:
 --
 -- > Build-Type: Custom
@@ -90,7 +103,10 @@
 -- [@--license@]
 --     prints the text of the lincense of the application and exits.
 --
-module Configuration.Utils.Setup (main) where
+module Configuration.Utils.Setup
+( main
+, mkPkgInfoModules
+) where
 
 import Distribution.PackageDescription
 import Distribution.Simple
@@ -116,18 +132,47 @@ import Prelude hiding (readFile, writeFile)
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitSuccess))
 
+-- | Include this function when your setup doesn't contain any
+-- extra functionality.
+--
 main :: IO ()
 main = defaultMainWithHooks simpleUserHooks
-    { postConf = mkPkgInfoModules
+    { postConf = mkPkgInfoModules (postConf simpleUserHooks)
     }
+
+-- | Modifies the given 'postConfig' hook by adding functionality that
+-- creates a package info module for each component of the cabal package.
+--
+-- This function is intended for usage in more complex @Setup.hs@ scripts.
+-- If your setup doesn't contain any other function you can just import
+-- the 'main' function from this module.
+--
+-- The modules are created in the /autogen/ build directory where also the
+-- @Path_@ module is created by cabal's simple build setup. This is usually the
+-- directory @.\/dist\/build\/autogen@.
+--
+-- For a library component the module is named just @PkgInfo@. For all other
+-- components the module is named @PkgInfo_COMPONENT_NAME@ where
+-- @COMPONENT_NAME@ is the name of the component with @-@ characters replaced by
+-- @_@.
+--
+mkPkgInfoModules
+    :: (Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ())
+    -> Args
+    -> ConfigFlags
+    -> PackageDescription
+    -> LocalBuildInfo
+    -> IO ()
+mkPkgInfoModules hook args flags pkgDesc bInfo = do
+    mkModules
+    hook args flags pkgDesc bInfo
   where
-    mkPkgInfoModules _ _ pkgDesc bInfo = mapM_ (f . \(a,_,_) -> a) $ componentsConfigs bInfo
-      where
-        f cname = case cname of
-            CLibName -> updatePkgInfoModule Nothing pkgDesc bInfo
-            CExeName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
-            CTestName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
-            CBenchName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
+    mkModules = mapM_ (f . \(a,_,_) -> a) $ componentsConfigs bInfo
+    f cname = case cname of
+        CLibName -> updatePkgInfoModule Nothing pkgDesc bInfo
+        CExeName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
+        CTestName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
+        CBenchName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
 
 pkgInfoModuleName :: Maybe String -> String
 pkgInfoModuleName Nothing = "PkgInfo"
