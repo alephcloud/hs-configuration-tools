@@ -1,3 +1,10 @@
+0.2.5
+=====
+
+*   `Configuration.Utils.Setup`: export `mkPkgInfoModules` function 
+    that modifies a given `UserHooks` record to generate an `PkgInfo`
+    module during configuration.
+
 0.2.4.1
 =======
 
