@@ -46,9 +46,7 @@
 --    > import qualified Configuration.Utils.Setup as ConfTools
 --    >
 --    > main :: IO ()
---    > main = defaultMainWithHooks simpleUserHooks
---    >     { postConf = ConfigTools.mkPkgInfoModules (postConf simpleUserHooks)
---    >     }
+--    > main = defaultMainWithHooks (ConfTools.mkPkgInfoModules simpleUserHooks)
 --    >
 --
 -- With all methods the field @Build-Type@ in the package description (cabal) file
@@ -136,11 +134,9 @@ import System.Exit (ExitCode(ExitSuccess))
 -- extra functionality.
 --
 main :: IO ()
-main = defaultMainWithHooks simpleUserHooks
-    { postConf = mkPkgInfoModules (postConf simpleUserHooks)
-    }
+main = defaultMainWithHooks (mkPkgInfoModules simpleUserHooks)
 
--- | Modifies the given 'postConfig' hook by adding functionality that
+-- | Modifies the given record of hooks by adding functionality that
 -- creates a package info module for each component of the cabal package.
 --
 -- This function is intended for usage in more complex @Setup.hs@ scripts.
@@ -157,13 +153,20 @@ main = defaultMainWithHooks simpleUserHooks
 -- @_@.
 --
 mkPkgInfoModules
+    :: UserHooks
+    -> UserHooks
+mkPkgInfoModules hooks = hooks
+    { postConf = mkPkgInfoModulesPostConf (postConf hooks)
+    }
+
+mkPkgInfoModulesPostConf
     :: (Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ())
     -> Args
     -> ConfigFlags
     -> PackageDescription
     -> LocalBuildInfo
     -> IO ()
-mkPkgInfoModules hook args flags pkgDesc bInfo = do
+mkPkgInfoModulesPostConf hook args flags pkgDesc bInfo = do
     mkModules
     hook args flags pkgDesc bInfo
   where
