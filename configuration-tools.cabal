@@ -76,6 +76,7 @@ Library
         base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10.0.2,
+        case-insensitive >= 1.2,
         directory >= 1.2.1.0,
         errors >= 1.4.3,
         optparse-applicative >= 0.8.1,

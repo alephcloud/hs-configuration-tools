@@ -67,6 +67,9 @@ module Configuration.Utils
 , MParser
 , (.::)
 , (%::)
+, boolReader
+, boolOption
+, fileOption
 
 -- * Parsing of Configuration Files with Default Values
 , setProperty
@@ -102,10 +105,12 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import qualified Data.ByteString.Char8 as B8
 import Data.Char
+import qualified Data.CaseInsensitive as CI
 import qualified Data.HashMap.Strict as H
 import Data.Maybe
 import Data.Monoid
 import Data.Monoid.Unicode
+import Data.String
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 
@@ -388,6 +393,35 @@ infix 6 ..:
     Just v → over s <$> parseJSON v
 infix 6 %.:
 {-# INLINE (%.:) #-}
+
+-- -------------------------------------------------------------------------- --
+-- Command Line Option Parsing
+
+boolReader
+    ∷ (Eq a, Show a, CI.FoldCase a, IsString a, IsString e, Monoid e)
+    ⇒ a
+    → Either e Bool
+boolReader x = case CI.mk x of
+    "true" → Right True
+    "false" → Right False
+    _ → Left $ "failed to read Boolean value " <> fromString (show x)
+        <> ". Expected either \"true\" or \"false\""
+
+boolOption
+    ∷ O.Mod O.OptionFields Bool
+    → O.Parser Bool
+boolOption mods = option (eitherReader boolReader)
+    % metavar "TRUE|FALSE"
+    <> completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
+    <> mods
+
+fileOption
+    ∷ O.Mod O.OptionFields String
+    → O.Parser FilePath
+fileOption mods = strOption
+    % metavar "FILE"
+    <> action "file"
+    <> mods
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration
