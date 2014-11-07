@@ -28,9 +28,15 @@ import Data.Profunctor
 
 -- | This is the same type as the type from the lens library with the same name.
 --
+-- In case it is already import from the lens package this should be hidden
+-- from the import.
+--
 type Lens σ τ α β = Functor φ ⇒ (α → φ β) → σ → φ τ
 
 -- | This is the same type as the type from the lens library with the same name.
+--
+-- In case it is already import from the lens package this should be hidden
+-- from the import.
 --
 type Lens' σ α = Lens σ σ α α
 
@@ -47,6 +53,9 @@ set s a = runIdentity . s (const $ Identity a)
 {-# INLINE set #-}
 
 -- | This is the same type as the type from the lens library with the same name.
+--
+-- In case it is already import from the lens package this should be hidden
+-- from the import.
 --
 type Iso' β α = (Profunctor π, Functor φ) ⇒ π α (φ α) → π β (φ β)
 
