@@ -340,7 +340,7 @@ hgInfo = do
 gitInfo :: IO (String, String, String)
 gitInfo = do
     tag <- do
-        (exitCode, out, _err) <- readProcessWithExitCode "git" ["describe", "--exact-match", "--abbrev=0"] ""
+        (exitCode, out, _err) <- readProcessWithExitCode "git" ["describe", "--exact-match", "--tags", "--abbrev=0"] ""
         case exitCode of
             ExitSuccess -> return $ trim out
             _ -> return ""
