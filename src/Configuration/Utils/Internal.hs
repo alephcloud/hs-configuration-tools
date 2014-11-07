@@ -36,12 +36,15 @@ type Lens' σ α = Lens σ σ α α
 
 lens ∷ (σ → α) → (σ → β → τ) → Lens σ τ α β
 lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
+{-# INLINE lens #-}
 
 over ∷ ((α → Identity α) → β → Identity β) → (α → α) → β → β
 over s f = runIdentity . s (Identity . f)
+{-# INLINE over #-}
 
 set ∷ ((α → Identity α) → β → Identity β) → α → β → β
 set s a = runIdentity . s (const $ Identity a)
+{-# INLINE set #-}
 
 -- | This is the same type as the type from the lens library with the same name.
 --
@@ -49,3 +52,5 @@ type Iso' β α = (Profunctor π, Functor φ) ⇒ π α (φ α) → π β (φ β
 
 iso ∷ (β → α) → (α → β) → Iso' β α
 iso f g = dimap f (fmap g)
+{-# INLINE iso #-}
+
