@@ -70,12 +70,15 @@ module Configuration.Utils
 , boolReader
 , boolOption
 , fileOption
+, module Options.Applicative
 
 -- * Parsing of Configuration Files with Default Values
 , setProperty
 , (..:)
 , (%.:)
+, module Data.Aeson
 
+-- * Command Line Option Parsing
 -- * Misc Utils
 , (%)
 , (×)
@@ -91,10 +94,6 @@ module Configuration.Utils
 
 -- * Configuration of Optional Values
 -- $maybe
-
--- * Reexports
-, module Data.Aeson
-, module Options.Applicative
 ) where
 
 import Configuration.Utils.Internal
