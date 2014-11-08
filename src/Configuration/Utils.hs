@@ -94,7 +94,13 @@ module Configuration.Utils
 , Lens
 
 -- * Configuration of Optional Values
--- $maybe
+
+-- * Simple Maybe Values
+-- $simplemaybe
+
+-- **  Record Maybe Values
+-- $recordmaybe
+, maybeOption
 ) where
 
 import Configuration.Utils.Internal
@@ -708,17 +714,12 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- -------------------------------------------------------------------------- --
 -- Configuration of Optional Values
 
--- $maybe
+-- $simplemaybe
 -- Optional configuration values are supposed to be encoded by wrapping
 -- the respective type with 'Maybe'.
 --
 -- For simple values the standard 'FromJSON' instance from the aeson
--- package can be used with the along with  the '..:' operator.
---
--- When defining command line option parsers with '.::' and '%::' all
--- options are optional. When an option is not present on the command
--- line the default value is used. For 'Maybe' values it is therefore
--- enough to wrap the parsed value into 'Just'.
+-- package can be used along with the '..:' operator.
 --
 -- > data LogConfig = LogConfig
 -- >    { _logLevel ∷ !Int
@@ -744,6 +745,12 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- >         , "LogConfig" .= _logFile config
 -- >         ]
 -- >
+--
+-- When defining command line option parsers with '.::' and '%::' all
+-- options are optional. When an option is not present on the command
+-- line the default value is used. For 'Maybe' values it is therefore
+-- enough to wrap the parsed value into 'Just'.
+--
 -- > pLogConfig ∷ MParser LogConfig
 -- > pLogConfig = id
 -- > #if MIN_VERSION_optparse-applicative(0,10,0)
@@ -758,6 +765,9 @@ runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
 -- >         % long "log-file"
 -- >         % metavar "FILENAME"
 -- >         % help "log file name"
+--
+
+-- $recordmaybe
 --
 -- For product-type (record) 'Maybe' values the following orphan 'FromJSON'
 -- instance is provided:
@@ -816,4 +826,95 @@ instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) whe
       where
         f g _ Nothing = Just g
         f _ g (Just x) = Just (g x)
+
+-- | Commandline parser for record 'Maybe' values
+--
+-- == Example:
+--
+-- > data Setting = Setting
+-- >     { _setA :: !Int
+-- >     , _setB :: !String
+-- >     }
+-- >     deriving (Show, Read, Eq, Ord, Typeable)
+-- >
+-- > $(makeLenses ''Setting)
+-- >
+-- > defaultSetting :: Setting
+-- > defaultSetting = Setting
+-- >     { _setA = 0
+-- >     , _setB = 1
+-- >     }
+-- >
+-- > instance ToJSON Setting where
+-- >     toJSON setting = object
+-- >        [ "a" .= _setA setting
+-- >        , "b" .= _setB setting
+-- >        ]
+-- >
+-- > instance FromJSON (Setting -> Setting) where
+-- >     parseJSON = withObject "Setting" $ \o -> id
+-- >         <$< setA ..: "a" % o
+-- >         <*< setB ..: "b" % o
+-- >
+-- > instance FromJSON Setting where
+-- >    parseJSON v = parseJSON v <*> pure defaultSetting
+-- >
+-- > pSetting :: MParser Setting
+-- > pSetting = id
+-- >     <$< setA .:: option auto
+-- >         % short 'a'
+-- >         <> metavar "INT"
+-- >         <> help "set a"
+-- >     <*< setB .:: option auto
+-- >         % short 'b'
+-- >         <> metavar "INT"
+-- >         <> help "set b"
+-- >
+-- > -- | Use 'Setting' as 'Maybe' in a configuration:
+-- > --
+-- > data Config = Config
+-- >     { _maybeSetting :: !(Maybe Setting)
+-- >     }
+-- >     deriving (Show, Read, Eq, Ord, Typeable)
+-- >
+-- > $(makeLenses ''Config)
+-- >
+-- > defaultConfig :: Config
+-- > defaultConfig = Config
+-- >     { _maybeSetting = defaultSetting
+-- >     }
+-- >
+-- > instance ToJSON Config where
+-- >     toJSON config = object
+-- >         [ "setting" .= maybeSetting
+-- >         ]
+-- >
+-- > instance FromJSON (Config -> Config) where
+-- >     parseJSON = withObject "Config" $ \o -> id
+-- >         <$< maybeSetting %.: "setting" % o
+-- >
+-- > pConfig :: MParser Config
+-- > pConfig = id
+-- >     <$< maybeSetting %:: (maybeOption defaultSetting
+-- >         <$> pEnableSetting
+-- >         <*> pSetting)
+-- >   where
+-- >     pEnableSetting = boolOption
+-- >         % long "setting-enable"
+-- >         <> value False
+-- >         <> help "Enable configuration flags for setting"
+--
+maybeOption
+    :: a
+        -- ^ default value that is used if base configuration is 'Nothing'
+    -> Bool
+        -- ^ whether to enable this parser or not (usually is a boolean option parser)
+    -> (a -> a)
+        -- ^ update function (usually given as applicative 'MParser a')
+    -> Maybe a
+        -- ^ the base value that is updated (usually the result of parsing the configuraton file)
+    -> Maybe a
+maybeOption _ False _ Nothing = Nothing -- not enabled
+maybeOption defA True update Nothing = Just $ update defA -- disabled in config file but enabled by command line
+maybeOption _ _ update (Just val) = Just $ update val -- enabled by config file and possibly by command line
 

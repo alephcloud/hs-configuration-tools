@@ -281,7 +281,13 @@ parser that yields an `a` and use it with the `.::` operator.
 Optional Configuration Values
 -----------------------------
 
-For configuration values of type `Maybe a`, though being sum types, we provide
+For simple `Maybe` values the standard `FromJSON` instance from the aeson
+package can be used along with the `..:` operator. When defining command line
+option parsers with `.::` and `%::` all options are optional. When an option is
+not present on the command line the default value is used. For `Maybe` values
+it is therefore enough to wrap the parsed value into `Just`.
+
+For configuration values of type `Maybe a` where `a` is a record type we provide
 an orphan[^1] `FromJSON` instance of the form
 
 ~~~{.haskell}
@@ -290,13 +296,17 @@ instance (FromJSON a, FromJSON (a -> a)) => FromJSON (Maybe a -> Maybe a)
 
 that has the following behavior:
 
-If the parsed configuration value is 'Null' the resulting function constantly
+If the parsed configuration value is `Null` the resulting function constantly
 returns `Nothing`. Otherwise
 
-*   the function does an pointwise update using the `FromJSON` instance for
-    `a -> a` when applied to `Just a` and
-*   the function uses the `FromJSON` instance for `a` to return the parsed `a`
-    value when applied to 'Nothing'.
+*   If the parsed configuration value is `Null` the result is `Nothing`.
+*   If the parsed configuration value is not `Null` then the result is
+    an update function that
+
+    *   updates the given default value if this value is `Just x` or
+    *   is a constant function that returns the value that is parsed
+        from the configuration using the `FromJSON` instance for the
+        configuration type.
 
 The `FromJSON a` instance may either require that the parsed configuration fully
 specifies the value of `a` (and raise a failure otherwise) or the `FromJSON a`
@@ -316,6 +326,9 @@ instance FromJSON MyType where
       this case. It's unlike that such an instance is needed elsewhere. If this
       is an issue for you, please let me know. In that case we can define a new
       type for optional configuration values.
+
+The function `maybeOption` is provided for defining command line parser for
+`Maybe` record values.
 
 Package and Build Information
 =============================
@@ -540,3 +553,11 @@ are planned.
 
 *   Include default values in help message.
 
+*   Use 'helpDoc' to highlight "meta-options", like options that enable
+    optional configuration values through usage of the `maybeOption`
+    function.
+
+*   Add functionality optparse-applicative that allows to group options.
+
+*   Raise parser error for sub-ordinate "maybe" options when not enabled
+    the respective optional value is not enabled.
