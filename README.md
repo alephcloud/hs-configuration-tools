@@ -424,7 +424,7 @@ Here is the example output of `--long-info` for the example
 `examples/Trivial.hs` from this package:
 
 ~~~{.shell}
-trivial-0.2.3 (package configuration-tools-0.2.3 revision 83634a3)
+trivial-0.2.6 (package configuration-tools-0.2.6 revision 2cc860c)
 Copyright (c) 2014 AlephCloud, Inc.
 
 Author: Lars Kuhtz <lars@alephcloud.com>
@@ -432,11 +432,12 @@ License: MIT
 Homepage: https://github.com/alephcloud/hs-configuration-tools
 Build with: ghc-7.8.3 (x86_64-osx)
 Build flags:
+Optimisation: normal
 
 Dependencies:
-    Cabal-1.20.0.1 [BSD3, 2003-2006, Isaac Jones 2005-2011, Duncan Coutts]
-    MonadRandom-0.1.13 [OtherLicense]
-    aeson-0.7.0.6 [BSD3, (c) 2011-2014 Bryan O'Sullivan (c) 2011 MailRank, Inc.]
+    Cabal-1.20.0.2 [BSD3, 2003-2006, Isaac Jones 2005-2011, Duncan Coutts]
+    MonadRandom-0.3 [OtherLicense]
+    aeson-0.8.0.0 [BSD3, (c) 2011-2014 Bryan O'Sullivan (c) 2011 MailRank, Inc.]
     ansi-terminal-0.6.1.1 [BSD3]
     ansi-wl-pprint-0.6.7.1 [BSD3]
     array-0.5.0.0 [BSD3]
@@ -446,15 +447,16 @@ Dependencies:
     bifunctors-4.1.1.1 [BSD3, Copyright (C) 2008-2013 Edward A. Kmett]
     rts-1.0 [BSD3]
     bytestring-0.10.4.0 [BSD3, Copyright (c) Don Stewart 2005-2009, (c) Duncan Coutts 2006-2013, (c) David Roundy 2003-2005, (c) Jasper Van der Jeugt 2010, (c) Simon Meier 2010-2013.]
-    comonad-4.2 [BSD3, Copyright (C) 2008-2013 Edward A. Kmett, Copyright (C) 2004-2008 Dave Menendez]
-    conduit-1.1.6 [MIT]
+    case-insensitive-1.2.0.0 [BSD3, 2011 Bas van Dijk]
+    comonad-4.2.2 [BSD3, Copyright (C) 2008-2014 Edward A. Kmett, Copyright (C) 2004-2008 Dave Menendez]
+    conduit-1.2.0.2 [MIT]
     containers-0.5.5.1 [BSD3]
-    contravariant-0.6 [BSD3, Copyright (C) 2007-2014 Edward A. Kmett]
+    contravariant-1.2 [BSD3, Copyright (C) 2007-2014 Edward A. Kmett]
     deepseq-1.3.0.2 [BSD3]
     directory-1.2.1.0 [BSD3]
     distributive-0.4.4 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
     dlist-0.7.1 [BSD3, 2006-2009 Don Stewart, 2013 Sean Leather]
-    either-4.3.0.1 [BSD3, Copyright (C) 2008-2014 Edward A. Kmett]
+    either-4.3.1 [BSD3, Copyright (C) 2008-2014 Edward A. Kmett]
     errors-1.4.7 [BSD3, 2012, 2013 Gabriel Gonzalez]
     exceptions-0.6.1 [BSD3, Copyright (C) 2013-2014 Edward A. Kmett Copyright (C) 2012 Google Inc.]
     filepath-1.3.0.2 [BSD3]
@@ -463,36 +465,37 @@ Dependencies:
     hashable-1.2.2.0 [BSD3]
     integer-gmp-0.5.1.0 [BSD3]
     lifted-base-0.2.3.0 [BSD3, (c) 2011-2012 Bas van Dijk, Anders Kaseorg]
-    mmorph-1.0.3 [BSD3, 2013 Gabriel Gonzalez]
+    mmorph-1.0.4 [BSD3, 2013 Gabriel Gonzalez]
     monad-control-0.3.3.0 [BSD3, (c) 2011 Bas van Dijk, Anders Kaseorg]
-    mtl-2.1.3.1 [BSD3]
+    mtl-2.2.1 [BSD3]
     nats-0.2 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
     old-locale-1.0.0.6 [BSD3]
-    optparse-applicative-0.9.0 [BSD3, (c) 2012 Paolo Capriotti <p.capriotti@gmail.com>]
+    optparse-applicative-0.11.0.1 [BSD3, (c) 2012-2014 Paolo Capriotti <paolo@capriotti.io>]
     prelude-extras-0.4 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
     pretty-1.1.1.1 [BSD3]
     primitive-0.5.3.0 [BSD3, (c) Roman Leshchinskiy 2009-2012]
     process-1.2.0.0 [BSD3]
-    profunctors-4.0.4 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
+    profunctors-4.2.0.1 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
     random-1.0.1.1 [BSD3]
-    resourcet-1.1.2.2 [BSD3]
+    resourcet-1.1.2.3 [BSD3]
     safe-0.3.6 [BSD3, Neil Mitchell 2007-2014]
     scientific-0.3.3.0 [BSD3]
-    semigroupoids-4.0.2.1 [BSD3, Copyright (C) 2011-2013 Edward A. Kmett]
-    semigroups-0.15.1 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
+    semigroupoids-4.2 [BSD3, Copyright (C) 2011-2013 Edward A. Kmett]
+    semigroups-0.15.3 [BSD3, Copyright (C) 2011-2014 Edward A. Kmett]
+    stm-2.4.3 [BSD3]
     syb-0.4.2 [BSD3]
     tagged-0.7.2 [BSD3, 2009-2013 Edward A. Kmett]
     template-haskell-2.9.0.0 [BSD3]
     text-1.1.1.3 [BSD3, 2009-2011 Bryan O'Sullivan, 2008-2009 Tom Harper]
     time-1.4.2 [BSD3]
-    transformers-0.3.0.0 [BSD3]
-    transformers-base-0.4.2 [BSD3, 2011 Mikhail Vorozhtsov <mikhail.vorozhtsov@gmail.com>, Bas van Dijk <v.dijk.bas@gmail.com>]
+    transformers-0.4.1.0 [BSD3]
+    transformers-base-0.4.3 [BSD3, 2011 Mikhail Vorozhtsov <mikhail.vorozhtsov@gmail.com>, Bas van Dijk <v.dijk.bas@gmail.com>]
     transformers-compat-0.3.3.4 [BSD3, Copyright (C) 2012 Edward A. Kmett]
     unix-2.7.0.1 [BSD3]
     unordered-containers-0.2.5.0 [BSD3, 2010-2014 Johan Tibell 2010 Edward Z. Yang]
     vector-0.10.11.0 [BSD3, (c) Roman Leshchinskiy 2008-2012]
     void-0.6.1 [BSD3, Copyright (C) 2008-2013 Edward A. Kmett]
-    yaml-0.8.8.4 [BSD3]
+    yaml-0.8.9.1 [BSD3]
 ~~~
 
 Configuration Types for HTTP Services and Clients
