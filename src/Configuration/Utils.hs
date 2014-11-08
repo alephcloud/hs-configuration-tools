@@ -70,6 +70,7 @@ module Configuration.Utils
 , boolReader
 , boolOption
 , fileOption
+, eitherReadP
 , module Options.Applicative
 
 -- * Parsing of Configuration Files with Default Values
@@ -124,6 +125,8 @@ import qualified Options.Applicative as O
 import Prelude.Unicode
 
 import System.IO.Unsafe (unsafePerformIO)
+
+import qualified Text.ParserCombinators.ReadP as P
 
 -- -------------------------------------------------------------------------- --
 -- Useful Operators
@@ -421,6 +424,17 @@ fileOption mods = strOption
     % metavar "FILE"
     <> action "file"
     <> mods
+
+eitherReadP
+    ∷ T.Text
+    → P.ReadP a
+    → T.Text
+    → Either T.Text a
+eitherReadP label p s =
+    case [ x | (x,"") ← P.readP_to_S p (T.unpack s) ] of
+        [x] → Right x
+        []  → Left $ "eitherReadP: no parse for " <> label <> " of " <> s
+        _  → Left $ "eitherReadP: ambigous parse for " <> label <> " of " <> s
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration
