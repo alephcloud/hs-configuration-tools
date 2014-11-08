@@ -1,3 +1,17 @@
+0.2.6
+=====
+
+*   For git repositories include also light-weight (non-annotated) tags
+    in the version description.
+
+*   Added new function `boolReader`, `boolOption`, `fileOption`, and
+    `eitherReadP` to `Utils`.
+
+*   Added new function `maybeOption` and improved documentation about
+    `Maybe` config values.
+
+*   Included optimisation level into long info.
+
 0.2.5
 =====
 
