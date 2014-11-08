@@ -412,17 +412,25 @@ boolReader x = case CI.mk x of
 boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
-boolOption mods = option (eitherReader boolReader)
-    % metavar "TRUE|FALSE"
-    <> completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
+#if MIN_VERSION_optparse_applicative(0,10,0)
+boolOption mods = O.option (O.eitherReader boolReader)
+    % O.metavar "TRUE|FALSE"
+    <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
     <> mods
+#else
+boolOption mods = O.nullOption
+    % metavar "TRUE|FALSE"
+    <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
+    <> O.eitherReader boolReader
+    <> mods
+#endif
 
 fileOption
     ∷ O.Mod O.OptionFields String
     → O.Parser FilePath
-fileOption mods = strOption
-    % metavar "FILE"
-    <> action "file"
+fileOption mods = O.strOption
+    % O.metavar "FILE"
+    <> O.action "file"
     <> mods
 
 eitherReadP
