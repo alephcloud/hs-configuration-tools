@@ -248,6 +248,9 @@ pkgInfoModule cName pkgDesc bInfo = do
             , "    flags :: IsString a => [a]"
             , "    flags = " <> (pack . show) flags
             , ""
+            , "    optimisation :: IsString a => a"
+            , "    optimisation = \"" <> (displayOptimisationLevel . withOptimization) bInfo <> "\""
+            , ""
             , "    arch :: IsString a => a"
             , "    arch = \"" <> (pack . display . hostPlatform) bInfo <> "\""
             , ""
@@ -295,7 +298,8 @@ pkgInfoModule cName pkgDesc bInfo = do
             , "        <> \"License: \" <> license <> \"\\n\""
             , "        <> \"Homepage: \" <> homepage <> \"\\n\""
             , "        <> \"Build with: \" <> compiler <> \" (\" <> arch <> \")\" <> \"\\n\""
-            , "        <> \"Build flags: \" <> mconcat (map (\\x -> \" \" <> x) flags) <> \"\\n\\n\""
+            , "        <> \"Build flags: \" <> mconcat (map (\\x -> \" \" <> x) flags) <> \"\\n\""
+            , "        <> \"Optimisation: \" <> optimisation <> \"\\n\\n\""
             , "        <> \"Dependencies:\\n\" <> mconcat (map (\\x -> \"    \" <> x <> \"\\n\") dependenciesWithLicenses)"
             , ""
             , "    pkgInfo :: (Monoid a, IsString a) => (a, a, a, a)"
@@ -307,6 +311,10 @@ pkgInfoModule cName pkgDesc bInfo = do
             , "        )"
             , ""
             ]
+  where
+    displayOptimisationLevel NoOptimisation = "none"
+    displayOptimisationLevel NormalOptimisation = "normal"
+    displayOptimisationLevel MaximumOptimisation = "maximum"
 
 updatePkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO ()
 updatePkgInfoModule cName pkgDesc bInfo = do
