@@ -79,6 +79,7 @@ Library
         bytestring >= 0.10.0.2,
         case-insensitive >= 1.2,
         directory >= 1.2.1.0,
+        dlist >= 0.7.1,
         errors >= 1.4.3,
         mtl >= 2.2,
         network-uri >= 2.6.0.1,
