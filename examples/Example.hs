@@ -14,7 +14,7 @@ import Configuration.Utils
 import Data.Monoid.Unicode
 import Prelude.Unicode
 
--- This assume usage of cabal with custom Setup.hs
+-- This assumes usage of cabal with custom Setup.hs
 --
 import PkgInfo_url_example
 
