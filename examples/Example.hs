@@ -118,7 +118,7 @@ mainInfo = programInfo "HTTP URL" pHttpURL defaultHttpURL
 -- This version assumes usage of cabal with custom Setup.hs
 --
 main ∷ IO ()
-main = runWithPkgInfoConfiguration mainInfo pkgInfo $ \conf → do
+main = runWithPkgInfoConfiguration mainInfo pkgInfo $ \conf →
     putStrLn
         $ "http://"
         ⊕ (_user ∘ _auth) conf
@@ -132,7 +132,7 @@ main = runWithPkgInfoConfiguration mainInfo pkgInfo $ \conf → do
 -- This version does not rely on cabal
 --
 main_ ∷ IO ()
-main_ = runWithConfiguration mainInfo $ \conf → do
+main_ = runWithConfiguration mainInfo $ \conf →
     putStrLn
         $ "http://"
         ⊕ (_user ∘ _auth) conf
