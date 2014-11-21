@@ -832,14 +832,14 @@ instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) whe
 -- == Example:
 --
 -- > data Setting = Setting
--- >     { _setA :: !Int
--- >     , _setB :: !String
+-- >     { _setA ∷ !Int
+-- >     , _setB ∷ !String
 -- >     }
 -- >     deriving (Show, Read, Eq, Ord, Typeable)
 -- >
 -- > $(makeLenses ''Setting)
 -- >
--- > defaultSetting :: Setting
+-- > defaultSetting ∷ Setting
 -- > defaultSetting = Setting
 -- >     { _setA = 0
 -- >     , _setB = 1
@@ -851,15 +851,15 @@ instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) whe
 -- >        , "b" .= _setB setting
 -- >        ]
 -- >
--- > instance FromJSON (Setting -> Setting) where
--- >     parseJSON = withObject "Setting" $ \o -> id
+-- > instance FromJSON (Setting → Setting) where
+-- >     parseJSON = withObject "Setting" $ \o → id
 -- >         <$< setA ..: "a" % o
 -- >         <*< setB ..: "b" % o
 -- >
 -- > instance FromJSON Setting where
 -- >    parseJSON v = parseJSON v <*> pure defaultSetting
 -- >
--- > pSetting :: MParser Setting
+-- > pSetting ∷ MParser Setting
 -- > pSetting = id
 -- >     <$< setA .:: option auto
 -- >         % short 'a'
@@ -873,13 +873,13 @@ instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) whe
 -- > -- | Use 'Setting' as 'Maybe' in a configuration:
 -- > --
 -- > data Config = Config
--- >     { _maybeSetting :: !(Maybe Setting)
+-- >     { _maybeSetting ∷ !(Maybe Setting)
 -- >     }
 -- >     deriving (Show, Read, Eq, Ord, Typeable)
 -- >
 -- > $(makeLenses ''Config)
 -- >
--- > defaultConfig :: Config
+-- > defaultConfig ∷ Config
 -- > defaultConfig = Config
 -- >     { _maybeSetting = defaultSetting
 -- >     }
@@ -889,11 +889,11 @@ instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) whe
 -- >         [ "setting" .= maybeSetting
 -- >         ]
 -- >
--- > instance FromJSON (Config -> Config) where
--- >     parseJSON = withObject "Config" $ \o -> id
+-- > instance FromJSON (Config → Config) where
+-- >     parseJSON = withObject "Config" $ \o → id
 -- >         <$< maybeSetting %.: "setting" % o
 -- >
--- > pConfig :: MParser Config
+-- > pConfig ∷ MParser Config
 -- > pConfig = id
 -- >     <$< maybeSetting %:: (maybeOption defaultSetting
 -- >         <$> pEnableSetting
@@ -905,15 +905,15 @@ instance (FromJSON (a → a), FromJSON a) ⇒ FromJSON (Maybe a → Maybe a) whe
 -- >         <> help "Enable configuration flags for setting"
 --
 maybeOption
-    :: a
+    ∷ a
         -- ^ default value that is used if base configuration is 'Nothing'
-    -> Bool
+    → Bool
         -- ^ whether to enable this parser or not (usually is a boolean option parser)
-    -> (a -> a)
+    → (a → a)
         -- ^ update function (usually given as applicative 'MParser a')
-    -> Maybe a
+    → Maybe a
         -- ^ the base value that is updated (usually the result of parsing the configuraton file)
-    -> Maybe a
+    → Maybe a
 maybeOption _ False _ Nothing = Nothing -- not enabled
 maybeOption defA True update Nothing = Just $ update defA -- disabled in config file but enabled by command line
 maybeOption _ _ update (Just val) = Just $ update val -- enabled by config file and possibly by command line
