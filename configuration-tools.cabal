@@ -99,7 +99,10 @@ Test-Suite url-example
     build-depends:
         base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
-        configuration-tools
+        configuration-tools,
+        errors >= 1.4.3,
+        mtl >= 2.2,
+        transformers >= 0.3.0.0
 
     ghc-options: -Wall
 

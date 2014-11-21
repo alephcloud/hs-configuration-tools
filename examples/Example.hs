@@ -2,6 +2,7 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -11,7 +12,14 @@ module Main
 ) where
 
 import Configuration.Utils
+
+import Control.Monad
+import Control.Monad.Trans.Class
+import Control.Monad.Except
+import Control.Monad.Writer
+
 import Data.Monoid.Unicode
+
 import Prelude.Unicode
 
 -- This assumes usage of cabal with custom Setup.hs
@@ -41,6 +49,10 @@ defaultAuth = Auth
     { _user = ""
     , _pwd = ""
     }
+
+validateAuth ∷ ConfigValidation Auth []
+validateAuth auth =
+    when (_user auth ≠ "" && _pwd auth ≡ "") $ tell ["password is empty"]
 
 instance FromJSON (Auth → Auth) where
     parseJSON = withObject "Auth" $ \o → id
@@ -86,6 +98,12 @@ defaultHttpURL = HttpURL
     , _path = ""
     }
 
+validateHttpURL ∷ ConfigValidation HttpURL []
+validateHttpURL conf = do
+    validateAuth $ _auth conf
+    when (_domain conf ≡ "" && _path conf ≡ "") $
+        throwError "domain and path must not both be null"
+
 instance FromJSON (HttpURL → HttpURL) where
     parseJSON = withObject "HttpURL" $ \o → id
         <$< auth %.: "auth" × o
@@ -112,8 +130,8 @@ pHttpURL = id
 
 -- | Information about the main Application
 --
-mainInfo ∷ ProgramInfo HttpURL
-mainInfo = programInfo "HTTP URL" pHttpURL defaultHttpURL
+mainInfo ∷ ProgramInfoValidate HttpURL []
+mainInfo = programInfoValidate "HTTP URL" pHttpURL defaultHttpURL validateHttpURL
 
 -- This version assumes usage of cabal with custom Setup.hs
 --
