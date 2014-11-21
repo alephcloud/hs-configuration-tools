@@ -2,12 +2,16 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
-{-# LANGUAGE UnicodeSyntax #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+#if __GLASGOW_HASKELL__>=708
+{-# LANGUAGE OverloadedLists #-}
+#endif
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UnicodeSyntax #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -17,6 +21,9 @@ module Configuration.Utils.Http
   HttpServiceTLSConfiguration
 , hstcCertFile
 , hstcKeyFile
+, defaultHttpServiceTLSConfiguration
+, pHttpServiceTLSConfiguration
+, validateHttpServiceTLSConfiguration
 
 -- * HTTP Service Configuration
 , HttpServiceConfiguration
@@ -25,6 +32,7 @@ module Configuration.Utils.Http
 , hscUseTLS
 , defaultHttpServiceConfiguration
 , pHttpServiceConfiguration
+, validateHttpServiceConfiguration
 
 -- * Http Client Configuration
 , HttpClientConfiguration
@@ -33,13 +41,21 @@ module Configuration.Utils.Http
 , hccUseTLS
 , defaultHttpClientConfiguration
 , pHttpClientConfiguration
+, validateHttpClientConfiguration
 , httpService2clientConfiguration
 ) where
 
 import Configuration.Utils
 import Configuration.Utils.Internal
+import Configuration.Utils.Validation
+
+import Control.Monad (when)
+#if __GLASGOW_HASKELL__>=708
+import Control.Monad.Writer.Class (tell)
+#endif
 
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.DList as DL
 import Data.Maybe (isJust)
 import Data.Monoid.Unicode
 
@@ -68,6 +84,12 @@ defaultHttpServiceTLSConfiguration = HttpServiceTLSConfiguration
     { _hstcCertFile = "cert.pem"
     , _hstcKeyFile = "key.pem"
     }
+
+validateHttpServiceTLSConfiguration
+    ∷ ConfigValidation HttpServiceTLSConfiguration λ
+validateHttpServiceTLSConfiguration conf = do
+    validateFileReadable "cert-file" $ _hstcCertFile conf
+    validateFileReadable "key-file" $ _hstcKeyFile conf
 
 instance FromJSON (HttpServiceTLSConfiguration → HttpServiceTLSConfiguration) where
     parseJSON = withObject "HttpServiceTLSConfiguration" $ \o → id
@@ -144,6 +166,17 @@ defaultHttpServiceConfiguration = HttpServiceConfiguration
     , _hscUseTLS = Nothing
     }
 
+validateHttpServiceConfiguration ∷ ConfigValidation HttpServiceConfiguration DL.DList
+validateHttpServiceConfiguration conf = do
+    maybe (return ()) validateHttpServiceTLSConfiguration $ _hscUseTLS conf
+    validatePort "port" $ _hscPort conf
+#if __GLASGOW_HASKELL__>=708
+    when (_hscPort conf < 1024) $
+        tell ["listening on a priviledged port requires super user rights"]
+#endif
+    validateNonEmpty "host" $ _hscHost conf
+    validateIPv4 "interface" . B8.unpack $ _hscInterface conf
+
 instance FromJSON (HttpServiceConfiguration → HttpServiceConfiguration) where
     parseJSON = withObject "HttpServiceConfiguration" $ \o → id
         <$< hscHost ∘ bs ..: "host" × o
@@ -211,6 +244,11 @@ defaultHttpClientConfiguration = HttpClientConfiguration
     , _hccPort = 80
     , _hccUseTLS = False
     }
+
+validateHttpClientConfiguration ∷ ConfigValidation HttpClientConfiguration λ
+validateHttpClientConfiguration conf = do
+    validatePort "port" $ _hccPort conf
+    validateNonEmpty "host" $ _hccHost conf
 
 instance FromJSON (HttpClientConfiguration → HttpClientConfiguration) where
     parseJSON = withObject "HttpClientConfiguration" $ \o → id
