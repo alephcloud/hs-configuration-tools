@@ -136,7 +136,6 @@ hscInterface = lens _hscInterface $ \s a → s { _hscInterface = a}
 hscUseTLS ∷ Lens' HttpServiceConfiguration (Maybe HttpServiceTLSConfiguration)
 hscUseTLS = lens _hscUseTLS $ \s a → s { _hscUseTLS = a}
 
-
 defaultHttpServiceConfiguration ∷ HttpServiceConfiguration
 defaultHttpServiceConfiguration = HttpServiceConfiguration
     { _hscHost = "localhost"
