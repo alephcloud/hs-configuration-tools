@@ -690,7 +690,7 @@ type PkgInfo =
 -- [@--info, -i@]
 --     Print a short info message for the application and exit.
 --
--- [@--long-inf@]
+-- [@--long-info@]
 --     Print a detailed info message for the application and exit.
 --
 -- [@--license@]
