@@ -65,6 +65,7 @@ Library
         Configuration.Utils
         Configuration.Utils.Http
         Configuration.Utils.Setup
+        Configuration.Utils.Validation
 
     other-modules:
         Configuration.Utils.Internal
@@ -80,6 +81,7 @@ Library
         directory >= 1.2.1.0,
         errors >= 1.4.3,
         mtl >= 2.2,
+        network-uri >= 2.6.0.1,
         optparse-applicative >= 0.8.1,
         process >= 1.2.0.0,
         text >= 1.0,
