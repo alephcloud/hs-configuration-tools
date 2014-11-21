@@ -9,12 +9,12 @@
 
 module Main
 ( main
+, main_
 ) where
 
 import Configuration.Utils
 
 import Control.Monad
-import Control.Monad.Trans.Class
 import Control.Monad.Except
 import Control.Monad.Writer
 
@@ -51,8 +51,8 @@ defaultAuth = Auth
     }
 
 validateAuth ∷ ConfigValidation Auth []
-validateAuth auth =
-    when (_user auth ≠ "" && _pwd auth ≡ "") $ tell ["password is empty"]
+validateAuth conf =
+    when (_user conf ≠ "" && _pwd conf ≡ "") $ tell ["password is empty"]
 
 instance FromJSON (Auth → Auth) where
     parseJSON = withObject "Auth" $ \o → id

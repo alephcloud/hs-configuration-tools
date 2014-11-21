@@ -104,8 +104,7 @@ Test-Suite url-example
         base-unicode-symbols >= 0.2.2.4,
         configuration-tools,
         errors >= 1.4.3,
-        mtl >= 2.2,
-        transformers >= 0.3.0.0
+        mtl >= 2.2
 
     ghc-options: -Wall
 
