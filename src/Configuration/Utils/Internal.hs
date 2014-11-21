@@ -10,14 +10,19 @@ module Configuration.Utils.Internal
 ( lens
 , over
 , set
+, view
 , Lens'
 , Lens
 , Iso'
 , iso
 ) where
 
+import Control.Applicative (Const(..))
+import Control.Monad.Reader.Class
+
 import Data.Functor.Identity
 import Data.Profunctor
+import Data.Profunctor.Unsafe
 
 -- -------------------------------------------------------------------------- --
 -- Lenses
@@ -51,6 +56,9 @@ over s f = runIdentity . s (Identity . f)
 set ∷ ((α → Identity α) → β → Identity β) → α → β → β
 set s a = runIdentity . s (const $ Identity a)
 {-# INLINE set #-}
+
+view ∷ MonadReader σ μ ⇒ ((α → Const α α) → σ → Const α σ) → μ α
+view l = asks (getConst #. l Const)
 
 -- | This is the same type as the type from the lens library with the same name.
 --
