@@ -36,6 +36,10 @@
 -- 4. an options parser that yields a function that takes a value and updates
 --    that value with the values provided as command line options.
 --
+-- In addition to the above optionally a validation function may be provided
+-- that (recursively) validates a configuration value and returns either
+-- an error or a --possibly empty-- list-like structure of warnings.
+--
 -- The module provides operators and functions that make the implmentation of
 -- these entities easy for the common case that the configurations are encoded
 -- mainly as nested records.
@@ -56,6 +60,15 @@ module Configuration.Utils
 , piHelpFooter
 , piOptionParser
 , piDefaultConfiguration
+
+-- * Program Configurations with Validation of Configuration Values
+, ConfigValidation
+, programInfoValidate
+
+-- ** Low-level Config Validation
+, ProgramInfoValidate
+, piValidateConfiguration
+, ConfigValidationFunction
 , piOptionParserAndDefaultConfiguration
 
 -- * Running an Configured Application
@@ -106,18 +119,21 @@ module Configuration.Utils
 import Configuration.Utils.Internal
 
 import Control.Error (fmapL)
+import Control.Monad.Except hiding (mapM_)
+import Control.Monad.Writer hiding (mapM_)
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import qualified Data.ByteString.Char8 as B8
 import Data.Char
 import qualified Data.CaseInsensitive as CI
+import Data.Foldable
 import qualified Data.HashMap.Strict as H
 import Data.Maybe
-import Data.Monoid
 import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import qualified Data.Yaml as Yaml
 
 #if MIN_VERSION_optparse_applicative(0,10,0)
@@ -128,8 +144,10 @@ import Options.Applicative hiding (Parser, Success, (&))
 
 import qualified Options.Applicative as O
 
+import Prelude hiding (concatMap, mapM_, any)
 import Prelude.Unicode
 
+import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Text.ParserCombinators.ReadP as P
@@ -453,7 +471,22 @@ eitherReadP label p s =
 -- -------------------------------------------------------------------------- --
 -- Main Configuration
 
-data ProgramInfo α = ProgramInfo
+-- | A validation function. The type in the 'MonadWriter' is excpected to
+-- be a 'Foldable' structure for collecting warnings.
+--
+type ConfigValidation α λ = (MonadError T.Text μ, MonadWriter (λ T.Text) μ) ⇒ α → μ ()
+
+-- | A newtype wrapper around a validation function. The only purpose of
+-- this type is to avoid ImpredicativeTypes when storing the function
+-- in the 'ProgramInfoValidate' record.
+--
+newtype ConfigValidationFunction α λ = ConfigValidationFunction
+    { runConfigValidation ∷ ConfigValidation α λ
+    }
+
+type ProgramInfo α = ProgramInfoValidate α []
+
+data ProgramInfoValidate α λ = ProgramInfo
     { _piDescription ∷ !String
       -- ^ Program Description
     , _piHelpHeader ∷ !(Maybe String)
@@ -464,65 +497,101 @@ data ProgramInfo α = ProgramInfo
       -- ^ options parser for configuration (TODO consider using a typeclass for this)
     , _piDefaultConfiguration ∷ !α
       -- ^ default configuration
+    , _piValidateConfiguration ∷ !(ConfigValidationFunction α λ)
+      -- ^ a validation function. The 'Right' result is interpreted as a 'Foldable'
+      -- structure of warnings.
     }
 
 -- | Program Description
 --
-piDescription ∷ Lens' (ProgramInfo α) String
+piDescription ∷ Lens' (ProgramInfoValidate α λ) String
 piDescription = lens _piDescription $ \s a → s { _piDescription = a }
 {-# INLINE piDescription #-}
 
 -- | Help header
 --
-piHelpHeader ∷ Lens' (ProgramInfo α) (Maybe String)
+piHelpHeader ∷ Lens' (ProgramInfoValidate α λ) (Maybe String)
 piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a }
 {-# INLINE piHelpHeader #-}
 
 -- | Help footer
 --
-piHelpFooter ∷ Lens' (ProgramInfo α) (Maybe String)
+piHelpFooter ∷ Lens' (ProgramInfoValidate α λ) (Maybe String)
 piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a }
 {-# INLINE piHelpFooter #-}
 
 -- | options parser for configuration (TODO consider using a typeclass for this)
 --
-piOptionParser ∷ Lens' (ProgramInfo α) (MParser α)
+piOptionParser ∷ Lens' (ProgramInfoValidate α λ) (MParser α)
 piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a }
 {-# INLINE piOptionParser #-}
 
 -- | default configuration
 --
-piDefaultConfiguration ∷ Lens' (ProgramInfo α) α
+piDefaultConfiguration ∷ Lens' (ProgramInfoValidate α λ) α
 piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a }
 {-# INLINE piDefaultConfiguration #-}
+
+-- | Validation Function
+--
+-- The 'Right' result is interpreted as a 'Foldable' structure of warnings.
+--
+piValidateConfiguration ∷ Lens' (ProgramInfoValidate α λ) (ConfigValidationFunction α λ)
+piValidateConfiguration = lens _piValidateConfiguration $ \s a → s { _piValidateConfiguration = a }
+{-# INLINE piValidateConfiguration #-}
 
 -- | 'Lens' for simultaneous query and update of 'piOptionParser' and
 -- 'piDefaultConfiguration'. This supports to change the type of 'ProgramInfo'
 -- with 'over' and 'set'.
 --
-piOptionParserAndDefaultConfiguration ∷ Lens (ProgramInfo α) (ProgramInfo β) (MParser α, α) (MParser β, β)
-piOptionParserAndDefaultConfiguration = lens g $ \s (a,b) → ProgramInfo
+piOptionParserAndDefaultConfiguration
+    ∷ Lens
+        (ProgramInfoValidate α λ)
+        (ProgramInfoValidate β γ)
+        (MParser α, α, ConfigValidationFunction α λ)
+        (MParser β, β, ConfigValidationFunction β γ)
+piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
     { _piDescription = _piDescription s
     , _piHelpHeader = _piHelpHeader s
     , _piHelpFooter = _piHelpFooter s
     , _piOptionParser = a
     , _piDefaultConfiguration = b
+    , _piValidateConfiguration = c
     }
   where
-    g s = (_piOptionParser s, _piDefaultConfiguration s)
+    g s = (_piOptionParser s, _piDefaultConfiguration s, _piValidateConfiguration s)
 {-# INLINE piOptionParserAndDefaultConfiguration #-}
 
 -- | Smart constructor for 'ProgramInfo'.
 --
 -- 'piHelpHeader' and 'piHelpFooter' are set to 'Nothing'.
+-- The function 'piValidateConfiguration' is set to @const (return [])@
 --
-programInfo ∷ String → MParser α → α → ProgramInfo α
-programInfo desc parser defaultConfig = ProgramInfo
+programInfo
+    ∷ String
+    → MParser α
+    → α
+    → ProgramInfo α
+programInfo desc parser defaultConfig =
+    programInfoValidate desc parser defaultConfig $ const (return ())
+
+-- | Smart constructor for 'ProgramInfo'.
+--
+-- 'piHelpHeader' and 'piHelpFooter' are set to 'Nothing'.
+--
+programInfoValidate
+    ∷ String
+    → MParser α
+    → α
+    → ConfigValidation α λ
+    → ProgramInfoValidate α λ
+programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
     { _piDescription = desc
     , _piHelpHeader = Nothing
     , _piHelpFooter = Nothing
     , _piOptionParser = parser
     , _piDefaultConfiguration = defaultConfig
+    , _piValidateConfiguration = ConfigValidationFunction valFunc
     }
 
 data AppConfiguration α = AppConfiguration
@@ -570,8 +639,8 @@ pAppConfiguration d = AppConfiguration
         $ unsafePerformIO (Yaml.decodeFileEither file)
 
 mainOptions
-    ∷ ∀ α . FromJSON (α → α)
-    ⇒ ProgramInfo α
+    ∷ ∀ α λ . FromJSON (α → α)
+    ⇒ ProgramInfoValidate α λ
     → (∀ β . Maybe (MParser β))
     → O.ParserInfo (AppConfiguration α)
 mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
@@ -610,18 +679,43 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
 --     Print a help message and exit.
 --
 runWithConfiguration
-    ∷ (FromJSON (α → α), ToJSON α)
-    ⇒ ProgramInfo α
+    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
     → (α → IO ())
     → IO ()
 runWithConfiguration appInfo mainFunction = do
     conf ← O.customExecParser parserPrefs mainOpts
+    validateConfig appInfo $ _mainConfig conf
     if _printConfig conf
         then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
         else mainFunction ∘ _mainConfig $ conf
   where
     mainOpts = mainOptions appInfo Nothing
     parserPrefs = O.prefs O.disambiguate
+
+-- | Validates a configuration value. Throws an user error
+-- if there is an error. If there are warnings they are
+-- printed to 'stderr'.
+--
+validateConfig
+    ∷ (Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
+    → α
+    → IO ()
+validateConfig appInfo conf = do
+    warnings ← execWriterT . exceptT (error . T.unpack) return $ do
+        runConfigValidation (view piValidateConfiguration appInfo) conf
+    when (any (const True) warnings) $ do
+        T.hPutStrLn stderr "WARNINGS:"
+        mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
+
+exceptT
+    ∷ Monad μ
+    ⇒ (ε → μ β)
+    → (α → μ β)
+    → ExceptT ε μ α
+    → μ β
+exceptT a b = runExceptT >=> either a b
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
@@ -697,13 +791,14 @@ type PkgInfo =
 --     Print the text of the lincense of the application and exit.
 --
 runWithPkgInfoConfiguration
-    ∷ (FromJSON (α → α), ToJSON α)
-    ⇒ ProgramInfo α
+    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
     → PkgInfo
     → (α → IO ())
     → IO ()
 runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
     conf ← O.customExecParser parserPrefs mainOpts
+    validateConfig appInfo $ _mainConfig conf
     if _printConfig conf
         then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
         else mainFunction ∘ _mainConfig $ conf
