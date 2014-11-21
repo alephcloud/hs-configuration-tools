@@ -17,7 +17,12 @@
 module Configuration.Utils.Validation
 (
 -- * Networking
-  validateUri
+  validateHttpOrHttpsUrl
+, validateHttpUrl
+, validateHttpsUrl
+, validateUri
+, validateAbsoluteUri
+, validateAbsoluteUriFragment
 , validateIPv4
 , validateIPv6
 , validatePort
@@ -68,13 +73,75 @@ sshow = fromString ∘ show
 -- -------------------------------------------------------------------------- --
 -- Networking
 
+-- | Validates that a value is an HTTP or HTTPS URL
+--
+validateHttpOrHttpsUrl
+    ∷ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation String λ
+validateHttpOrHttpsUrl configName uri =
+    case parseURI uri of
+        Nothing → throwError $
+            "the value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
+        Just u → unless (uriScheme u ≡ "http:" || uriScheme u ≡ "https:") ∘ throwError $
+            "the value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not an HTTP or HTTPS URL"
+
+-- | Validates that a value is an HTTP URL
+--
+validateHttpUrl
+    ∷ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation String λ
+validateHttpUrl configName uri =
+    case parseURI uri of
+        Nothing → throwError $
+            "the value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
+        Just u → unless (uriScheme u ≡ "http:") ∘ throwError $
+            "the value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not an HTTP URL"
+
+-- | Validates that a value is an HTTPS URL
+--
+validateHttpsUrl
+    ∷ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation String λ
+validateHttpsUrl configName uri =
+    case parseURI uri of
+        Nothing → throwError $
+            "the value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
+        Just u → unless (uriScheme u ≡ "https:") ∘ throwError $
+            "the value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not an HTTPS URL"
+
+-- | Validates that a value is an URI without a fragment identifier
+--
 validateUri
     ∷ T.Text
         -- ^ configuration property name that is used in the error message
     → ConfigValidation String λ
 validateUri configName uri =
     unless (isURIReference uri) ∘ throwError $
-        "The value " <> T.pack uri <> " for " ⊕ configName ⊕ " is not a valid URI"
+        "The value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
+
+-- | Validates that a value is an absolute URI without a fragment identifier
+--
+validateAbsoluteUri
+    ∷ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation String λ
+validateAbsoluteUri configName uri =
+    unless (isAbsoluteURI uri) ∘ throwError $
+        "The value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
+
+-- | Validates that a value is an absolute URI with an optional fragment
+-- identifier
+--
+validateAbsoluteUriFragment
+    ∷ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation String λ
+validateAbsoluteUriFragment configName uri =
+    unless (isURI uri) ∘ throwError $
+        "The value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
 
 validateIPv4
     ∷ T.Text
