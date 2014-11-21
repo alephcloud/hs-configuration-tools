@@ -93,11 +93,14 @@ Library
 
     ghc-options: -Wall
 
-Test-Suite url-example
+Test-Suite url-example-test
     type: exitcode-stdio-1.0
     default-language: Haskell2010
-    main-is: Example.hs
-    hs-source-dirs: examples
+    main-is: TestExample.hs
+    hs-source-dirs: examples, test
+
+    other-modules:
+        Example
 
     build-depends:
         base >= 4.6 && < 5.0,
@@ -107,6 +110,7 @@ Test-Suite url-example
         mtl >= 2.2
 
     ghc-options: -Wall
+    cpp-options: -DMain=Example
 
 Test-Suite trivial
     type: exitcode-stdio-1.0
