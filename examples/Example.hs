@@ -2,6 +2,7 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -24,7 +25,7 @@ import Prelude.Unicode
 
 -- This assumes usage of cabal with custom Setup.hs
 --
-import PkgInfo_url_example
+import PkgInfo_url_example_test
 
 -- | Specification of the authentication section of a URL.
 --
