@@ -82,7 +82,7 @@ validateIPv4
     → ConfigValidation String λ
 validateIPv4 configName ipv4 =
     unless (isIPv4address ipv4) ∘ throwError $
-        "The value " <> T.pack ipv4 <> " for " ⊕ configName ⊕ " is not a valid IPv4 address"
+        "The value " ⊕ T.pack ipv4 ⊕ " for " ⊕ configName ⊕ " is not a valid IPv4 address"
 
 validateIPv6
     ∷ T.Text
@@ -90,7 +90,7 @@ validateIPv6
     → ConfigValidation String λ
 validateIPv6 configName ipv6 =
     unless (isIPv6address ipv6) ∘ throwError $
-        "The value " <> T.pack ipv6 <> " for " ⊕ configName ⊕ " is not a valid IPv6 address"
+        "The value " ⊕ T.pack ipv6 ⊕ " for " ⊕ configName ⊕ " is not a valid IPv6 address"
 
 validatePort
     ∷ T.Text
