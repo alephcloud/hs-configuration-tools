@@ -1,3 +1,13 @@
+0.2.7
+=====
+
+*   Added `view` funtion for lenses to `Configuration.Utils.Internal`.
+
+*   Added support for validation of configuration values.
+
+*   Added module `Configuration.Utils.Validation` that provides primitives
+    for validating different basic configuration values.
+
 0.2.6
 =====
 
