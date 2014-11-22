@@ -291,10 +291,12 @@ validateExecutable
     ∷ T.Text
         -- ^ configuration property name that is used in the error message
     → ConfigValidation FilePath λ
-validateExecutable configName file =
-    liftIO (findExecutable file) >>= \case
-        Nothing → throwError $
-            "the executable " ⊕ T.pack file ⊕ " for " ⊕ configName ⊕ " could not be found in the system;"
-            ⊕ " you may check your SearchPath and PATH variable settings"
-        Just f → validateFileExecutable configName f
+validateExecutable configName file = do
+    execFile ← (file <$ validateFile configName file) `catchError` \_ ->
+        liftIO (findExecutable file) >>= \case
+            Nothing → throwError $
+                "the executable " ⊕ T.pack file ⊕ " for " ⊕ configName ⊕ " could not be found in the system;"
+                ⊕ " you may check your SearchPath and PATH variable settings"
+            Just f → return f
+    validateFileExecutable configName execFile
 
