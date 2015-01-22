@@ -155,9 +155,9 @@ import qualified Text.ParserCombinators.ReadP as P
 -- -------------------------------------------------------------------------- --
 -- Useful Operators
 
--- | This operator is an alternative for '$' with a higher precedence which
--- makes it suitable for usage within Applicative style funtors without the need
--- to add parenthesis.
+-- | This operator is an alternative for '$' with a higher precedence. It is
+-- suitable for usage within applicative style code without the need to add
+-- parenthesis.
 --
 (%) ∷ (α → β) → α → β
 (%) = ($)
@@ -165,8 +165,8 @@ infixr 5 %
 {-# INLINE (%) #-}
 
 -- | This operator is a UTF-8 version of '%' which is an alternative for '$'
--- with a higher precedence which makes it suitable for usage within Applicative
--- style funtors without the need to add parenthesis.
+-- with a higher precedence. It is suitable for usage within applicative style
+-- code without the need to add parenthesis.
 --
 -- The hex value of the UTF-8 character × is 0x00d7.
 --
@@ -433,6 +433,17 @@ boolReader x = case CI.mk x of
     _ → Left $ "failed to read Boolean value " <> fromString (show x)
         <> ". Expected either \"true\" or \"false\""
 
+-- | The 'boolOption' is an alternative to 'O.switch'.
+--
+-- Using 'O.switch' with command line parsers that overwrite settings
+-- from a configuration file is problematic: the absence of the 'switch'
+-- is interpreted as setting the respective configuration value to 'False'.
+-- So there is no way to specify on the command line that the value from
+-- the configuration file shall be used. Some command line UIs use two
+-- different options for those values, for instance @--enable-feature@ and
+-- @--disable-feature@. This option instead expects a Boolean value. Beside
+-- that it behaves like any other option.
+--
 boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
@@ -477,7 +488,7 @@ eitherReadP label p s =
 type ConfigValidation α λ = (MonadIO μ, Functor μ, Applicative μ, MonadError T.Text μ, MonadWriter (λ T.Text) μ) ⇒ α → μ ()
 
 -- | A newtype wrapper around a validation function. The only purpose of
--- this type is to avoid ImpredicativeTypes when storing the function
+-- this type is to avoid @ImpredicativeTypes@ when storing the function
 -- in the 'ProgramInfoValidate' record.
 --
 newtype ConfigValidationFunction α λ = ConfigValidationFunction
@@ -494,7 +505,7 @@ data ProgramInfoValidate α λ = ProgramInfo
     , _piHelpFooter ∷ !(Maybe String)
       -- ^ Help footer
     , _piOptionParser ∷ !(MParser α)
-      -- ^ options parser for configuration (TODO consider using a typeclass for this)
+      -- ^ options parser for configuration
     , _piDefaultConfiguration ∷ !α
       -- ^ default configuration
     , _piValidateConfiguration ∷ !(ConfigValidationFunction α λ)
@@ -520,13 +531,13 @@ piHelpFooter ∷ Lens' (ProgramInfoValidate α λ) (Maybe String)
 piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a }
 {-# INLINE piHelpFooter #-}
 
--- | options parser for configuration (TODO consider using a typeclass for this)
+-- | Options parser for configuration
 --
 piOptionParser ∷ Lens' (ProgramInfoValidate α λ) (MParser α)
 piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a }
 {-# INLINE piOptionParser #-}
 
--- | default configuration
+-- | Default configuration
 --
 piDefaultConfiguration ∷ Lens' (ProgramInfoValidate α λ) α
 piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a }
@@ -569,8 +580,11 @@ piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
 --
 programInfo
     ∷ String
+        -- ^ program description
     → MParser α
+        -- ^ parser for updating the default configuration
     → α
+        -- ^ default configuration
     → ProgramInfo α
 programInfo desc parser defaultConfig =
     programInfoValidate desc parser defaultConfig $ const (return ())
@@ -681,7 +695,11 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
 runWithConfiguration
     ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
     ⇒ ProgramInfoValidate α λ
+        -- ^ program info value; use 'programInfo' to construct a value of this
+        -- type
     → (α → IO ())
+        -- ^ computation that is given the configuration that is parsed from
+        -- the command line.
     → IO ()
 runWithConfiguration appInfo mainFunction = do
     conf ← O.customExecParser parserPrefs mainOpts
@@ -793,8 +811,17 @@ type PkgInfo =
 runWithPkgInfoConfiguration
     ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
     ⇒ ProgramInfoValidate α λ
+        -- ^ program info value; use 'programInfo' to construct a value of this
+        -- type
     → PkgInfo
+        -- 'PkgInfo' value that contain information about the package.
+        --
+        -- See the documentation of "Configuration.Utils.Setup" for a way
+        -- how to generate this information automatically from the package
+        -- description during the build process.
     → (α → IO ())
+        -- ^ computation that is given the configuration that is parsed from
+        -- the command line.
     → IO ()
 runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
     conf ← O.customExecParser parserPrefs mainOpts
