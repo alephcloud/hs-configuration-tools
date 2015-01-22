@@ -41,6 +41,11 @@ module Configuration.Utils.Validation
 , validateFileWritable
 , validateExecutable
 , validateDirectory
+
+-- * Boolean Values
+, validateFalse
+, validateTrue
+, validateBool
 ) where
 
 import Configuration.Utils
@@ -299,4 +304,35 @@ validateExecutable configName file = do
                 ⊕ " you may check your SearchPath and PATH variable settings"
             Just f → return f
     validateFileExecutable configName execFile
+
+-- -------------------------------------------------------------------------- --
+-- Boolean Values
+
+validateFalse
+    ∷ (MonadError T.Text m)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → Bool
+    → m ()
+validateFalse configName = validateBool configName False
+
+validateTrue
+    ∷ (MonadError T.Text m)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → Bool
+    → m ()
+validateTrue configName = validateBool configName True
+
+validateBool
+    ∷ (MonadError T.Text m)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → Bool
+        -- ^ expected value
+    → Bool
+    → m ()
+validateBool configName expected x = unless (x ≡ expected) ∘ throwError $
+    "expected " ⊕ configName ⊕ " to be " ⊕ sshow expected ⊕ ", but was " ⊕ sshow x
+
 
