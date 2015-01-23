@@ -75,6 +75,7 @@ module Configuration.Utils
 , runWithConfiguration
 , PkgInfo
 , runWithPkgInfoConfiguration
+, parseConfiguration
 
 -- * Applicative Option Parsing with Default Values
 , MParser
@@ -724,6 +725,43 @@ runWithConfiguration appInfo mainFunction = do
   where
     mainOpts = mainOptions appInfo Nothing
     parserPrefs = O.prefs O.disambiguate
+
+-- | Parse the command line arguments.
+--
+-- Any warnings from the configuration function are discarded.
+-- The options @--print-config@ and @--help@ are just ignored.
+--
+-- NOTE this that this function may call 'unsafePerformIO' for
+-- reading configuration files.
+--
+parseConfiguration
+    ∷
+        ( Applicative m
+        , MonadIO m
+        , MonadError T.Text m
+        , FromJSON (α → α)
+        , ToJSON α
+        , Foldable λ
+        , Monoid (λ T.Text)
+        )
+    ⇒ T.Text
+        -- ^ program name (used in error messages)
+    → ProgramInfoValidate α λ
+        -- ^ program info value; use 'programInfo' to construct a value of this
+        -- type
+    → [String]
+        -- ^ command line arguments
+    → m α
+parseConfiguration appName appInfo args = do
+    case O.execParserPure parserPrefs mainOpts args of
+        O.Success a → validate (_mainConfig a) >> return (_mainConfig a)
+        O.Failure e → throwError ∘ T.pack ∘ fst $ renderFailure e (T.unpack appName)
+        O.CompletionInvoked _ → throwError "command line parser returned completion result"
+  where
+    mainOpts = mainOptions appInfo Nothing
+    parserPrefs = O.prefs O.disambiguate
+    validate conf = runWriterT $ do
+        runConfigValidation (view piValidateConfiguration appInfo) conf
 
 -- | Validates a configuration value. Throws an user error
 -- if there is an error. If there are warnings they are
