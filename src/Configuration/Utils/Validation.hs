@@ -53,6 +53,13 @@ module Configuration.Utils.Validation
 , validateNonPositive
 , validateNegative
 , validateNonNull
+
+-- * Orders
+, validateLess
+, validateLessEq
+, validateGreater
+, validateGreaterEq
+, validateRange
 ) where
 
 import Configuration.Utils
@@ -389,4 +396,56 @@ validateNonNull
 validateNonNull configName x = when (x ≡ 0) ∘ throwError $
     "value for " ⊕ configName ⊕ " must not be zero"
 
+-- -------------------------------------------------------------------------- --
+-- Orders
+
+validateLess
+    ∷ (Ord α, Show α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → α
+        -- ^ a strict upper bound for the configuration value
+    → ConfigValidation α λ
+validateLess configName upper x = unless (x < upper) ∘ throwError $
+    "value for " ⊕ configName ⊕ " must be strictly less than " ⊕ sshow upper ⊕ ", but was " ⊕ sshow x
+
+validateLessEq
+    ∷ (Ord α, Show α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → α
+        -- ^ a upper bound for the configuration value
+    → ConfigValidation α λ
+validateLessEq configName upper x = unless (x ≤ upper) ∘ throwError $
+    "value for " ⊕ configName ⊕ " must be less or equal than " ⊕ sshow upper ⊕ ", but was " ⊕ sshow x
+
+validateGreater
+    ∷ (Ord α, Show α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → α
+        -- ^ a strict lower bound for the configuration value
+    → ConfigValidation α λ
+validateGreater configName lower x = unless (x > lower) ∘ throwError $
+    "value for " ⊕ configName ⊕ " must be strictly greater than " ⊕ sshow lower ⊕ ", but was " ⊕ sshow x
+
+validateGreaterEq
+    ∷ (Ord α, Show α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → α
+        -- ^ a lower bound for the configuration value
+    → ConfigValidation α λ
+validateGreaterEq configName lower x = unless (x ≥ lower) ∘ throwError $
+    "value for " ⊕ configName ⊕ " must be greater or equal than " ⊕ sshow lower ⊕ ", but was " ⊕ sshow x
+
+validateRange
+    ∷ (Ord α, Show α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → (α, α)
+        -- ^ the valid range for the configuration value
+    → ConfigValidation α λ
+validateRange configName (lower,upper) x = unless (x ≥ lower ∧ x ≤ upper) ∘ throwError $
+    "value for " ⊕ configName ⊕ " must be within the range of (" ⊕ sshow lower ⊕ ", " ⊕ sshow upper ⊕ "), but was " ⊕ sshow x
 
