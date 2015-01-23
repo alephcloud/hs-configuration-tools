@@ -9,7 +9,6 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE CPP #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -138,11 +137,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Yaml as Yaml
 
-#if MIN_VERSION_optparse_applicative(0,10,0)
 import Options.Applicative hiding (Parser, Success)
-#else
-import Options.Applicative hiding (Parser, Success, (&))
-#endif
 
 import qualified Options.Applicative as O
 
@@ -462,18 +457,10 @@ boolReader x = case CI.mk x of
 boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
-#if MIN_VERSION_optparse_applicative(0,10,0)
 boolOption mods = O.option (O.eitherReader boolReader)
     % O.metavar "true|false"
     <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
     <> mods
-#else
-boolOption mods = O.nullOption
-    % metavar "true|false"
-    <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
-    <> O.eitherReader boolReader
-    <> mods
-#endif
 
 fileOption
     ∷ O.Mod O.OptionFields String
@@ -647,22 +634,12 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.short 'p'
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
-#if MIN_VERSION_optparse_applicative(0,10,0)
     <*> O.option (O.eitherReader $ \file → fileReader file <*> pure d)
         × O.long "config-file"
         ⊕ O.short 'c'
         ⊕ O.metavar "FILE"
         ⊕ O.help "Configuration file in YAML format"
         ⊕ O.value d
-#else
-    <*> O.nullOption
-        × O.long "config-file"
-        ⊕ O.short 'c'
-        ⊕ O.metavar "FILE"
-        ⊕ O.help "Configuration file in YAML format"
-        ⊕ O.eitherReader (\file → fileReader file <*> pure d)
-        ⊕ O.value d
-#endif
   where
     fileReader file = fmapL (\e → "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ show e)
         $ unsafePerformIO (Yaml.decodeFileEither file)
