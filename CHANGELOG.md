@@ -1,3 +1,17 @@
+0.2.8
+=====
+
+*   Added validation funcitons for Boolean values, numberic values and
+    orders.
+
+*   Added operator `!..:` for parsing of configuration values that are
+    required to be present in a configuration file, thus preventing
+    the default value from being used.
+
+*   More consistent usage of case in metavar values.
+
+*   Drop support for optparse-applicative < 0.10.
+
 0.2.7
 =====
 
