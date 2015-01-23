@@ -89,6 +89,7 @@ module Configuration.Utils
 -- * Parsing of Configuration Files with Default Values
 , setProperty
 , (..:)
+, (!..:)
 , (%.:)
 , module Data.Aeson
 
@@ -419,6 +420,19 @@ infix 6 ..:
     Just v → over s <$> parseJSON v
 infix 6 %.:
 {-# INLINE (%.:) #-}
+
+-- | This operator requires that a value is explicitly provided in a
+-- configuration file, thus preventing the default value from being used.
+-- Otherwise this operator does the same as '(..:)'.
+--
+(!..:)
+    ∷ FromJSON β
+    ⇒ Lens' α β
+    → T.Text
+    → Object
+    → Parser (α → α)
+(!..:) l property o = set l <$> (o .: property)
+{-# INLINE (!..:) #-}
 
 -- -------------------------------------------------------------------------- --
 -- Command Line Option Parsing
