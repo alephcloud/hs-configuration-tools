@@ -735,7 +735,7 @@ validateConfig
     → α
     → IO ()
 validateConfig appInfo conf = do
-    warnings ← execWriterT . exceptT (error . T.unpack) return $ do
+    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $ do
         runConfigValidation (view piValidateConfiguration appInfo) conf
     when (any (const True) warnings) $ do
         T.hPutStrLn stderr "WARNINGS:"
