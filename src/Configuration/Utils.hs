@@ -463,12 +463,12 @@ boolOption
     → O.Parser Bool
 #if MIN_VERSION_optparse_applicative(0,10,0)
 boolOption mods = O.option (O.eitherReader boolReader)
-    % O.metavar "TRUE|FALSE"
+    % O.metavar "true|false"
     <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
     <> mods
 #else
 boolOption mods = O.nullOption
-    % metavar "TRUE|FALSE"
+    % metavar "true|false"
     <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
     <> O.eitherReader boolReader
     <> mods
