@@ -46,6 +46,13 @@ module Configuration.Utils.Validation
 , validateFalse
 , validateTrue
 , validateBool
+
+-- * Numeric Values
+, validateNonNegative
+, validatePositive
+, validateNonPositive
+, validateNegative
+, validateNonNull
 ) where
 
 import Configuration.Utils
@@ -334,5 +341,52 @@ validateBool
     → m ()
 validateBool configName expected x = unless (x ≡ expected) ∘ throwError $
     "expected " ⊕ configName ⊕ " to be " ⊕ sshow expected ⊕ ", but was " ⊕ sshow x
+
+-- -------------------------------------------------------------------------- --
+-- Numeric Values
+
+validateNonNegative
+    ∷ (Ord α, Num α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation α λ
+validateNonNegative configName x =
+    when (x < 0) ∘ throwError $
+        "value for " ⊕ configName ⊕ " must not be negative"
+
+validatePositive
+    ∷ (Ord α, Num α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation α λ
+validatePositive configName x =
+    when (x ≤ 0) ∘ throwError $
+        "value for " ⊕ configName ⊕ " must be positive"
+
+validateNonPositive
+    ∷ (Ord α, Num α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation α λ
+validateNonPositive configName x =
+    when (x > 0) ∘ throwError $
+        "value for " ⊕ configName ⊕ " must not be positive"
+
+validateNegative
+    ∷ (Ord α, Num α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation α λ
+validateNegative configName x =
+    when (x ≥ 0) ∘ throwError $
+        "value for " ⊕ configName ⊕ " must be negative"
+
+validateNonNull
+    ∷ (Eq α, Num α)
+    ⇒ T.Text
+        -- ^ configuration property name that is used in the error message
+    → ConfigValidation α λ
+validateNonNull configName x = when (x ≡ 0) ∘ throwError $
+    "value for " ⊕ configName ⊕ " must not be zero"
 
 
