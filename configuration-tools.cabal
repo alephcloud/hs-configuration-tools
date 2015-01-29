@@ -63,11 +63,9 @@ Library
     exposed-modules:
         Configuration.Utils
         Configuration.Utils.Http
+        Configuration.Utils.Internal
         Configuration.Utils.Setup
         Configuration.Utils.Validation
-
-    other-modules:
-        Configuration.Utils.Internal
 
     build-depends:
         Cabal >= 1.20,
