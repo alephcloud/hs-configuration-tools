@@ -61,7 +61,6 @@ Library
     default-language: Haskell2010
 
     exposed-modules:
-        -- Configuration.Utils.FromJsonWithDef
         Configuration.Utils
         Configuration.Utils.Http
         Configuration.Utils.Setup
