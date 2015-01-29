@@ -104,7 +104,8 @@ Test-Suite url-example-test
         base-unicode-symbols >= 0.2.2.4,
         configuration-tools,
         errors >= 1.4.3,
-        mtl >= 2.2
+        mtl >= 2.2,
+        text >= 1.0
 
     ghc-options: -Wall
     cpp-options: -DMain=Example
