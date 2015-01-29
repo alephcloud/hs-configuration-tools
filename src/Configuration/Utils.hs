@@ -766,7 +766,7 @@ parseConfiguration
     → [String]
         -- ^ command line arguments
     → m α
-parseConfiguration appName appInfo args = do
+parseConfiguration appName appInfo args =
     case O.execParserPure parserPrefs mainOpts args of
         O.Success a → validate (_mainConfig a) >> return (_mainConfig a)
         O.Failure e → throwError ∘ T.pack ∘ fst $ renderFailure e (T.unpack appName)
@@ -774,7 +774,7 @@ parseConfiguration appName appInfo args = do
   where
     mainOpts = mainOptions appInfo Nothing
     parserPrefs = O.prefs O.disambiguate
-    validate conf = runWriterT $ do
+    validate conf = runWriterT $
         runConfigValidation (view piValidateConfiguration appInfo) conf
 
 -- | Validates a configuration value. Throws an user error
@@ -787,7 +787,7 @@ validateConfig
     → α
     → IO ()
 validateConfig appInfo conf = do
-    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $ do
+    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $
         runConfigValidation (view piValidateConfiguration appInfo) conf
     when (any (const True) warnings) $ do
         T.hPutStrLn stderr "WARNINGS:"
