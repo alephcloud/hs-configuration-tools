@@ -793,14 +793,6 @@ validateConfig appInfo conf = do
         T.hPutStrLn stderr "WARNINGS:"
         mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
 
-exceptT
-    ∷ Monad μ
-    ⇒ (ε → μ β)
-    → (α → μ β)
-    → ExceptT ε μ α
-    → μ β
-exceptT a b = runExceptT >=> either a b
-
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
 

@@ -63,6 +63,7 @@ module Configuration.Utils.Validation
 ) where
 
 import Configuration.Utils
+import Configuration.Utils.Internal
 
 import Control.Monad.Error.Class
 import Control.Monad
@@ -71,7 +72,6 @@ import Control.Monad.IO.Class
 import qualified Data.Foldable as F
 import Data.Monoid
 import Data.Monoid.Unicode
-import Data.String
 import qualified Data.Text as T
 
 import Network.URI
@@ -79,15 +79,6 @@ import Network.URI
 import Prelude.Unicode
 
 import System.Directory
-
--- -------------------------------------------------------------------------- --
--- Utils
-
-sshow
-    ∷ (Show α, IsString τ)
-    ⇒ α
-    → τ
-sshow = fromString ∘ show
 
 -- -------------------------------------------------------------------------- --
 -- Networking

@@ -2,12 +2,16 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RankNTypes #-}
 
 module Configuration.Utils.Internal
-( lens
+(
+-- * Lenses
+  lens
 , over
 , set
 , view
@@ -15,14 +19,26 @@ module Configuration.Utils.Internal
 , Lens
 , Iso'
 , iso
+
+-- * Misc Utils
+, sshow
+, exceptT
+, errorT
 ) where
 
 import Control.Applicative (Const(..))
+import Control.Monad
 import Control.Monad.Reader.Class
+import Control.Monad.Except
 
 import Data.Functor.Identity
+import Data.Monoid.Unicode
 import Data.Profunctor
 import Data.Profunctor.Unsafe
+import Data.String
+import qualified Data.Text as T
+
+import Prelude.Unicode
 
 -- -------------------------------------------------------------------------- --
 -- Lenses
@@ -70,4 +86,27 @@ type Iso' β α = (Profunctor π, Functor φ) ⇒ π α (φ α) → π β (φ β
 iso ∷ (β → α) → (α → β) → Iso' β α
 iso f g = dimap f (fmap g)
 {-# INLINE iso #-}
+
+-- -------------------------------------------------------------------------- --
+-- Misc Utils
+
+sshow
+    ∷ (Show α, IsString τ)
+    ⇒ α
+    → τ
+sshow = fromString ∘ show
+
+exceptT
+    ∷ Monad μ
+    ⇒ (ε → μ β)
+    → (α → μ β)
+    → ExceptT ε μ α
+    → μ β
+exceptT a b = runExceptT >=> either a b
+
+errorT
+    ∷ Monad μ
+    ⇒ ExceptT T.Text μ α
+    → μ α
+errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
 
