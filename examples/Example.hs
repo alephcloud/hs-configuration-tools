@@ -9,7 +9,26 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Main
-( main
+(
+-- * Authentication
+  Auth(..)
+, user
+, pwd
+, defaultAuth
+, validateAuth
+, pAuth
+
+-- * Http URL
+, HttpURL(..)
+, auth
+, domain
+, path
+, defaultHttpURL
+, validateHttpURL
+, pHttpURL
+
+-- * main functions
+, main
 , main_
 ) where
 
