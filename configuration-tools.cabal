@@ -124,7 +124,6 @@ Test-Suite url-example-test
         yaml >= 0.8.8.3
 
     ghc-options: -Wall
-    cpp-options: -DMain=Example
 
 Test-Suite trivial
     type: exitcode-stdio-1.0
