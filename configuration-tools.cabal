@@ -123,6 +123,16 @@ Test-Suite url-example-test
         text >= 1.0,
         yaml >= 0.8.8.3
 
+    if flag(remote-configs)
+        build-depends:
+            enclosed-exceptions >= 1.0,
+            http-types >= 0.8,
+            monad-control >= 1.0,
+            wai >= 3.0,
+            warp >= 3.0
+
+        cpp-options: -DREMOTE_CONFIGS
+
     ghc-options: -Wall
 
 Test-Suite trivial

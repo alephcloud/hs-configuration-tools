@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
@@ -42,6 +43,15 @@ import System.IO
 
 import PkgInfo_url_example_test
 
+#ifdef REMOTE_CONFIGS
+import Control.Concurrent
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.Text.Encoding as T
+import qualified Network.Wai as WAI
+import qualified Network.Wai.Handler.Warp as WARP
+import qualified Network.HTTP.Types as HTTP
+#endif
+
 -- -------------------------------------------------------------------------- --
 -- Poor man's debugging
 
@@ -59,21 +69,36 @@ debug a
 -- -------------------------------------------------------------------------- --
 -- main
 
+#ifdef REMOTE_CONFIGS
+serverPort ∷ Int
+serverPort = 8283
+
+serverUrl ∷ T.Text
+serverUrl = "http://127.0.0.1:" ⊕ sshow serverPort
+#endif
+
 main ∷ IO ()
 main =
     withTempFile "." "tmp_TestExample.yml" $ \tmpPath0 tmpHandle0 →
     withTempFile "." "tmp_TestExample.yml" $ \tmpPath1 tmpHandle1 → do
 
-        B8.hPutStrLn tmpHandle0 ∘ Yaml.encode $ fileConfig0
+        B8.hPutStrLn tmpHandle0 ∘ Yaml.encode $ config0
         hClose tmpHandle0
 
-        T.hPutStrLn tmpHandle1 fileConfig1Part
+        T.hPutStrLn tmpHandle1 config1Part
         hClose tmpHandle1
 
+#ifdef REMOTE_CONFIGS
+        void ∘ forkIO $ server serverPort
+#endif
         (successes, failures) ← L.partition id <$> sequence
             × tests0
             ⊕ tests1 [T.pack tmpPath0, T.pack tmpPath1]
-            ⊕ tests2 (T.pack tmpPath0) (T.pack tmpPath1)
+            ⊕ tests2 "test-2a-" (T.pack tmpPath0) (T.pack tmpPath1)
+#ifdef REMOTE_CONFIGS
+            ⊕ tests2 "test-2b-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            ⊕ test3
+#endif
 
         T.putStrLn $ "success: " ⊕ sshow (length successes)
         T.putStrLn $ "failures: " ⊕ sshow (length failures)
@@ -82,120 +107,160 @@ main =
                 T.readFile tmpPath0 >>= T.putStrLn
                 T.readFile tmpPath1 >>= T.putStrLn
             error "test suite failed"
+
+-- -------------------------------------------------------------------------- --
+-- Test Cases
+
+#ifdef REMOTE_CONFIGS
+-- | Test with invalid remote URLs
+--
+test3 ∷ [IO Bool]
+test3 =
+    [ runTest mainInfo "test-3-0" False [x0 d1]
+    , runTest mainInfo "test-3-1" False [x1 d1]
+    ]
   where
+    x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=http://invalid"):args) l v
+    x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"):args) l v
+#endif
 
-    -- tests with configuration files
 
+-- | Tests with two configuration files
+--
+tests2
+    ∷ T.Text
+        -- ^ test label prefix
+    → T.Text
+        -- ^ file for config0
+    → T.Text
+        -- ^ file for config1
+    → [IO Bool]
+tests2 prefix file0 file1 =
+    -- first c0 then c1
+    [ runf [file0] (prefix ⊕ "0") True [x1 (f1 c1), f2 c0, f3 c1, f4 c0]
+    , runf [file0] (prefix ⊕ "1") False [x1 (f1 c0)]
+    , runf [file0] (prefix ⊕ "2") False [x1 d1]
+    , runf [file0] (prefix ⊕ "3") False [x1 (f3 c0)]
+    , runf [file0] (prefix ⊕ "4") False [x1 d4]
+
+    -- c1 then c0
+    , runf [file1] "test-2-5" True [x0 (f1 c0), f2 c0, f3 c0, f4 c0]
+    , runf [file1] "test-2-6" False [x0 (f1 c1)]
+    , runf [file1] "test-2-7" False [x0 (f2 c1)]
+    , runf [file1] "test-2-8" False [x0 (f3 c1)]
+    , runf [file1] "test-2-9" False [x0 (f4 c1)]
+    ]
+  where
+    c0 = config0
+    c1 = config1
+    x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack file0):args) l v
+    x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack file1):args) l v
     runf files = runTest $ mainInfoConfigFile files
 
-    fileConfig0 = defaultHttpURL
-        { _domain = "f0_localhost"
-        , _path = "f0_path"
-        , _auth = defaultAuth
-            { _user = "f0_user"
-            , _pwd = "f0_pwd"
-            }
-        }
+-- | Tests with two configuration files
+--
+tests1 ∷ [T.Text] → [IO Bool]
+tests1 files =
+    -- first c0 then c1
+    [ runf files "test-1-0" True [f1 c1, f2 c0, f3 c1, f4 c0]
+    , runf files "test-1-1" False [f1 c0]
+    , runf files "test-1-2" False [d1]
+    , runf files "test-1-3" False [f3 c0]
+    , runf files "test-1-4" False [d4]
 
-    fileConfig1 = defaultHttpURL
-        { _domain = "f1_localhost"
-        , _path = "f1_path"
-        , _auth = defaultAuth
-            { _user = "f1_user"
-            , _pwd = "f1_pwd"
-            }
-        }
+    -- c1 then c0
+    , runf selif "test-1-5" True [f1 c0, f2 c0, f3 c0, f4 c0]
+    , runf selif "test-1-6" False [f1 c1]
+    , runf selif "test-1-7" False [f2 c1]
+    , runf selif "test-1-8" False [f3 c1]
+    , runf selif "test-1-9" False [f4 c1]
+    ]
+  where
+    c0 = config0
+    c1 = config1
+    selif = reverse files
+    runf f = runTest $ mainInfoConfigFile f
 
-    -- We only write a partial configuration file...
-    fileConfig1Part = T.unlines
-        [ "domain: " ⊕ T.pack (view domain fileConfig1)
-        , "auth:"
-        , "    user: " ⊕ T.pack (view (auth ∘ user) fileConfig1)
-        ]
+-- | Command Line argument test
+--
+tests0 ∷ [IO Bool]
+tests0 =
+    [ run "test0" False [d1, d2, d3, d4]
 
-    tests2 file0 file1 =
-        -- first c0 then c1
-        [ runf [file0] "test-2-0" True [x1 (f1 c1), f2 c0, f3 c1, f4 c0]
-        , runf [file0] "test-2-1" False [x1 (f1 c0)]
-        , runf [file0] "test-2-2" False [x1 d1]
-        , runf [file0] "test-2-3" False [x1 (f3 c0)]
-        , runf [file0] "test-2-4" False [x1 d4]
+    , run "test1" True [t0, d2, d3, d4]
+    , run "test2" True [t1, d2, d3, d4]
+    , run "test3" True [d1, t2, d3, d4]
+    , run "test4" False [d1, d2, t3, d4]
+    , run "test5" False [d1, d2, d3, t4]
 
-        -- c1 then c0
-        , runf [file1] "test-2-5" True [x0 (f1 c0), f2 c0, f3 c0, f4 c0]
-        , runf [file1] "test-2-6" False [x0 (f1 c1)]
-        , runf [file1] "test-2-7" False [x0 (f2 c1)]
-        , runf [file1] "test-2-8" False [x0 (f3 c1)]
-        , runf [file1] "test-2-9" False [x0 (f4 c1)]
-        ]
-      where
-        c0 = fileConfig0
-        c1 = fileConfig1
-        x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack file0):args) l v
-        x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack file1):args) l v
+    , run "test6" False [t0, t1, d2, d3, d4]
+    , run "test7" True [t0, t2, d3, d4]
+    , run "test8" True [t0, d2, t3, d4]
+    , run "test9" True [t0, d2, d3, t4]
+    , run "test10" True [t1, t2, d3, d4]
+    , run "test11" True [t1, d2, t3, d4]
+    , run "test12" True [t1, d2, d3, t4]
+    , run "test13" True [d1, t2, t3, d4]
+    , run "test14" True [d1, t2, d3, t4]
+    , run "test15" False [d1, d2, t3, t4]
 
-    tests1 files =
-        -- first c0 then c1
-        [ runf files "test-1-0" True [f1 c1, f2 c0, f3 c1, f4 c0]
-        , runf files "test-1-1" False [f1 c0]
-        , runf files "test-1-2" False [d1]
-        , runf files "test-1-3" False [f3 c0]
-        , runf files "test-1-4" False [d4]
+    , run "test16" False [t0, t1, t2, d3, d4]
+    , run "test17" False [t0, t1, t3, d4]
+    , run "test18" False [t0, t1, d3, t4]
+    , run "test19" True [t0, t2, t3, d4]
+    , run "test20" True [t0, t2, d3, t4]
+    , run "test21" True [t0, d2, t3, t4]
+    , run "test22" True [t1, t2, t3, d4]
+    , run "test23" True [t1, t2, d3, t4]
+    , run "test24" True [t1, d2, t3, t4]
+    , run "test25" True [d1, t2, t3, t4]
 
-        -- c1 then c0
-        , runf selif "test-1-5" True [f1 c0, f2 c0, f3 c0, f4 c0]
-        , runf selif "test-1-6" False [f1 c1]
-        , runf selif "test-1-7" False [f2 c1]
-        , runf selif "test-1-8" False [f3 c1]
-        , runf selif "test-1-9" False [f4 c1]
-        ]
-      where
-        c0 = fileConfig0
-        c1 = fileConfig1
-        selif = reverse files
+    , run "test26" False [t0, t1, t2, t3, d4]
+    , run "test27" False [t0, t1, t2, d3, t4]
+    , run "test28" False [t0, t1, d2, t3, t4]
+    , run "test29" True [t0, t2, t3, t4]
+    , run "test30" True [t1, t2, t3, t4]
 
-    -- simple Tests
-
+    , run "test31" False [t0, t1, t2, t3, t4]
+    ]
+  where
     run = runTest mainInfo
-    tests0 =
-        [ run "test0" False [d1, d2, d3, d4]
 
-        , run "test1" True [t0, d2, d3, d4]
-        , run "test2" True [t1, d2, d3, d4]
-        , run "test3" True [d1, t2, d3, d4]
-        , run "test4" False [d1, d2, t3, d4]
-        , run "test5" False [d1, d2, d3, t4]
+-- -------------------------------------------------------------------------- --
+-- Test Data
 
-        , run "test6" False [t0, t1, d2, d3, d4]
-        , run "test7" True [t0, t2, d3, d4]
-        , run "test8" True [t0, d2, t3, d4]
-        , run "test9" True [t0, d2, d3, t4]
-        , run "test10" True [t1, t2, d3, d4]
-        , run "test11" True [t1, d2, t3, d4]
-        , run "test12" True [t1, d2, d3, t4]
-        , run "test13" True [d1, t2, t3, d4]
-        , run "test14" True [d1, t2, d3, t4]
-        , run "test15" False [d1, d2, t3, t4]
+-- | Test configuration 0
+--
+config0 ∷ HttpURL
+config0 = defaultHttpURL
+    { _domain = "f0_localhost"
+    , _path = "f0_path"
+    , _auth = defaultAuth
+        { _user = "f0_user"
+        , _pwd = "f0_pwd"
+        }
+    }
 
-        , run "test16" False [t0, t1, t2, d3, d4]
-        , run "test17" False [t0, t1, t3, d4]
-        , run "test18" False [t0, t1, d3, t4]
-        , run "test19" True [t0, t2, t3, d4]
-        , run "test20" True [t0, t2, d3, t4]
-        , run "test21" True [t0, d2, t3, t4]
-        , run "test22" True [t1, t2, t3, d4]
-        , run "test23" True [t1, t2, d3, t4]
-        , run "test24" True [t1, d2, t3, t4]
-        , run "test25" True [d1, t2, t3, t4]
+-- | Test configuration 1
+--
+config1 ∷ HttpURL
+config1 = defaultHttpURL
+    { _domain = "f1_localhost"
+    , _path = "f1_path"
+    , _auth = defaultAuth
+        { _user = "f1_user"
+        , _pwd = "f1_pwd"
+        }
+    }
 
-        , run "test26" False [t0, t1, t2, t3, d4]
-        , run "test27" False [t0, t1, t2, d3, t4]
-        , run "test28" False [t0, t1, d2, t3, t4]
-        , run "test29" True [t0, t2, t3, t4]
-        , run "test30" True [t1, t2, t3, t4]
-
-        , run "test31" False [t0, t1, t2, t3, t4]
-        ]
+-- | A partial version of configuration 1
+--
+config1Part ∷ T.Text
+config1Part = T.unlines
+    [ "domain: " ⊕ T.pack (view domain config1)
+    , "auth:"
+    , "    user: " ⊕ T.pack (view (auth ∘ user) config1)
+    ]
 
 mainInfo ∷ ProgramInfoValidate HttpURL []
 mainInfo = programInfoValidate "HTTP URL" pHttpURL defaultHttpURL validateHttpURL
@@ -206,7 +271,7 @@ mainInfoConfigFile
 mainInfoConfigFile files = set piConfigurationFiles files mainInfo
 
 -- -------------------------------------------------------------------------- --
--- Test Vectors
+-- Building blocks for tests
 
 -- | Specify a assertion about the parsed configuration
 --
@@ -327,3 +392,17 @@ runTest mInfo label succeed assertions = do
         writeIORef ref False
         debug ∘ T.putStrLn $ "DEBUG: caugth exception: " ⊕ sshow e
 
+#ifdef REMOTE_CONFIGS
+-- -------------------------------------------------------------------------- --
+-- Test HTTP server for serving configurations
+--
+
+server ∷ Int → IO ()
+server port = WARP.run port $ \req respond → do
+    let body = LB.fromStrict $ case WAI.pathInfo req of
+            ("config0":_) → Yaml.encode $ config0
+            ("config1":_) → T.encodeUtf8 $ config1Part
+            _ → "invalid: invalid"
+    respond $ WAI.responseLBS HTTP.status200 [] body
+
+#endif
