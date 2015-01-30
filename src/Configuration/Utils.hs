@@ -2,6 +2,8 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -151,6 +153,14 @@ import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Text.ParserCombinators.ReadP as P
+
+#ifdef REMOTE_CONFIGS
+import Control.Monad.Trans.Control
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.List as L
+import Network.HTTP.Conduit (simpleHttp)
+import Control.Exception.Enclosed
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- Useful Operators
@@ -739,6 +749,9 @@ parseConfiguration
     ∷
         ( Applicative m
         , MonadIO m
+#ifdef REMOTE_CONFIGS
+        , MonadBaseControl IO m
+#endif
         , MonadError T.Text m
         , FromJSON (α → α)
         , ToJSON α
@@ -944,8 +957,25 @@ validateConfig appInfo conf = do
 -- -------------------------------------------------------------------------- --
 -- Tools for parsing configuration files
 
+#ifdef REMOTE_CONFIGS
+type ConfigFileParser μ =
+    ( Functor μ
+    , Applicative μ
+    , MonadIO μ
+    , MonadBaseControl IO μ
+    , MonadError T.Text μ
+    )
+#else
+type ConfigFileParser μ =
+    ( Functor μ
+    , Applicative μ
+    , MonadIO μ
+    , MonadError T.Text μ
+    )
+#endif
+
 parseConfigFiles
-    ∷ (Applicative μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
+    ∷ (ConfigFileParser μ, FromJSON (α → α))
     ⇒ α
         -- ^ default configuration value
     → [T.Text]
@@ -955,13 +985,44 @@ parseConfigFiles = foldM $ \conf file →
     readConfigFile file <*> pure conf
 
 readConfigFile
+    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ⇒ T.Text
+        -- ^ file path
+    → μ (α → α)
+readConfigFile file =
+#ifdef REMOTE_CONFIGS
+    if isRemote file then loadRemote file else loadLocal file
+#else
+    loadLocal file
+#endif
+
+loadLocal
     ∷ (MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
     ⇒ T.Text
         -- ^ file path
     → μ (α → α)
-readConfigFile file = liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
+loadLocal file = liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
     Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
     Right r → return r
+
+#ifdef REMOTE_CONFIGS
+isRemote
+    ∷ T.Text
+    → Bool
+isRemote path = L.any (`T.isPrefixOf` path) ["http://", "https://"]
+
+loadRemote
+    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ⇒ T.Text
+        -- ^ URL
+    → μ (α → α)
+loadRemote url = do
+    dat ← LB.toStrict <$> liftIO (simpleHttp (T.unpack url)) `catchAnyDeep` \e →
+        throwError $ "failed to download remote configuration file: " ⊕ sshow e
+    case Yaml.decodeEither' dat of
+        Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ sshow e
+        Right r → return r
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- Configuration of Optional Values
