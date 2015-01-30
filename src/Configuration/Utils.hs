@@ -2,6 +2,7 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -59,6 +60,7 @@ module Configuration.Utils
 , piHelpFooter
 , piOptionParser
 , piDefaultConfiguration
+, piConfigurationFiles
 
 -- * Program Configurations with Validation of Configuration Values
 , ConfigValidation
@@ -550,6 +552,9 @@ data ProgramInfoValidate α λ = ProgramInfo
     , _piValidateConfiguration ∷ !(ConfigValidationFunction α λ)
       -- ^ a validation function. The 'Right' result is interpreted as a 'Foldable'
       -- structure of warnings.
+    , _piConfigurationFiles ∷ ![T.Text]
+      -- ^ a list of configuration files that are loaded in order
+      -- before any command line argument is evaluated.
     }
 
 -- | Program Description
@@ -590,6 +595,13 @@ piValidateConfiguration ∷ Lens' (ProgramInfoValidate α λ) (ConfigValidationF
 piValidateConfiguration = lens _piValidateConfiguration $ \s a → s { _piValidateConfiguration = a }
 {-# INLINE piValidateConfiguration #-}
 
+-- | Configuration files that are loaded in order before any command line
+-- argument is evaluated.
+--
+piConfigurationFiles ∷ Lens' (ProgramInfoValidate α λ) [T.Text]
+piConfigurationFiles = lens _piConfigurationFiles $ \s a → s { _piConfigurationFiles = a }
+{-# INLINE piConfigurationFiles #-}
+
 -- | 'Lens' for simultaneous query and update of 'piOptionParser' and
 -- 'piDefaultConfiguration'. This supports to change the type of 'ProgramInfo'
 -- with 'over' and 'set'.
@@ -607,6 +619,7 @@ piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
     , _piOptionParser = a
     , _piDefaultConfiguration = b
     , _piValidateConfiguration = c
+    , _piConfigurationFiles = _piConfigurationFiles s
     }
   where
     g s = (_piOptionParser s, _piDefaultConfiguration s, _piValidateConfiguration s)
@@ -645,6 +658,7 @@ programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
     , _piOptionParser = parser
     , _piDefaultConfiguration = defaultConfig
     , _piValidateConfiguration = ConfigValidationFunction valFunc
+    , _piConfigurationFiles = []
     }
 
 data AppConfiguration α = AppConfiguration
@@ -678,32 +692,10 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.help "Configuration file in YAML format"
         ⊕ O.value d
   where
-    fileReader file = fmapL (\e → "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ show e)
-        $ unsafePerformIO (Yaml.decodeFileEither file)
+    fileReader = fmapL T.unpack ∘ unsafePerformIO ∘ runExceptT ∘ readConfigFile ∘ T.pack
 
-mainOptions
-    ∷ ∀ α λ . FromJSON (α → α)
-    ⇒ ProgramInfoValidate α λ
-    → (∀ β . Maybe (MParser β))
-    → O.ParserInfo (AppConfiguration α)
-mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
-    $ O.progDesc _piDescription
-    ⊕ O.fullDesc
-    ⊕ maybe mempty O.header _piHelpHeader
-    ⊕ maybe mempty O.footer _piHelpFooter
-  where
-    optionParser = fromMaybe (pure id) pkgInfoParser
-        <*> nonHiddenHelper
-        <*> (over mainConfig <$> _piOptionParser)
-        <*> pAppConfiguration _piDefaultConfiguration
-
-    -- the 'O.helper' option from optparse-applicative is hidden be default
-    -- which seems a bit weired. This option doesn't hide the access to help.
-    nonHiddenHelper = abortOption ShowHelpText
-        × long "help"
-        ⊕ short 'h'
-        ⊕ short '?'
-        ⊕ help "Show this help text"
+-- -------------------------------------------------------------------------- --
+-- Main Configuration without Package Info
 
 -- | Run an IO action with a configuration that is obtained by updating the
 -- given default configuration the values defined via command line arguments.
@@ -730,15 +722,10 @@ runWithConfiguration
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
-runWithConfiguration appInfo mainFunction = do
-    conf ← O.customExecParser parserPrefs mainOpts
-    validateConfig appInfo $ _mainConfig conf
-    if _printConfig conf
-        then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
-        else mainFunction ∘ _mainConfig $ conf
-  where
-    mainOpts = mainOptions appInfo Nothing
-    parserPrefs = O.prefs O.disambiguate
+runWithConfiguration appInfo = runInternal appInfo Nothing
+
+-- -------------------------------------------------------------------------- --
+-- Low level configuration parsing
 
 -- | Parse the command line arguments.
 --
@@ -776,22 +763,6 @@ parseConfiguration appName appInfo args =
     parserPrefs = O.prefs O.disambiguate
     validate conf = runWriterT $
         runConfigValidation (view piValidateConfiguration appInfo) conf
-
--- | Validates a configuration value. Throws an user error
--- if there is an error. If there are warnings they are
--- printed to 'stderr'.
---
-validateConfig
-    ∷ (Foldable λ, Monoid (λ T.Text))
-    ⇒ ProgramInfoValidate α λ
-    → α
-    → IO ()
-validateConfig appInfo conf = do
-    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $
-        runConfigValidation (view piValidateConfiguration appInfo) conf
-    when (any (const True) warnings) $ do
-        T.hPutStrLn stderr "WARNINGS:"
-        mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
@@ -872,7 +843,7 @@ runWithPkgInfoConfiguration
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
     → PkgInfo
-        -- 'PkgInfo' value that contain information about the package.
+        -- 'PkgInfo' value that contains information about the package.
         --
         -- See the documentation of "Configuration.Utils.Setup" for a way
         -- how to generate this information automatically from the package
@@ -881,15 +852,110 @@ runWithPkgInfoConfiguration
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
-runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
-    conf ← O.customExecParser parserPrefs mainOpts
-    validateConfig appInfo $ _mainConfig conf
+runWithPkgInfoConfiguration appInfo pkgInfo =
+    runInternal appInfo (Just $ pPkgInfo pkgInfo)
+
+-- -------------------------------------------------------------------------- --
+-- Internal main function
+
+mainOptions
+    ∷ ∀ α λ . FromJSON (α → α)
+    ⇒ ProgramInfoValidate α λ
+    → (∀ β . Maybe (MParser β))
+    → O.ParserInfo (AppConfiguration α)
+mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
+    $ O.progDesc _piDescription
+    ⊕ O.fullDesc
+    ⊕ maybe mempty O.header _piHelpHeader
+    ⊕ maybe mempty O.footer _piHelpFooter
+  where
+    optionParser = fromMaybe (pure id) pkgInfoParser
+        <*> nonHiddenHelper
+        <*> (over mainConfig <$> _piOptionParser)
+        <*> pAppConfiguration _piDefaultConfiguration
+
+    -- the 'O.helper' option from optparse-applicative is hidden be default
+    -- which seems a bit weired. This option doesn't hide the access to help.
+    nonHiddenHelper = abortOption ShowHelpText
+        × long "help"
+        ⊕ short 'h'
+        ⊕ short '?'
+        ⊕ help "Show this help text"
+
+-- | Internal main function
+--
+runInternal
+    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
+        -- ^ program info value; use 'programInfo' to construct a value of this
+        -- type
+    → (∀ β . Maybe (MParser β))
+        -- 'PkgInfo' value that contains information about the package.
+        --
+        -- See the documentation of "Configuration.Utils.Setup" for a way
+        -- how to generate this information automatically from the package
+        -- description during the build process.
+    → (α → IO ())
+        -- ^ computation that is given the configuration that is parsed from
+        -- the command line.
+    → IO ()
+runInternal appInfo maybePkgInfo mainFunction = do
+
+    -- Parse static configuration files
+    configFromFiles ← errorT $
+        parseConfigFiles (_piDefaultConfiguration appInfo) (_piConfigurationFiles appInfo)
+    let newAppInfo = appInfo { _piDefaultConfiguration = configFromFiles }
+
+    -- Parse command line
+    conf ← O.customExecParser parserPrefs (mainOpts newAppInfo)
+    validateConfig newAppInfo $ _mainConfig conf
     if _printConfig conf
         then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
         else mainFunction ∘ _mainConfig $ conf
   where
-    mainOpts = mainOptions appInfo (Just $ pPkgInfo pkgInfo)
+    mainOpts i = mainOptions i maybePkgInfo
     parserPrefs = O.prefs O.disambiguate
+
+-- -------------------------------------------------------------------------- --
+-- Validation
+
+-- | Validates a configuration value. Throws an user error
+-- if there is an error. If there are warnings they are
+-- printed to 'stderr'.
+--
+validateConfig
+    ∷ (Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
+    → α
+    → IO ()
+validateConfig appInfo conf = do
+    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $
+        runConfigValidation (view piValidateConfiguration appInfo) conf
+    when (any (const True) warnings) $ do
+        T.hPutStrLn stderr "WARNINGS:"
+        mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
+
+-- -------------------------------------------------------------------------- --
+-- Tools for parsing configuration files
+
+parseConfigFiles
+    ∷ (Applicative μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
+    ⇒ α
+        -- ^ default configuration value
+    → [T.Text]
+        -- ^ list of configuration file paths
+    → μ α
+parseConfigFiles = foldM $ \conf file →
+    readConfigFile file <*> pure conf
+
+readConfigFile
+    ∷ (MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
+    ⇒ T.Text
+        -- ^ file path
+    → μ (α → α)
+readConfigFile file = liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
+    Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
+    Right r → return r
 
 -- -------------------------------------------------------------------------- --
 -- Configuration of Optional Values

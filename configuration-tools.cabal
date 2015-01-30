@@ -102,10 +102,13 @@ Test-Suite url-example-test
     build-depends:
         base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
+        bytestring >= 0.10,
+        Cabal >= 1.20,
         configuration-tools,
         errors >= 1.4.3,
         mtl >= 2.2,
-        text >= 1.0
+        text >= 1.0,
+        yaml >= 0.8.8.3
 
     ghc-options: -Wall
     cpp-options: -DMain=Example
