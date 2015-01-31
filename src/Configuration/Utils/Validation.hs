@@ -41,6 +41,7 @@ module Configuration.Utils.Validation
 , validateFileWritable
 , validateExecutable
 , validateDirectory
+, validateConfigFile
 
 -- * Boolean Values
 , validateFalse
@@ -346,6 +347,17 @@ validateExecutable configName file = do
                 ⊕ " you may check your SearchPath and PATH variable settings"
             Just f → return f
     validateFileExecutable configName execFile
+
+-- | Validate that the input is a config file
+--
+validateConfigFile
+    ∷ (MonadIO m, MonadError T.Text m)
+    ⇒ String
+    → m ()
+validateConfigFile filepath =
+    validateFileReadable "config-file" filepath
+    `catchError` \_ ->
+    validateHttpOrHttpsUrl "config-file" filepath
 
 -- -------------------------------------------------------------------------- --
 -- Boolean Values
