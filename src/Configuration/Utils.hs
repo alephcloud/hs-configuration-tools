@@ -753,16 +753,22 @@ parseConfiguration
     → [String]
         -- ^ command line arguments
     → m α
-parseConfiguration appName appInfo args =
-    case O.execParserPure parserPrefs mainOpts args of
-        O.Success a → validate (_mainConfig a) >> return (_mainConfig a)
+parseConfiguration appName appInfo args = do
+
+    -- Parse static configuration files
+    configFromFiles ← errorT $
+        parseConfigFiles (_piDefaultConfiguration appInfo) (_piConfigurationFiles appInfo)
+    let newAppInfo = appInfo { _piDefaultConfiguration = configFromFiles }
+
+    case O.execParserPure parserPrefs (mainOpts newAppInfo) args of
+        O.Success a → validate newAppInfo (_mainConfig a) >> return (_mainConfig a)
         O.Failure e → throwError ∘ T.pack ∘ fst $ renderFailure e (T.unpack appName)
         O.CompletionInvoked _ → throwError "command line parser returned completion result"
   where
-    mainOpts = mainOptions appInfo Nothing
+    mainOpts i = mainOptions i Nothing
     parserPrefs = O.prefs O.disambiguate
-    validate conf = runWriterT $
-        runConfigValidation (view piValidateConfiguration appInfo) conf
+    validate i conf = runWriterT $
+        runConfigValidation (view piValidateConfiguration i) conf
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
