@@ -90,6 +90,7 @@ module Configuration.Utils
 , setProperty
 , (..:)
 , (!..:)
+, updateProperty
 , (%.:)
 , module Data.Aeson
 
@@ -385,8 +386,46 @@ setProperty s k p o = case H.lookup k o of
 infix 6 ..:
 {-# INLINE (..:) #-}
 
--- | A variant of the aeson operator '.:' that creates a parser
--- that modifies a setter with a parsed function.
+-- | A JSON parser for a function that modifies a property
+-- of a given 'Object' and updates a setter with the parsed
+-- function.
+--
+-- > data HttpURL = HttpURL
+-- >     { _auth ∷ !Auth
+-- >     , _domain ∷ !String
+-- >     }
+-- >
+-- > auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- > auth f s = (\u → s { _auth = u }) <$> f (_auth s)
+-- >
+-- > domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > domain f s = (\u → s { _domain = u }) <$> f (_domain s)
+-- >
+-- > path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > path f s = (\u → s { _path = u }) <$> f (_path s)
+-- >
+-- > -- or with lenses and TemplateHaskell just:
+-- > -- $(makeLenses ''HttpURL)
+-- >
+-- > instance FromJSON (HttpURL → HttpURL) where
+-- >     parseJSON = withObject "HttpURL" $ \o → id
+-- >         <$< auth %.: "auth" × o
+-- >         <*< domain ..: "domain" × o
+--
+updateProperty
+    ∷ Lens' α β
+    → T.Text
+    → (Value → Parser (β → β))
+    → Object
+    → Parser (α → α)
+updateProperty s k p o = case H.lookup k o of
+    Nothing → pure id
+    Just v → over s <$> p v
+{-# INLINE updateProperty #-}
+
+-- | A variant of 'updateProperty' that used the 'FromJSON' instance
+-- for the update function. It mimics the aeson operator '.:'.
+-- It creates a parser that modifies a setter with a parsed function.
 --
 -- > data HttpURL = HttpURL
 -- >     { _auth ∷ !Auth
@@ -411,9 +450,7 @@ infix 6 ..:
 -- >         <*< domain ..: "domain" × o
 --
 (%.:) ∷ FromJSON (β → β) ⇒ Lens' α β → T.Text → Object → Parser (α → α)
-(%.:) s k o = case H.lookup k o of
-    Nothing → pure id
-    Just v → over s <$> parseJSON v
+(%.:) s k = updateProperty s k parseJSON
 infix 6 %.:
 {-# INLINE (%.:) #-}
 
