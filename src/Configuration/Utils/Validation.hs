@@ -95,9 +95,11 @@ sshow = fromString ∘ show
 -- | Validates that a value is an HTTP or HTTPS URL
 --
 validateHttpOrHttpsUrl
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateHttpOrHttpsUrl configName uri =
     case parseURI uri of
         Nothing → throwError $
@@ -108,9 +110,11 @@ validateHttpOrHttpsUrl configName uri =
 -- | Validates that a value is an HTTP URL
 --
 validateHttpUrl
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateHttpUrl configName uri =
     case parseURI uri of
         Nothing → throwError $
@@ -121,9 +125,11 @@ validateHttpUrl configName uri =
 -- | Validates that a value is an HTTPS URL
 --
 validateHttpsUrl
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateHttpsUrl configName uri =
     case parseURI uri of
         Nothing → throwError $
@@ -134,9 +140,11 @@ validateHttpsUrl configName uri =
 -- | Validates that a value is an URI without a fragment identifier
 --
 validateUri
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateUri configName uri =
     unless (isURIReference uri) ∘ throwError $
         "The value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
@@ -144,9 +152,11 @@ validateUri configName uri =
 -- | Validates that a value is an absolute URI without a fragment identifier
 --
 validateAbsoluteUri
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateAbsoluteUri configName uri =
     unless (isAbsoluteURI uri) ∘ throwError $
         "The value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
@@ -155,33 +165,41 @@ validateAbsoluteUri configName uri =
 -- identifier
 --
 validateAbsoluteUriFragment
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateAbsoluteUriFragment configName uri =
     unless (isURI uri) ∘ throwError $
         "The value " ⊕ T.pack uri ⊕ " for " ⊕ configName ⊕ " is not a valid URI"
 
 validateIPv4
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateIPv4 configName ipv4 =
     unless (isIPv4address ipv4) ∘ throwError $
         "The value " ⊕ T.pack ipv4 ⊕ " for " ⊕ configName ⊕ " is not a valid IPv4 address"
 
 validateIPv6
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation String λ
+    → String
+    → m ()
 validateIPv6 configName ipv6 =
     unless (isIPv6address ipv6) ∘ throwError $
         "The value " ⊕ T.pack ipv6 ⊕ " for " ⊕ configName ⊕ " is not a valid IPv6 address"
 
 validatePort
-    ∷ T.Text
+    ∷ (MonadError T.Text m, Integral n, Show n)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation Int λ
+    → n
+    → m ()
 validatePort configName p =
     unless (p > 1 && p < 65535) ∘ throwError $
         "port value " ⊕ T.pack (show p) ⊕ " for " ⊕ configName ⊕ " is not valid port number"
@@ -190,56 +208,61 @@ validatePort configName p =
 -- Monoids, Foldables, and Co
 
 validateNonEmpty
-    ∷ (Eq α, Monoid α)
+    ∷ (MonadError T.Text m, Eq α, Monoid α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateNonEmpty configName x =
     when (x ≡ mempty) ∘ throwError $
         "value for " ⊕ configName ⊕ " must not be empty"
 
 validateLength
-    ∷ (F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable φ)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ exact length of the validated value
-    → ConfigValidation (φ α) λ
+    → φ α
+    → m ()
 validateLength configName len x =
     unless (length (F.toList x) ≡ len) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be of length exactly " ⊕ sshow len
 
 validateMaxLength
-    ∷ (F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable φ)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ maximum length of the validated value
-    → ConfigValidation (φ α) λ
+    → φ α
+    → m ()
 validateMaxLength configName u x =
     unless (length (F.toList x) ≤ u) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be of length at most " ⊕ sshow u
 
 validateMinLength
-    ∷ (F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable φ)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ minimum length of the validated value
-    → ConfigValidation (φ α) λ
+    → φ α
+    → m ()
 validateMinLength configName l x =
     unless (length (F.toList x) ≥ l) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be of length at least " ⊕ sshow l
 
 validateMinMaxLength
-    ∷ (F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable φ)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ minimum length of the validated value
     → Int
         -- ^ maximum length of the validated value
-    → ConfigValidation (φ α) λ
+    → φ α
+    → m ()
 validateMinMaxLength configName l u x =
     unless (len ≥ l && len ≤ u) ∘ throwError $
         "the length of the value for " ⊕ configName ⊕
@@ -251,53 +274,65 @@ validateMinMaxLength configName l u x =
 -- Files
 
 validateFilePath
-    ∷ T.Text
+    ∷ MonadError T.Text m
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateFilePath configName file =
     when (null file) ∘ throwError $
         "file path for " ⊕ configName ⊕ " must not be empty"
 
 validateFile
-    ∷ T.Text
+    ∷ (MonadError T.Text m, MonadIO m)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateFile configName file = do
     exists ← liftIO $ doesFileExist file
     unless exists ∘ throwError $
         "the file " ⊕ T.pack file ⊕ " for " ⊕ configName ⊕ " does not exist"
 
 validateFileReadable
-    ∷ T.Text
+    ∷ (MonadError T.Text m, MonadIO m)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateFileReadable configName file = do
     validateFile configName file
     liftIO (getPermissions file) >>= \x → unless (readable x) ∘ throwError $
         "the file " ⊕ T.pack file ⊕ " for " ⊕ configName ⊕ " is not readable"
 
 validateFileWritable
-    ∷ T.Text
+    ∷ (MonadError T.Text m, MonadIO m)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateFileWritable configName file = do
     validateFile configName file
     liftIO (getPermissions file) >>= \x → unless (writable x) ∘ throwError $
         "the file " ⊕ T.pack file ⊕ " for " ⊕ configName ⊕ " is not writable"
 
 validateFileExecutable
-    ∷ T.Text
+    ∷ (MonadError T.Text m, MonadIO m)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateFileExecutable configName file = do
     validateFile configName file
     liftIO (getPermissions file) >>= \x → unless (executable x) ∘ throwError $
         "the file " ⊕ T.pack file ⊕ " for " ⊕ configName ⊕ " is not excutable"
 
 validateDirectory
-    ∷ T.Text
+    ∷ (MonadError T.Text m, MonadIO m)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateDirectory configName dir = do
     exists ← liftIO $ doesDirectoryExist dir
     unless exists ∘ throwError $
@@ -307,9 +342,11 @@ validateDirectory configName dir = do
 -- and can be executed.
 --
 validateExecutable
-    ∷ T.Text
+    ∷ (Functor m, MonadError T.Text m, MonadIO m)
+    ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation FilePath λ
+    → FilePath
+    → m ()
 validateExecutable configName file = do
     execFile ← (file <$ validateFile configName file) `catchError` \_ ->
         liftIO (findExecutable file) >>= \case
@@ -353,46 +390,51 @@ validateBool configName expected x = unless (x ≡ expected) ∘ throwError $
 -- Numeric Values
 
 validateNonNegative
-    ∷ (Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord α, Num α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateNonNegative configName x =
     when (x < 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must not be negative"
 
 validatePositive
-    ∷ (Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord α, Num α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation α λ
+    → α
+    → m ()
 validatePositive configName x =
     when (x ≤ 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be positive"
 
 validateNonPositive
-    ∷ (Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord α, Num α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateNonPositive configName x =
     when (x > 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must not be positive"
 
 validateNegative
-    ∷ (Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord α, Num α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateNegative configName x =
     when (x ≥ 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be negative"
 
 validateNonNull
-    ∷ (Eq α, Num α)
+    ∷ (MonadError T.Text m, Eq α, Num α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateNonNull configName x = when (x ≡ 0) ∘ throwError $
     "value for " ⊕ configName ⊕ " must not be zero"
 
@@ -400,52 +442,57 @@ validateNonNull configName x = when (x ≡ 0) ∘ throwError $
 -- Orders
 
 validateLess
-    ∷ (Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord α, Show α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → α
         -- ^ a strict upper bound for the configuration value
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateLess configName upper x = unless (x < upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be strictly less than " ⊕ sshow upper ⊕ ", but was " ⊕ sshow x
 
 validateLessEq
-    ∷ (Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord α, Show α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → α
         -- ^ a upper bound for the configuration value
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateLessEq configName upper x = unless (x ≤ upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be less or equal than " ⊕ sshow upper ⊕ ", but was " ⊕ sshow x
 
 validateGreater
-    ∷ (Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord α, Show α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → α
         -- ^ a strict lower bound for the configuration value
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateGreater configName lower x = unless (x > lower) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be strictly greater than " ⊕ sshow lower ⊕ ", but was " ⊕ sshow x
 
 validateGreaterEq
-    ∷ (Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord α, Show α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → α
         -- ^ a lower bound for the configuration value
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateGreaterEq configName lower x = unless (x ≥ lower) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be greater or equal than " ⊕ sshow lower ⊕ ", but was " ⊕ sshow x
 
 validateRange
-    ∷ (Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord α, Show α)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → (α, α)
         -- ^ the valid range for the configuration value
-    → ConfigValidation α λ
+    → α
+    → m ()
 validateRange configName (lower,upper) x = unless (x ≥ lower ∧ x ≤ upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be within the range of (" ⊕ sshow lower ⊕ ", " ⊕ sshow upper ⊕ "), but was " ⊕ sshow x
 
