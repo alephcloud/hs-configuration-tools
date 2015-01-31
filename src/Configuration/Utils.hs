@@ -2,6 +2,7 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase #-}
@@ -68,6 +69,9 @@ module Configuration.Utils
 , ConfigValidation
 , programInfoValidate
 
+-- * Configuration Files
+, ConfigFile(..)
+
 -- ** Low-level Config Validation
 , ProgramInfoValidate
 , piValidateConfiguration
@@ -125,6 +129,7 @@ module Configuration.Utils
 import Configuration.Utils.Internal
 import Configuration.Utils.Validation
 
+import Control.Applicative
 import Control.Error (fmapL)
 import Control.Monad.Except hiding (mapM_)
 import Control.Monad.Writer hiding (mapM_)
@@ -141,6 +146,7 @@ import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Data.Typeable
 import qualified Data.Yaml as Yaml
 
 import Options.Applicative hiding (Parser, Success)
@@ -543,6 +549,11 @@ newtype ConfigValidationFunction α λ = ConfigValidationFunction
     { runConfigValidation ∷ ConfigValidation α λ
     }
 
+data ConfigFile
+    = ConfigFileRequired { getConfigFile ∷ !T.Text }
+    | ConfigFileOptional { getConfigFile ∷ !T.Text }
+    deriving (Show, Read, Eq, Ord, Typeable)
+
 type ProgramInfo α = ProgramInfoValidate α []
 
 data ProgramInfoValidate α λ = ProgramInfo
@@ -559,7 +570,7 @@ data ProgramInfoValidate α λ = ProgramInfo
     , _piValidateConfiguration ∷ !(ConfigValidationFunction α λ)
       -- ^ a validation function. The 'Right' result is interpreted as a 'Foldable'
       -- structure of warnings.
-    , _piConfigurationFiles ∷ ![T.Text]
+    , _piConfigurationFiles ∷ ![ConfigFile]
       -- ^ a list of configuration files that are loaded in order
       -- before any command line argument is evaluated.
     }
@@ -605,7 +616,7 @@ piValidateConfiguration = lens _piValidateConfiguration $ \s a → s { _piValida
 -- | Configuration files that are loaded in order before any command line
 -- argument is evaluated.
 --
-piConfigurationFiles ∷ Lens' (ProgramInfoValidate α λ) [T.Text]
+piConfigurationFiles ∷ Lens' (ProgramInfoValidate α λ) [ConfigFile]
 piConfigurationFiles = lens _piConfigurationFiles $ \s a → s { _piConfigurationFiles = a }
 {-# INLINE piConfigurationFiles #-}
 
@@ -701,7 +712,7 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.metavar "FILE"
         ⊕ O.help "Configuration file in YAML format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
 
-    fileReader = fmapL T.unpack ∘ unsafePerformIO ∘ runExceptT ∘ readConfigFile ∘ T.pack
+    fileReader = fmapL T.unpack ∘ unsafePerformIO ∘ runExceptT ∘ readConfigFile ∘ ConfigFileRequired ∘ T.pack
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration without Package Info
@@ -921,7 +932,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
         | null _piConfigurationFiles = Nothing
         | otherwise = Just $ \n → P.hang 3 $ P.vsep
             [ P.int n ⊕ "." P.</> par "Configuration files at the following locations:"
-            , P.vsep $ map (\f → "* " ⊕ P.text (T.unpack f)) _piConfigurationFiles
+            , P.vsep $ map (\f → "* " ⊕ printConfigFile f) _piConfigurationFiles
             ]
     cmdFiles = Just $ \n → P.hang 3 $ P.fillSep
         [ P.int n ⊕ "." P.</> par "Configuration files from locations provided through"
@@ -929,6 +940,10 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
         ]
     cmdOptions = Just $ \n → P.hang 3
         $ P.int n ⊕ "." P.</> par "Command line options."
+
+    printConfigFile f = P.text (T.unpack $ getConfigFile f) P.<+> case f of
+        ConfigFileRequired _ → P.text "(required)"
+        ConfigFileOptional _ → P.text "(optional)"
 
     par ∷ String → P.Doc
     par = P.fillSep ∘ map P.string ∘ words
@@ -1010,7 +1025,7 @@ parseConfigFiles
     ∷ (ConfigFileParser μ, FromJSON (α → α))
     ⇒ α
         -- ^ default configuration value
-    → [T.Text]
+    → [ConfigFile]
         -- ^ list of configuration file paths
     → μ α
 parseConfigFiles = foldM $ \conf file →
@@ -1018,7 +1033,7 @@ parseConfigFiles = foldM $ \conf file →
 
 readConfigFile
     ∷ (ConfigFileParser μ, FromJSON (α → α))
-    ⇒ T.Text
+    ⇒ ConfigFile
         -- ^ file path
     → μ (α → α)
 readConfigFile file =
@@ -1029,31 +1044,49 @@ readConfigFile file =
 #endif
 
 loadLocal
-    ∷ (MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
-    ⇒ T.Text
+    ∷ (Functor μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
+    ⇒ ConfigFile
         -- ^ file path
     → μ (α → α)
-loadLocal file = liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
-    Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
-    Right r → return r
+loadLocal path = do
+    validateFilePath "config-file" (T.unpack file)
+    exists ← (True <$ validateFile "config-file" (T.unpack file)) `catchError` \e → case path of
+        ConfigFileOptional _ → return False
+        ConfigFileRequired _ → throwError $ "failed to read config file: " ⊕ e
+    if exists
+      then
+        liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
+            Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
+            Right r → return r
+      else
+        return id
+  where
+    file = getConfigFile path
 
 #ifdef REMOTE_CONFIGS
 isRemote
-    ∷ T.Text
+    ∷ ConfigFile
     → Bool
-isRemote path = L.any (`T.isPrefixOf` path) ["http://", "https://"]
+isRemote path = L.any (`T.isPrefixOf` getConfigFile path) ["http://", "https://"]
 
 loadRemote
     ∷ (ConfigFileParser μ, FromJSON (α → α))
-    ⇒ T.Text
+    ⇒ ConfigFile
         -- ^ URL
     → μ (α → α)
-loadRemote url = do
-    dat ← LB.toStrict <$> liftIO (simpleHttp (T.unpack url)) `catchAnyDeep` \e →
-        throwError $ "failed to download remote configuration file: " ⊕ sshow e
-    case Yaml.decodeEither' dat of
-        Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ sshow e
-        Right r → return r
+loadRemote path = do
+    validateHttpOrHttpsUrl "config-file" (T.unpack url)
+    dat ← liftIO (Just ∘ LB.toStrict <$> simpleHttp (T.unpack url)) `catchAnyDeep` \e →
+        case path of
+            ConfigFileOptional _ → return Nothing
+            ConfigFileRequired _ → throwError $ "failed to download remote configuration file: " ⊕ sshow e
+    case dat of
+        Nothing → return id
+        Just d → case Yaml.decodeEither' d of
+            Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ sshow e
+            Right r → return r
+  where
+    url = getConfigFile path
 #endif
 
 -- -------------------------------------------------------------------------- --

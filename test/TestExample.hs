@@ -93,6 +93,7 @@ main =
 #endif
         (successes, failures) ← L.partition id <$> sequence
             × tests0
+            ⊕ testsConfigFile [T.pack tmpPath0, T.pack tmpPath1]
             ⊕ tests2Files1 [T.pack tmpPath0, T.pack tmpPath1]
             ⊕ tests2Files2 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
             ⊕ tests2Files3 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
@@ -119,8 +120,19 @@ main =
 --
 testPrintHelp ∷ [T.Text] → [IO Bool]
 testPrintHelp files =
-    [ runTest (mainInfoConfigFile files) "print-help" False [trueAssertion ["-?"]]
+    [ runTest (mainInfoConfigFile configFiles) "print-help" False [trueAssertion ["-?"]]
     ]
+  where
+    configFiles = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) files
+
+testsConfigFile ∷ [T.Text] → [IO Bool]
+testsConfigFile files =
+    [ runTest (mainInfoConfigFile configFiles0) "config-file-1" True [trueAssertion []]
+    , runTest (mainInfoConfigFile configFiles1) "config-file-2" False [trueAssertion []]
+    ]
+  where
+    configFiles0 = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) (files ⊕ ["./invalid"])
+    configFiles1 = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) ("./invalid":files)
 
 #ifdef REMOTE_CONFIGS
 -- | Test with invalid remote URLs
@@ -194,7 +206,7 @@ twoFileCasesC0C1 prefix files x =
   where
     c0 = config0
     c1 = config1
-    runf = runTest ∘ mainInfoConfigFile
+    runf = runTest ∘ mainInfoConfigFile ∘ map ConfigFileRequired
 
 -- | Tests with two configuration files c1 then c0
 --
@@ -209,7 +221,7 @@ twoFileCasesC1C0 prefix files x =
   where
     c0 = config0
     c1 = config1
-    runf = runTest ∘ mainInfoConfigFile
+    runf = runTest ∘ mainInfoConfigFile ∘ map ConfigFileRequired
 
 -- -------------------------------------------------------------------------- --
 -- Command Line argument tests
@@ -299,7 +311,7 @@ mainInfo ∷ ProgramInfoValidate HttpURL []
 mainInfo = programInfoValidate "HTTP URL" pHttpURL defaultHttpURL validateHttpURL
 
 mainInfoConfigFile
-    ∷ [T.Text]
+    ∷ [ConfigFile]
     → ProgramInfoValidate HttpURL []
 mainInfoConfigFile files = set piConfigurationFiles files mainInfo
 
