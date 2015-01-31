@@ -15,9 +15,10 @@
 -- Utilities for validating configuration values
 --
 module Configuration.Utils.Validation
-(
+( ConfigValidation
+
 -- * Networking
-  validateHttpOrHttpsUrl
+, validateHttpOrHttpsUrl
 , validateHttpUrl
 , validateHttpsUrl
 , validateUri
@@ -63,12 +64,13 @@ module Configuration.Utils.Validation
 , validateRange
 ) where
 
-import Configuration.Utils
 import Configuration.Utils.Internal
 
+import Control.Applicative
 import Control.Monad.Error.Class
 import Control.Monad
 import Control.Monad.IO.Class
+import Control.Monad.Writer.Class
 
 import qualified Data.Foldable as F
 import Data.Monoid
@@ -80,6 +82,11 @@ import Network.URI
 import Prelude.Unicode
 
 import System.Directory
+
+-- | A validation function. The type in the 'MonadWriter' is excpected to
+-- be a 'Foldable' structure for collecting warnings.
+--
+type ConfigValidation α λ = (MonadIO μ, Functor μ, Applicative μ, MonadError T.Text μ, MonadWriter (λ T.Text) μ) ⇒ α → μ ()
 
 -- -------------------------------------------------------------------------- --
 -- Networking

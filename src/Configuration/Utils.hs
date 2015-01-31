@@ -123,6 +123,7 @@ module Configuration.Utils
 ) where
 
 import Configuration.Utils.Internal
+import Configuration.Utils.Validation
 
 import Control.Error (fmapL)
 import Control.Monad.Except hiding (mapM_)
@@ -533,11 +534,6 @@ eitherReadP label p s =
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration
-
--- | A validation function. The type in the 'MonadWriter' is excpected to
--- be a 'Foldable' structure for collecting warnings.
---
-type ConfigValidation α λ = (MonadIO μ, Functor μ, Applicative μ, MonadError T.Text μ, MonadWriter (λ T.Text) μ) ⇒ α → μ ()
 
 -- | A newtype wrapper around a validation function. The only purpose of
 -- this type is to avoid @ImpredicativeTypes@ when storing the function
