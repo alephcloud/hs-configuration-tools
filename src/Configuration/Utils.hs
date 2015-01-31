@@ -152,7 +152,8 @@ import Prelude.Unicode
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 
-import qualified Text.ParserCombinators.ReadP as P
+import qualified Text.ParserCombinators.ReadP as P hiding (string)
+import qualified Text.PrettyPrint.ANSI.Leijen as P
 
 #ifdef REMOTE_CONFIGS
 import Control.Monad.Trans.Control
@@ -695,13 +696,15 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.short 'p'
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
-    <*> O.option (O.eitherReader $ \file → fileReader file <*> pure d)
+    <*> (pConfigFiles <*> pure d)
+  where
+    pConfigFiles = foldl' (∘) id ∘ reverse <$> many pConfigFile
+    pConfigFile = O.option (O.eitherReader fileReader)
         × O.long "config-file"
         ⊕ O.short 'c'
         ⊕ O.metavar "FILE"
-        ⊕ O.help "Configuration file in YAML format"
-        ⊕ O.value d
-  where
+        ⊕ O.help "Configuration file in YAML format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
+
     fileReader = fmapL T.unpack ∘ unsafePerformIO ∘ runExceptT ∘ readConfigFile ∘ T.pack
 
 -- -------------------------------------------------------------------------- --
@@ -886,7 +889,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
     $ O.progDesc _piDescription
     ⊕ O.fullDesc
     ⊕ maybe mempty O.header _piHelpHeader
-    ⊕ maybe mempty O.footer _piHelpFooter
+    ⊕ O.footerDoc (Just $ defaultFooter ⊕ maybe mempty P.text _piHelpFooter)
   where
     optionParser = fromMaybe (pure id) pkgInfoParser
         <*> nonHiddenHelper
@@ -899,7 +902,40 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
         × long "help"
         ⊕ short 'h'
         ⊕ short '?'
-        ⊕ help "Show this help text"
+        ⊕ help "Show this help message"
+
+    defaultFooter = P.vsep
+        [ par "Configurations are loaded in order from the following sources:"
+        , P.indent 2 ∘ P.vsep $ zipWith ($) (catMaybes [staticFiles, cmdFiles, cmdOptions]) [1..]
+        , ""
+        , P.fillSep
+            [ par "Configuration file locations can be either local file system paths"
+            , par "or remote HTTP or HTTPS URLs. Remote URLs must start with"
+            , par "either \"http://\" or \"https://\"."
+            ]
+        , ""
+        , P.fillSep
+            [ par "Configuration settings that are loaded later overwrite settings"
+            , par "that were loaded before."
+            ]
+        , ""
+        ]
+
+    staticFiles
+        | null _piConfigurationFiles = Nothing
+        | otherwise = Just $ \n → P.hang 3 $ P.vsep
+            [ P.int n ⊕ "." P.</> par "Configuration files at the following locations:"
+            , P.vsep $ map (\f → "* " ⊕ P.text (T.unpack f)) _piConfigurationFiles
+            ]
+    cmdFiles = Just $ \n → P.hang 3 $ P.fillSep
+        [ P.int n ⊕ "." P.</> par "Configuration files from locations provided through"
+        , par "--config-file options in the order as they appear."
+        ]
+    cmdOptions = Just $ \n → P.hang 3
+        $ P.int n ⊕ "." P.</> par "Command line options."
+
+    par ∷ String → P.Doc
+    par = P.fillSep ∘ map P.string ∘ words
 
 -- | Internal main function
 --

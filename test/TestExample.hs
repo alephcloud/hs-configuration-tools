@@ -56,7 +56,7 @@ import qualified Network.HTTP.Types as HTTP
 -- Poor man's debugging
 
 enableDebug ∷ Bool
-enableDebug = True
+enableDebug = False
 
 debug
     ∷ Monad m
@@ -93,12 +93,15 @@ main =
 #endif
         (successes, failures) ← L.partition id <$> sequence
             × tests0
-            ⊕ tests1 [T.pack tmpPath0, T.pack tmpPath1]
-            ⊕ tests2 "test-2a-" (T.pack tmpPath0) (T.pack tmpPath1)
+            ⊕ tests2Files1 [T.pack tmpPath0, T.pack tmpPath1]
+            ⊕ tests2Files2 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
+            ⊕ tests2Files3 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
 #ifdef REMOTE_CONFIGS
-            ⊕ tests2 "test-2b-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
-            ⊕ test3
+            ⊕ tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            ⊕ tests2Files3 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            ⊕ testsInvalidUrl
 #endif
+            ⊕ testPrintHelp [T.pack tmpPath0, T.pack tmpPath1]
 
         T.putStrLn $ "success: " ⊕ sshow (length successes)
         T.putStrLn $ "failures: " ⊕ sshow (length failures)
@@ -111,23 +114,42 @@ main =
 -- -------------------------------------------------------------------------- --
 -- Test Cases
 
+-- | This always succeeds. It prints the help message for manual
+-- inspection.
+--
+testPrintHelp ∷ [T.Text] → [IO Bool]
+testPrintHelp files =
+    [ runTest (mainInfoConfigFile files) "print-help" False [trueAssertion ["-?"]]
+    ]
+
 #ifdef REMOTE_CONFIGS
 -- | Test with invalid remote URLs
 --
-test3 ∷ [IO Bool]
-test3 =
-    [ runTest mainInfo "test-3-0" False [x0 d1]
-    , runTest mainInfo "test-3-1" False [x1 d1]
+testsInvalidUrl ∷ [IO Bool]
+testsInvalidUrl =
+    [ runTest mainInfo "invalidUrl-0" False [x0 d1]
+    , runTest mainInfo "invalidUrl-1" False [x1 d1]
     ]
   where
     x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=http://invalid"):args) l v
     x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"):args) l v
 #endif
 
+-- -------------------------------------------------------------------------- --
+-- Tests with two configuration files
 
 -- | Tests with two configuration files
 --
-tests2
+tests2Files1 ∷ [T.Text] → [IO Bool]
+tests2Files1 files =
+    twoFileCasesC0C1 "2files-1-" files (trueAssertion [])
+    ⊕ twoFileCasesC1C0 "2files-1-" selif (trueAssertion [])
+  where
+    selif = reverse files
+
+-- | Tests with two configuration files
+--
+tests2Files2
     ∷ T.Text
         -- ^ test label prefix
     → T.Text
@@ -135,51 +157,62 @@ tests2
     → T.Text
         -- ^ file for config1
     → [IO Bool]
-tests2 prefix file0 file1 =
-    -- first c0 then c1
-    [ runf [file0] (prefix ⊕ "0") True [x1 (f1 c1), f2 c0, f3 c1, f4 c0]
-    , runf [file0] (prefix ⊕ "1") False [x1 (f1 c0)]
-    , runf [file0] (prefix ⊕ "2") False [x1 d1]
-    , runf [file0] (prefix ⊕ "3") False [x1 (f3 c0)]
-    , runf [file0] (prefix ⊕ "4") False [x1 d4]
-
-    -- c1 then c0
-    , runf [file1] "test-2-5" True [x0 (f1 c0), f2 c0, f3 c0, f4 c0]
-    , runf [file1] "test-2-6" False [x0 (f1 c1)]
-    , runf [file1] "test-2-7" False [x0 (f2 c1)]
-    , runf [file1] "test-2-8" False [x0 (f3 c1)]
-    , runf [file1] "test-2-9" False [x0 (f4 c1)]
-    ]
+tests2Files2 suffix file0 file1 =
+    twoFileCasesC0C1 ("2files-2-" ⊕ suffix) [file0] x1
+    ⊕ twoFileCasesC1C0 ("2files-2-" ⊕ suffix) [file1] x0
   where
-    c0 = config0
-    c1 = config1
-    x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack file0):args) l v
-    x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack file1):args) l v
-    runf files = runTest $ mainInfoConfigFile files
+    x0 = trueAssertion ["--config-file=" ⊕ T.unpack file0]
+    x1 = trueAssertion ["--config-file=" ⊕ T.unpack file1]
 
 -- | Tests with two configuration files
 --
-tests1 ∷ [T.Text] → [IO Bool]
-tests1 files =
-    -- first c0 then c1
-    [ runf files "test-1-0" True [f1 c1, f2 c0, f3 c1, f4 c0]
-    , runf files "test-1-1" False [f1 c0]
-    , runf files "test-1-2" False [d1]
-    , runf files "test-1-3" False [f3 c0]
-    , runf files "test-1-4" False [d4]
+tests2Files3
+    ∷ T.Text
+        -- ^ test label prefix
+    → T.Text
+        -- ^ file for config0
+    → T.Text
+        -- ^ file for config1
+    → [IO Bool]
+tests2Files3 suffix file0 file1 =
+    twoFileCasesC0C1 ("2files-3-" ⊕ suffix) [] x01
+    ⊕ twoFileCasesC1C0 ("2files-3-" ⊕ suffix) [] x10
+  where
+    x01 = trueAssertion ["--config-file=" ⊕ T.unpack file0, "--config-file=" ⊕ T.unpack file1]
+    x10 = trueAssertion ["--config-file=" ⊕ T.unpack file1, "--config-file=" ⊕ T.unpack file0]
 
-    -- c1 then c0
-    , runf selif "test-1-5" True [f1 c0, f2 c0, f3 c0, f4 c0]
-    , runf selif "test-1-6" False [f1 c1]
-    , runf selif "test-1-7" False [f2 c1]
-    , runf selif "test-1-8" False [f3 c1]
-    , runf selif "test-1-9" False [f4 c1]
+-- | Tests with two configuration files c0 then c1
+--
+twoFileCasesC0C1 ∷ T.Text → [T.Text] → ConfAssertion HttpURL → [IO Bool]
+twoFileCasesC0C1 prefix files x =
+    [ runf files (prefix ⊕ "c0c1-0") True [x, f1 c1, f2 c0, f3 c1, f4 c0]
+    , runf files (prefix ⊕ "c0c1-1") False [x, f1 c0]
+    , runf files (prefix ⊕ "c0c1-2") False [x, d1]
+    , runf files (prefix ⊕ "c0c1-3") False [x, f3 c0]
+    , runf files (prefix ⊕ "c0c1-4") False [x, d4]
     ]
   where
     c0 = config0
     c1 = config1
-    selif = reverse files
-    runf f = runTest $ mainInfoConfigFile f
+    runf = runTest ∘ mainInfoConfigFile
+
+-- | Tests with two configuration files c1 then c0
+--
+twoFileCasesC1C0 ∷ T.Text → [T.Text] → ConfAssertion HttpURL → [IO Bool]
+twoFileCasesC1C0 prefix files x =
+    [ runf files (prefix ⊕ "c1c0-0") True [x, f1 c0, f2 c0, f3 c0, f4 c0]
+    , runf files (prefix ⊕ "c1c0-1") False [x, f1 c1]
+    , runf files (prefix ⊕ "c1c0-2") False [x, f2 c1]
+    , runf files (prefix ⊕ "c1c0-3") False [x, f3 c1]
+    , runf files (prefix ⊕ "c1c0-4") False [x, f4 c1]
+    ]
+  where
+    c0 = config0
+    c1 = config1
+    runf = runTest ∘ mainInfoConfigFile
+
+-- -------------------------------------------------------------------------- --
+-- Command Line argument tests
 
 -- | Command Line argument test
 --
@@ -282,6 +315,12 @@ mainInfoConfigFile files = set piConfigurationFiles files mainInfo
 -- 3. the expected value
 --
 data ConfAssertion β = ∀ α . Eq α ⇒ ConfAssertion [String] (Lens' β α) α
+
+trueLens ∷ Lens' β ()
+trueLens = lens (const ()) const
+
+trueAssertion ∷ [String] → ConfAssertion β
+trueAssertion args = ConfAssertion args trueLens ()
 
 -- assert values from given configuration
 
