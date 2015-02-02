@@ -50,6 +50,9 @@ provided:
 4.  an options parser that yields a function that takes a value and updates
     that value with the values provided as command line options.
 
+Optionally, a function for validating the configuration value may be
+provided.
+
 The package provides operators and functions that make the implmentation of
 these requisites easy for the common case that the configuration is encoded
 mainly through nested records.
@@ -58,12 +61,21 @@ In addition to the user defined command line options the following
 options are recognized by the application:
 
 `--config-file, -c`
-:    parses the given file as a (partial) configuration in YAML format.
+:   parses the given file as a (partial) configuration in YAML format.
+    The file location can be provided either as a local filesystem path
+    or as a remote HTTP or HTTPS URL. In addition a list of static
+    configuration file locations can be defined in the code.
+
+    If this option is provided more than a single time the configuration
+    files are loaded in the order as the respective options appear
+    on the command line, where settings that are loaded later have
+    precedence over earlier settings. Files from static locations are
+    loaded before files that are specified on the command line.
 
 `print-config, -p`
-:    configures the application and prints the configuration in YAML format
-     to standard out and exits. The printed configuration is exactly the
-     configuration that otherwise would be used to run the application.
+:   configures the application and prints the configuration in YAML format
+    to standard out and exits. The printed configuration is exactly the
+    configuration that otherwise would be used to run the application.
 
 `--help, -h`
 :   prints a help message and exits.
@@ -117,8 +129,9 @@ pwd :: Functor f => (String -> f String) -> Auth -> f Auth
 pwd f s = (\p -> s { _pwd = p }) <$> f (_pwd s)
 ~~~
 
-(Note, that the module `Configuration.Utils` defines its own `Lens'` type synonym.
-If you import `Control.Lens` you should hide `Lens'` from either module.)
+(Note, that the module `Configuration.Utils` defines its own type synonyms for
+lenses. If you import `Control.Lens` you should hide `Lens` and `Lens'` from
+either module.)
 
 We must provide a default value. If there is no reasonable default the
 respective value could, for instance, be wrapped into `Maybe`. Here we
@@ -263,12 +276,11 @@ is non-determinism in the choice of the constructor, too.
 
 An update function for a product type can be defined pointwise as a mapping from
 constructor parameters to values. An update for a sum type must take the
-constructor context into account. In terms of the lens library this is reflected
-by using `Lens`es for product types and `Prism`s for sum types. Therefore a
-configuration that defines an update function for a sum types must also specify
-the constructor context. Moreover, when applied to a given default value the
-function may not be applicable at all if the default value uses a different
-constructor context than what the update assumes.
+constructor context into account. Therefore a configuration that defines an
+update function for a sum types must also specify the constructor context.
+Moreover, when applied to a given default value the function may not be
+applicable at all if the default value uses a different constructor context
+than what the update assumes.
 
 For the future we plan to provide a general solution for configurations of sum
 types which would be based on the possibility to define default values for more
@@ -545,14 +557,12 @@ are planned.
 *   Provide operators (or at least examples) for more scenarios
     (like required options)
 
-*   Nicer errors messages if parsing fails.
+*   Nicer error messages if parsing fails.
 
 *   Suport JSON encoded configuration files.
 
 *   Support mode where JSON/YAML parsing fails when unexpected
     properties are encountered.
-
-*   Loading of configurations from URLs.
 
 *   Include default values in help message.
 

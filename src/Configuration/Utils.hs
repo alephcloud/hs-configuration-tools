@@ -2,6 +2,10 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -59,10 +63,14 @@ module Configuration.Utils
 , piHelpFooter
 , piOptionParser
 , piDefaultConfiguration
+, piConfigurationFiles
 
 -- * Program Configurations with Validation of Configuration Values
 , ConfigValidation
 , programInfoValidate
+
+-- * Configuration Files
+, ConfigFile(..)
 
 -- ** Low-level Config Validation
 , ProgramInfoValidate
@@ -119,7 +127,9 @@ module Configuration.Utils
 ) where
 
 import Configuration.Utils.Internal
+import Configuration.Utils.Validation
 
+import Control.Applicative
 import Control.Error (fmapL)
 import Control.Monad.Except hiding (mapM_)
 import Control.Monad.Writer hiding (mapM_)
@@ -136,6 +146,7 @@ import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import Data.Typeable
 import qualified Data.Yaml as Yaml
 
 import Options.Applicative hiding (Parser, Success)
@@ -148,7 +159,16 @@ import Prelude.Unicode
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 
-import qualified Text.ParserCombinators.ReadP as P
+import qualified Text.ParserCombinators.ReadP as P hiding (string)
+import qualified Text.PrettyPrint.ANSI.Leijen as P
+
+#ifdef REMOTE_CONFIGS
+import Control.Monad.Trans.Control
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.List as L
+import Network.HTTP.Conduit (simpleHttp)
+import Control.Exception.Enclosed
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- Useful Operators
@@ -521,11 +541,6 @@ eitherReadP label p s =
 -- -------------------------------------------------------------------------- --
 -- Main Configuration
 
--- | A validation function. The type in the 'MonadWriter' is excpected to
--- be a 'Foldable' structure for collecting warnings.
---
-type ConfigValidation α λ = (MonadIO μ, Functor μ, Applicative μ, MonadError T.Text μ, MonadWriter (λ T.Text) μ) ⇒ α → μ ()
-
 -- | A newtype wrapper around a validation function. The only purpose of
 -- this type is to avoid @ImpredicativeTypes@ when storing the function
 -- in the 'ProgramInfoValidate' record.
@@ -533,6 +548,11 @@ type ConfigValidation α λ = (MonadIO μ, Functor μ, Applicative μ, MonadErro
 newtype ConfigValidationFunction α λ = ConfigValidationFunction
     { runConfigValidation ∷ ConfigValidation α λ
     }
+
+data ConfigFile
+    = ConfigFileRequired { getConfigFile ∷ !T.Text }
+    | ConfigFileOptional { getConfigFile ∷ !T.Text }
+    deriving (Show, Read, Eq, Ord, Typeable)
 
 type ProgramInfo α = ProgramInfoValidate α []
 
@@ -550,6 +570,9 @@ data ProgramInfoValidate α λ = ProgramInfo
     , _piValidateConfiguration ∷ !(ConfigValidationFunction α λ)
       -- ^ a validation function. The 'Right' result is interpreted as a 'Foldable'
       -- structure of warnings.
+    , _piConfigurationFiles ∷ ![ConfigFile]
+      -- ^ a list of configuration files that are loaded in order
+      -- before any command line argument is evaluated.
     }
 
 -- | Program Description
@@ -590,6 +613,13 @@ piValidateConfiguration ∷ Lens' (ProgramInfoValidate α λ) (ConfigValidationF
 piValidateConfiguration = lens _piValidateConfiguration $ \s a → s { _piValidateConfiguration = a }
 {-# INLINE piValidateConfiguration #-}
 
+-- | Configuration files that are loaded in order before any command line
+-- argument is evaluated.
+--
+piConfigurationFiles ∷ Lens' (ProgramInfoValidate α λ) [ConfigFile]
+piConfigurationFiles = lens _piConfigurationFiles $ \s a → s { _piConfigurationFiles = a }
+{-# INLINE piConfigurationFiles #-}
+
 -- | 'Lens' for simultaneous query and update of 'piOptionParser' and
 -- 'piDefaultConfiguration'. This supports to change the type of 'ProgramInfo'
 -- with 'over' and 'set'.
@@ -607,6 +637,7 @@ piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
     , _piOptionParser = a
     , _piDefaultConfiguration = b
     , _piValidateConfiguration = c
+    , _piConfigurationFiles = _piConfigurationFiles s
     }
   where
     g s = (_piOptionParser s, _piDefaultConfiguration s, _piValidateConfiguration s)
@@ -645,6 +676,7 @@ programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
     , _piOptionParser = parser
     , _piDefaultConfiguration = defaultConfig
     , _piValidateConfiguration = ConfigValidationFunction valFunc
+    , _piConfigurationFiles = []
     }
 
 data AppConfiguration α = AppConfiguration
@@ -671,39 +703,19 @@ pAppConfiguration d = AppConfiguration
         ⊕ O.short 'p'
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
-    <*> O.option (O.eitherReader $ \file → fileReader file <*> pure d)
+    <*> (pConfigFiles <*> pure d)
+  where
+    pConfigFiles = foldl' (∘) id ∘ reverse <$> many pConfigFile
+    pConfigFile = O.option (O.eitherReader fileReader)
         × O.long "config-file"
         ⊕ O.short 'c'
         ⊕ O.metavar "FILE"
-        ⊕ O.help "Configuration file in YAML format"
-        ⊕ O.value d
-  where
-    fileReader file = fmapL (\e → "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ show e)
-        $ unsafePerformIO (Yaml.decodeFileEither file)
+        ⊕ O.help "Configuration file in YAML format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
 
-mainOptions
-    ∷ ∀ α λ . FromJSON (α → α)
-    ⇒ ProgramInfoValidate α λ
-    → (∀ β . Maybe (MParser β))
-    → O.ParserInfo (AppConfiguration α)
-mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
-    $ O.progDesc _piDescription
-    ⊕ O.fullDesc
-    ⊕ maybe mempty O.header _piHelpHeader
-    ⊕ maybe mempty O.footer _piHelpFooter
-  where
-    optionParser = fromMaybe (pure id) pkgInfoParser
-        <*> nonHiddenHelper
-        <*> (over mainConfig <$> _piOptionParser)
-        <*> pAppConfiguration _piDefaultConfiguration
+    fileReader = fmapL T.unpack ∘ unsafePerformIO ∘ runExceptT ∘ readConfigFile ∘ ConfigFileRequired ∘ T.pack
 
-    -- the 'O.helper' option from optparse-applicative is hidden be default
-    -- which seems a bit weired. This option doesn't hide the access to help.
-    nonHiddenHelper = abortOption ShowHelpText
-        × long "help"
-        ⊕ short 'h'
-        ⊕ short '?'
-        ⊕ help "Show this help text"
+-- -------------------------------------------------------------------------- --
+-- Main Configuration without Package Info
 
 -- | Run an IO action with a configuration that is obtained by updating the
 -- given default configuration the values defined via command line arguments.
@@ -730,15 +742,10 @@ runWithConfiguration
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
-runWithConfiguration appInfo mainFunction = do
-    conf ← O.customExecParser parserPrefs mainOpts
-    validateConfig appInfo $ _mainConfig conf
-    if _printConfig conf
-        then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
-        else mainFunction ∘ _mainConfig $ conf
-  where
-    mainOpts = mainOptions appInfo Nothing
-    parserPrefs = O.prefs O.disambiguate
+runWithConfiguration appInfo = runInternal appInfo Nothing
+
+-- -------------------------------------------------------------------------- --
+-- Low level configuration parsing
 
 -- | Parse the command line arguments.
 --
@@ -752,6 +759,9 @@ parseConfiguration
     ∷
         ( Applicative m
         , MonadIO m
+#ifdef REMOTE_CONFIGS
+        , MonadBaseControl IO m
+#endif
         , MonadError T.Text m
         , FromJSON (α → α)
         , ToJSON α
@@ -766,32 +776,22 @@ parseConfiguration
     → [String]
         -- ^ command line arguments
     → m α
-parseConfiguration appName appInfo args =
-    case O.execParserPure parserPrefs mainOpts args of
-        O.Success a → validate (_mainConfig a) >> return (_mainConfig a)
+parseConfiguration appName appInfo args = do
+
+    -- Parse static configuration files
+    configFromFiles ← errorT $
+        parseConfigFiles (_piDefaultConfiguration appInfo) (_piConfigurationFiles appInfo)
+    let newAppInfo = appInfo { _piDefaultConfiguration = configFromFiles }
+
+    case O.execParserPure parserPrefs (mainOpts newAppInfo) args of
+        O.Success a → validate newAppInfo (_mainConfig a) >> return (_mainConfig a)
         O.Failure e → throwError ∘ T.pack ∘ fst $ renderFailure e (T.unpack appName)
         O.CompletionInvoked _ → throwError "command line parser returned completion result"
   where
-    mainOpts = mainOptions appInfo Nothing
+    mainOpts i = mainOptions i Nothing
     parserPrefs = O.prefs O.disambiguate
-    validate conf = runWriterT $
-        runConfigValidation (view piValidateConfiguration appInfo) conf
-
--- | Validates a configuration value. Throws an user error
--- if there is an error. If there are warnings they are
--- printed to 'stderr'.
---
-validateConfig
-    ∷ (Foldable λ, Monoid (λ T.Text))
-    ⇒ ProgramInfoValidate α λ
-    → α
-    → IO ()
-validateConfig appInfo conf = do
-    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $
-        runConfigValidation (view piValidateConfiguration appInfo) conf
-    when (any (const True) warnings) $ do
-        T.hPutStrLn stderr "WARNINGS:"
-        mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
+    validate i conf = runWriterT $
+        runConfigValidation (view piValidateConfiguration i) conf
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
@@ -872,7 +872,7 @@ runWithPkgInfoConfiguration
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
     → PkgInfo
-        -- 'PkgInfo' value that contain information about the package.
+        -- 'PkgInfo' value that contains information about the package.
         --
         -- See the documentation of "Configuration.Utils.Setup" for a way
         -- how to generate this information automatically from the package
@@ -881,15 +881,213 @@ runWithPkgInfoConfiguration
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
-runWithPkgInfoConfiguration appInfo pkgInfo mainFunction = do
-    conf ← O.customExecParser parserPrefs mainOpts
-    validateConfig appInfo $ _mainConfig conf
+runWithPkgInfoConfiguration appInfo pkgInfo =
+    runInternal appInfo (Just $ pPkgInfo pkgInfo)
+
+-- -------------------------------------------------------------------------- --
+-- Internal main function
+
+mainOptions
+    ∷ ∀ α λ . FromJSON (α → α)
+    ⇒ ProgramInfoValidate α λ
+    → (∀ β . Maybe (MParser β))
+    → O.ParserInfo (AppConfiguration α)
+mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
+    $ O.progDesc _piDescription
+    ⊕ O.fullDesc
+    ⊕ maybe mempty O.header _piHelpHeader
+    ⊕ O.footerDoc (Just $ defaultFooter ⊕ maybe mempty P.text _piHelpFooter)
+  where
+    optionParser = fromMaybe (pure id) pkgInfoParser
+        <*> nonHiddenHelper
+        <*> (over mainConfig <$> _piOptionParser)
+        <*> pAppConfiguration _piDefaultConfiguration
+
+    -- the 'O.helper' option from optparse-applicative is hidden be default
+    -- which seems a bit weired. This option doesn't hide the access to help.
+    nonHiddenHelper = abortOption ShowHelpText
+        × long "help"
+        ⊕ short 'h'
+        ⊕ short '?'
+        ⊕ help "Show this help message"
+
+    defaultFooter = P.vsep
+        [ par "Configurations are loaded in order from the following sources:"
+        , P.indent 2 ∘ P.vsep $ zipWith ($) (catMaybes [staticFiles, cmdFiles, cmdOptions]) [1..]
+        , ""
+        , P.fillSep
+            [ par "Configuration file locations can be either local file system paths"
+            , par "or remote HTTP or HTTPS URLs. Remote URLs must start with"
+            , par "either \"http://\" or \"https://\"."
+            ]
+        , ""
+        , P.fillSep
+            [ par "Configuration settings that are loaded later overwrite settings"
+            , par "that were loaded before."
+            ]
+        , ""
+        ]
+
+    staticFiles
+        | null _piConfigurationFiles = Nothing
+        | otherwise = Just $ \n → P.hang 3 $ P.vsep
+            [ P.int n ⊕ "." P.</> par "Configuration files at the following locations:"
+            , P.vsep $ map (\f → "* " ⊕ printConfigFile f) _piConfigurationFiles
+            ]
+    cmdFiles = Just $ \n → P.hang 3 $ P.fillSep
+        [ P.int n ⊕ "." P.</> par "Configuration files from locations provided through"
+        , par "--config-file options in the order as they appear."
+        ]
+    cmdOptions = Just $ \n → P.hang 3
+        $ P.int n ⊕ "." P.</> par "Command line options."
+
+    printConfigFile f = P.text (T.unpack $ getConfigFile f) P.<+> case f of
+        ConfigFileRequired _ → P.text "(required)"
+        ConfigFileOptional _ → P.text "(optional)"
+
+    par ∷ String → P.Doc
+    par = P.fillSep ∘ map P.string ∘ words
+
+-- | Internal main function
+--
+runInternal
+    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
+        -- ^ program info value; use 'programInfo' to construct a value of this
+        -- type
+    → (∀ β . Maybe (MParser β))
+        -- 'PkgInfo' value that contains information about the package.
+        --
+        -- See the documentation of "Configuration.Utils.Setup" for a way
+        -- how to generate this information automatically from the package
+        -- description during the build process.
+    → (α → IO ())
+        -- ^ computation that is given the configuration that is parsed from
+        -- the command line.
+    → IO ()
+runInternal appInfo maybePkgInfo mainFunction = do
+
+    -- Parse static configuration files
+    configFromFiles ← errorT $
+        parseConfigFiles (_piDefaultConfiguration appInfo) (_piConfigurationFiles appInfo)
+    let newAppInfo = appInfo { _piDefaultConfiguration = configFromFiles }
+
+    -- Parse command line
+    conf ← O.customExecParser parserPrefs (mainOpts newAppInfo)
+    validateConfig newAppInfo $ _mainConfig conf
     if _printConfig conf
         then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ conf
         else mainFunction ∘ _mainConfig $ conf
   where
-    mainOpts = mainOptions appInfo (Just $ pPkgInfo pkgInfo)
+    mainOpts i = mainOptions i maybePkgInfo
     parserPrefs = O.prefs O.disambiguate
+
+-- -------------------------------------------------------------------------- --
+-- Validation
+
+-- | Validates a configuration value. Throws an user error
+-- if there is an error. If there are warnings they are
+-- printed to 'stderr'.
+--
+validateConfig
+    ∷ (Foldable λ, Monoid (λ T.Text))
+    ⇒ ProgramInfoValidate α λ
+    → α
+    → IO ()
+validateConfig appInfo conf = do
+    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $
+        runConfigValidation (view piValidateConfiguration appInfo) conf
+    when (any (const True) warnings) $ do
+        T.hPutStrLn stderr "WARNINGS:"
+        mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
+
+-- -------------------------------------------------------------------------- --
+-- Tools for parsing configuration files
+
+#ifdef REMOTE_CONFIGS
+type ConfigFileParser μ =
+    ( Functor μ
+    , Applicative μ
+    , MonadIO μ
+    , MonadBaseControl IO μ
+    , MonadError T.Text μ
+    )
+#else
+type ConfigFileParser μ =
+    ( Functor μ
+    , Applicative μ
+    , MonadIO μ
+    , MonadError T.Text μ
+    )
+#endif
+
+parseConfigFiles
+    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ⇒ α
+        -- ^ default configuration value
+    → [ConfigFile]
+        -- ^ list of configuration file paths
+    → μ α
+parseConfigFiles = foldM $ \conf file →
+    readConfigFile file <*> pure conf
+
+readConfigFile
+    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ⇒ ConfigFile
+        -- ^ file path
+    → μ (α → α)
+readConfigFile file =
+#ifdef REMOTE_CONFIGS
+    if isRemote file then loadRemote file else loadLocal file
+#else
+    loadLocal file
+#endif
+
+loadLocal
+    ∷ (Functor μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
+    ⇒ ConfigFile
+        -- ^ file path
+    → μ (α → α)
+loadLocal path = do
+    validateFilePath "config-file" (T.unpack file)
+    exists ← (True <$ validateFile "config-file" (T.unpack file)) `catchError` \e → case path of
+        ConfigFileOptional _ → return False
+        ConfigFileRequired _ → throwError $ "failed to read config file: " ⊕ e
+    if exists
+      then
+        liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
+            Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
+            Right r → return r
+      else
+        return id
+  where
+    file = getConfigFile path
+
+#ifdef REMOTE_CONFIGS
+isRemote
+    ∷ ConfigFile
+    → Bool
+isRemote path = L.any (`T.isPrefixOf` getConfigFile path) ["http://", "https://"]
+
+loadRemote
+    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ⇒ ConfigFile
+        -- ^ URL
+    → μ (α → α)
+loadRemote path = do
+    validateHttpOrHttpsUrl "config-file" (T.unpack url)
+    dat ← liftIO (Just ∘ LB.toStrict <$> simpleHttp (T.unpack url)) `catchAnyDeep` \e →
+        case path of
+            ConfigFileOptional _ → return Nothing
+            ConfigFileRequired _ → throwError $ "failed to download remote configuration file: " ⊕ sshow e
+    case dat of
+        Nothing → return id
+        Just d → case Yaml.decodeEither' d of
+            Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ sshow e
+            Right r → return r
+  where
+    url = getConfigFile path
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- Configuration of Optional Values
