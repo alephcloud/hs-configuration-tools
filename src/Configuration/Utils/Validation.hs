@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -363,8 +364,10 @@ validateConfigFile
     → m ()
 validateConfigFile filepath =
     validateFileReadable "config-file" filepath
+#ifdef REMOTE_CONFIGS
     `catchError` \_ ->
     validateHttpOrHttpsUrl "config-file" filepath
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- Boolean Values
