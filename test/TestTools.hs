@@ -50,7 +50,6 @@ import Control.Monad
 
 import qualified Data.ByteString.Char8 as B8
 import Data.IORef
-import Data.Maybe
 import Data.Monoid.Unicode
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
@@ -66,6 +65,7 @@ import System.IO
 #ifdef REMOTE_CONFIGS
 import Control.Concurrent
 import qualified Data.ByteString.Lazy as LB
+import Data.Maybe
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as WAI
 import qualified Network.Wai.Handler.Warp as WARP
