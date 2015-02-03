@@ -22,6 +22,7 @@ module Configuration.Utils.Internal
 , iso
 
 -- * Misc Utils
+, (&)
 , sshow
 , exceptT
 , errorT
@@ -40,6 +41,8 @@ import Data.String
 import qualified Data.Text as T
 
 import Prelude.Unicode
+
+infixl 1 &
 
 -- -------------------------------------------------------------------------- --
 -- Lenses
@@ -91,6 +94,10 @@ iso f g = dimap f (fmap g)
 
 -- -------------------------------------------------------------------------- --
 -- Misc Utils
+
+(&) ∷ α → (α → β) → β
+(&) = flip ($)
+{-# INLINE (&) #-}
 
 sshow
     ∷ (Show α, IsString τ)
