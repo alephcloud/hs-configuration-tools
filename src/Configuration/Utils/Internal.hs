@@ -22,6 +22,7 @@ module Configuration.Utils.Internal
 , iso
 
 -- * Misc Utils
+, (&)
 , sshow
 , exceptT
 , errorT
@@ -40,6 +41,8 @@ import Data.String
 import qualified Data.Text as T
 
 import Prelude.Unicode
+
+infixl 1 &
 
 -- -------------------------------------------------------------------------- --
 -- Lenses
@@ -66,16 +69,17 @@ lens ∷ (σ → α) → (σ → β → τ) → Lens σ τ α β
 lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
 {-# INLINE lens #-}
 
-over ∷ ((α → Identity α) → β → Identity β) → (α → α) → β → β
+over ∷ ((α → Identity β) → σ → Identity τ) → (α → β) → σ → τ
 over s f = runIdentity . s (Identity . f)
 {-# INLINE over #-}
 
-set ∷ ((α → Identity α) → β → Identity β) → α → β → β
+set ∷ ((α → Identity β) → σ → Identity τ) → β → σ → τ
 set s a = runIdentity . s (const $ Identity a)
 {-# INLINE set #-}
 
 view ∷ MonadReader σ μ ⇒ ((α → Const α α) → σ → Const α σ) → μ α
 view l = asks (getConst #. l Const)
+{-# INLINE view #-}
 
 -- | This is the same type as the type from the lens library with the same name.
 --
@@ -92,11 +96,16 @@ iso f g = dimap f (fmap g)
 -- -------------------------------------------------------------------------- --
 -- Misc Utils
 
+(&) ∷ α → (α → β) → β
+(&) = flip ($)
+{-# INLINE (&) #-}
+
 sshow
     ∷ (Show α, IsString τ)
     ⇒ α
     → τ
 sshow = fromString ∘ show
+{-# INLINE sshow #-}
 
 exceptT
     ∷ Monad μ
@@ -105,10 +114,12 @@ exceptT
     → ExceptT ε μ α
     → μ β
 exceptT a b = runExceptT >=> either a b
+{-# INLINE exceptT #-}
 
 errorT
     ∷ Monad μ
     ⇒ ExceptT T.Text μ α
     → μ α
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
+{-# INLINE errorT #-}
 
