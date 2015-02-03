@@ -79,6 +79,7 @@ set s a = runIdentity . s (const $ Identity a)
 
 view ∷ MonadReader σ μ ⇒ ((α → Const α α) → σ → Const α σ) → μ α
 view l = asks (getConst #. l Const)
+{-# INLINE view #-}
 
 -- | This is the same type as the type from the lens library with the same name.
 --
@@ -104,6 +105,7 @@ sshow
     ⇒ α
     → τ
 sshow = fromString ∘ show
+{-# INLINE sshow #-}
 
 exceptT
     ∷ Monad μ
@@ -112,10 +114,12 @@ exceptT
     → ExceptT ε μ α
     → μ β
 exceptT a b = runExceptT >=> either a b
+{-# INLINE exceptT #-}
 
 errorT
     ∷ Monad μ
     ⇒ ExceptT T.Text μ α
     → μ α
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
+{-# INLINE errorT #-}
 
