@@ -1,9 +1,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
@@ -18,98 +20,63 @@ module Main
 ( main
 ) where
 
+import TestTools
+
 import Configuration.Utils
 import Configuration.Utils.Internal
+import Configuration.Utils.Validation
 
-import Control.Exception
 import Control.Monad
 
-import qualified Data.ByteString.Char8 as B8
-import Data.IORef
+import qualified Data.HashMap.Strict as HM
 import qualified Data.List as L
 import Data.Monoid.Unicode
+import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Data.Yaml as Yaml
-
-import Distribution.Simple.Utils (withTempFile)
 
 import Example hiding (main)
 
 import Prelude.Unicode
 
-import System.Environment
-import System.IO
-
 import PkgInfo_url_example_test
-
-#ifdef REMOTE_CONFIGS
-import Control.Concurrent
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.Text.Encoding as T
-import qualified Network.Wai as WAI
-import qualified Network.Wai.Handler.Warp as WARP
-import qualified Network.HTTP.Types as HTTP
-#endif
-
--- -------------------------------------------------------------------------- --
--- Poor man's debugging
-
-enableDebug ∷ Bool
-enableDebug = False
-
-debug
-    ∷ Monad m
-    ⇒ m ()
-    → m ()
-debug a
-    | enableDebug = a
-    | otherwise = return ()
 
 -- -------------------------------------------------------------------------- --
 -- main
 
-#ifdef REMOTE_CONFIGS
-serverPort ∷ Int
-serverPort = 8283
-
-serverUrl ∷ T.Text
-serverUrl = "http://127.0.0.1:" ⊕ sshow serverPort
-#endif
-
 main ∷ IO ()
 main =
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath0 tmpHandle0 →
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath1 tmpHandle1 → do
-
-        B8.hPutStrLn tmpHandle0 ∘ Yaml.encode $ config0
-        hClose tmpHandle0
-
-        T.hPutStrLn tmpHandle1 config1Part
-        hClose tmpHandle1
+    withConfigFile config0 $ \tmpPath0 →
+    withConfigFileText config1Part$ \tmpPath1 → do
 
 #ifdef REMOTE_CONFIGS
-        void ∘ forkIO $ server serverPort
+    withConfigFileServer [("config0", ConfigType config0)] [("config1", config1Part), ("invalid", "invalid: invalid")] $ do
 #endif
         (successes, failures) ← L.partition id <$> sequence
             × tests0
-            ⊕ testsConfigFile [T.pack tmpPath0, T.pack tmpPath1]
-            ⊕ tests2Files1 [T.pack tmpPath0, T.pack tmpPath1]
-            ⊕ tests2Files2 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
-            ⊕ tests2Files3 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
+            ⊕ testsConfigFile [tmpPath0, tmpPath1]
+            ⊕ tests2Files1 [tmpPath0, tmpPath1]
+            ⊕ tests2Files2 "local-" (tmpPath0) (tmpPath1)
+            ⊕ tests2Files3 "local-" (tmpPath0) (tmpPath1)
 #ifdef REMOTE_CONFIGS
             ⊕ tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ tests2Files3 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
 #endif
-            ⊕ testPrintHelp [T.pack tmpPath0, T.pack tmpPath1]
+            ⊕ routingTableTests
+            ⊕ textAppendTestsR
+            ⊕ textAppendTestsFilesR
+            ⊕ textAppendTestsL
+            ⊕ textAppendTestsFilesL
+            ⊕ testPrintHelp [tmpPath0, tmpPath1]
+
 
         T.putStrLn $ "success: " ⊕ sshow (length successes)
         T.putStrLn $ "failures: " ⊕ sshow (length failures)
         unless (length failures ≡ 0) $ do
             debug $ do
-                T.readFile tmpPath0 >>= T.putStrLn
-                T.readFile tmpPath1 >>= T.putStrLn
+                T.readFile (T.unpack tmpPath0) >>= T.putStrLn
+                T.readFile (T.unpack tmpPath1) >>= T.putStrLn
             error "test suite failed"
 
 -- -------------------------------------------------------------------------- --
@@ -120,15 +87,15 @@ main =
 --
 testPrintHelp ∷ [T.Text] → [IO Bool]
 testPrintHelp files =
-    [ runTest (mainInfoConfigFile configFiles) "print-help" False [trueAssertion ["-?"]]
+    [ runTest pkgInfo (mainInfoConfigFile configFiles) "print-help" False [trueAssertion ["-?"]]
     ]
   where
     configFiles = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) files
 
 testsConfigFile ∷ [T.Text] → [IO Bool]
 testsConfigFile files =
-    [ runTest (mainInfoConfigFile configFiles0) "config-file-1" True [trueAssertion []]
-    , runTest (mainInfoConfigFile configFiles1) "config-file-2" False [trueAssertion []]
+    [ runTest pkgInfo (mainInfoConfigFile configFiles0) "config-file-1" True [trueAssertion []]
+    , runTest pkgInfo (mainInfoConfigFile configFiles1) "config-file-2" False [trueAssertion []]
     ]
   where
     configFiles0 = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) (files ⊕ ["./invalid"])
@@ -139,8 +106,8 @@ testsConfigFile files =
 --
 testsInvalidUrl ∷ [IO Bool]
 testsInvalidUrl =
-    [ runTest mainInfo "invalidUrl-0" False [x0 d1]
-    , runTest mainInfo "invalidUrl-1" False [x1 d1]
+    [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0 d1]
+    , runTest pkgInfo mainInfo "invalidUrl-1" False [x1 d1]
     ]
   where
     x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=http://invalid"):args) l v
@@ -206,7 +173,7 @@ twoFileCasesC0C1 prefix files x =
   where
     c0 = config0
     c1 = config1
-    runf = runTest ∘ mainInfoConfigFile ∘ map ConfigFileRequired
+    runf = runTest pkgInfo ∘ mainInfoConfigFile ∘ map ConfigFileRequired
 
 -- | Tests with two configuration files c1 then c0
 --
@@ -221,7 +188,7 @@ twoFileCasesC1C0 prefix files x =
   where
     c0 = config0
     c1 = config1
-    runf = runTest ∘ mainInfoConfigFile ∘ map ConfigFileRequired
+    runf = runTest pkgInfo ∘ mainInfoConfigFile ∘ map ConfigFileRequired
 
 -- -------------------------------------------------------------------------- --
 -- Command Line argument tests
@@ -269,7 +236,7 @@ tests0 =
     , run "test31" False [t0, t1, t2, t3, t4]
     ]
   where
-    run = runTest mainInfo
+    run = runTest pkgInfo mainInfo
 
 -- -------------------------------------------------------------------------- --
 -- Test Data
@@ -318,22 +285,6 @@ mainInfoConfigFile files = set piConfigurationFiles files mainInfo
 -- -------------------------------------------------------------------------- --
 -- Building blocks for tests
 
--- | Specify a assertion about the parsed configuration
---
--- The parameters are
---
--- 1. list of command line arguments,
--- 2. lens for the configuration value
--- 3. the expected value
---
-data ConfAssertion β = ∀ α . Eq α ⇒ ConfAssertion [String] (Lens' β α) α
-
-trueLens ∷ Lens' β ()
-trueLens = lens (const ()) const
-
-trueAssertion ∷ [String] → ConfAssertion β
-trueAssertion args = ConfAssertion args trueLens ()
-
 -- assert values from given configuration
 
 f1 ∷ HttpURL → ConfAssertion HttpURL
@@ -381,79 +332,209 @@ t4 ∷ ConfAssertion HttpURL
 t4 = ConfAssertion ["--pwd=c_pwd"] (auth ∘ pwd) "c_pwd"
 
 -- -------------------------------------------------------------------------- --
--- Test execution
+-- Test Monoid Updates
 
--- Check the given list of assertions for the given configuration value
+-- HashMap
 --
-check
-    ∷ α
-    → [ConfAssertion α]
-    → IO Bool
-check conf assertions =
-    foldM (\a (b,n) → (&& a) <$> go b n) True $ zip assertions [0 ∷ Int ..]
+newtype RoutingTable = RoutingTable { _routingTableMap ∷ HM.HashMap T.Text T.Text }
+
+routingTableMap ∷ Lens' RoutingTable (HM.HashMap T.Text T.Text)
+routingTableMap = lens _routingTableMap $ \a b → a { _routingTableMap = b }
+
+defaultRoutingTable ∷ RoutingTable
+defaultRoutingTable = RoutingTable HM.empty
+
+instance ToJSON RoutingTable where
+    toJSON RoutingTable{..} = object
+        [ "route_map" .= _routingTableMap
+        ]
+
+instance FromJSON (RoutingTable → RoutingTable) where
+    parseJSON = withObject "RoutingTable" $ \o → id
+        <$< routingTableMap . fromLeftMonoidalUpdate %.: "route_map" × o
+
+pRoutingTable ∷ MParser RoutingTable
+pRoutingTable = routingTableMap %:: pLeftMonoidalUpdate pRoute
   where
-    go (ConfAssertion _ l v) n =
-        if view l conf ≡ v
-          then do
-            debug ∘ T.putStrLn $ "DEBUG: assertion " ⊕ sshow n ⊕ " succeeded"
-            return True
-          else do
-            debug ∘ T.putStrLn $ "DEBUG: assertion " ⊕ sshow n ⊕ " failed"
-            return False
+    pRoute = option (eitherReader readRoute)
+        × long "route"
+        ⊕ help "add a route to the routing table; the APIROUTE part must not contain a colon character"
+        ⊕ metavar "APIROUTE:APIURL"
 
--- | Run a test with an expected outcome ('True' or 'False')
--- for a given that of assertions.
---
-runTest
-    ∷ (FromJSON (α → α), ToJSON α)
-    ⇒ ProgramInfoValidate α []
-    → T.Text
-        -- ^ label for the test case
-    → Bool
-        -- ^ expected outcome
-    → [ConfAssertion α]
-        -- ^ test assertions
-    → IO Bool
-runTest mInfo label succeed assertions = do
+    readRoute s = case break (== ':') s of
+        (a,':':b) → fmapL T.unpack $ do
+            validateNonEmpty "APIROUTE" a
+            validateHttpOrHttpsUrl "APIURL" b
+            return $ HM.singleton (T.pack a) (T.pack b)
+        _ → Left "missing colon between APIROUTE and APIURL"
 
-    debug ∘ T.putStrLn $ "\nDEBUG: ======> " ⊕ label
+    fmapL f = either (Left . f) Right
 
-    debug ∘ T.putStrLn $ "DEBUG: runWithPkgInfoConfiguration"
-    a ← run $ runWithPkgInfoConfiguration mInfo pkgInfo
+mainInfoRoutingTable ∷ ProgramInfoValidate RoutingTable []
+mainInfoRoutingTable = programInfoValidate "Routing Table" pRoutingTable defaultRoutingTable (const $ return ())
 
-    debug ∘ T.putStrLn $ "DEBUG: runWithConfiguration"
-    b ← run $ runWithConfiguration mInfo
-
-    if a ≡ b && succeed ≡ (a && b)
-      then
-        return True
-      else do
-        T.putStrLn $ "WARNING: test " ⊕ label ⊕ " failed"
-        return False
+routingTableTests ∷ [IO Bool]
+routingTableTests =
+    [ run 0 [ConfAssertion ["--route=a:" ⊕ b0] (routingTableMap ∘ at "a") $ Just b0]
+    , run 1 [ConfAssertion ["--route=a:" ⊕ b0, "--route=a:" ⊕ b1] (routingTableMap ∘ at "a") $ Just b1]
+    , run 2 [ConfAssertion ["--route=a:" ⊕ b0, "--route=a:" ⊕ b1] (routingTableMap ∘ at "a") $ Just b1]
+    , run 3 [ConfAssertion ["--route=a:" ⊕ b0, "--route=b:" ⊕ b1] (routingTableMap ∘ at "a") $ Just b0]
+    , run 4 [ConfAssertion ["--route=a:" ⊕ b0, "--route=b:" ⊕ b1] (routingTableMap ∘ at "b") $ Just b1]
+    , run 5 [ConfAssertion ["--route=a:" ⊕ b0, "--route=b:" ⊕ b1] (routingTableMap ∘ at "c") Nothing]
+    ]
   where
-    run f = do
-        ref ← newIORef False
-        handle (handler ref) $ withArgs args ∘ f $ \conf →
-            writeIORef ref =<< check conf assertions
-        readIORef ref
+    b0,b1 ∷ IsString a ⇒ a
+    b0 = "http://b0"
+    b1 = "https://b1"
+    run (x ∷ Int) = runTest pkgInfo mainInfoRoutingTable ("routing-table-" ⊕ sshow x) True
 
-    args = concatMap (\(ConfAssertion x _ _) → x) assertions
+    at k f m = f mv <&> \r -> case r of
+        Nothing -> maybe m (const (HM.delete k m)) mv
+        Just v' -> HM.insert k v' m
+      where
+        mv = HM.lookup k m
+        (<&>) = flip fmap
 
-    handler ref (e ∷ SomeException) = do
-        writeIORef ref False
-        debug ∘ T.putStrLn $ "DEBUG: caugth exception: " ⊕ sshow e
-
-#ifdef REMOTE_CONFIGS
--- -------------------------------------------------------------------------- --
--- Test HTTP server for serving configurations
+-- Text with right append
 --
+newtype StringConfigR = StringConfigR { _stringConfigR ∷ T.Text }
 
-server ∷ Int → IO ()
-server port = WARP.run port $ \req respond → do
-    let body = LB.fromStrict $ case WAI.pathInfo req of
-            ("config0":_) → Yaml.encode $ config0
-            ("config1":_) → T.encodeUtf8 $ config1Part
-            _ → "invalid: invalid"
-    respond $ WAI.responseLBS HTTP.status200 [] body
+stringConfigR ∷ Lens' StringConfigR T.Text
+stringConfigR = lens _stringConfigR $ \a b → a { _stringConfigR = b }
 
-#endif
+defaultStringConfigR ∷ StringConfigR
+defaultStringConfigR = StringConfigR "|"
+
+instance ToJSON StringConfigR where
+    toJSON StringConfigR{..} = object
+        [ "string" .= _stringConfigR
+        ]
+
+instance FromJSON (StringConfigR → StringConfigR) where
+    parseJSON = withObject "StringConfigR" $ \o → id
+        <$< stringConfigR . fromRightMonoidalUpdate %.: "string" × o
+
+pStringConfigR ∷ MParser StringConfigR
+pStringConfigR = stringConfigR %:: pRightMonoidalUpdate pString
+  where
+    pString = T.pack <$> strOption × long "string"
+
+textAppendTestsR ∷ [IO Bool]
+textAppendTestsR =
+    [ run 0 True [ConfAssertion [] stringConfigR "|"]
+    , run 1 True [ConfAssertion ["--string=a"] stringConfigR "|a"]
+
+    , run 2 True [ConfAssertion ["--string=a", "--string=b"] stringConfigR "|ab"]
+    , run 3 False [ConfAssertion ["--string=a", "--string=b"] stringConfigR "|ba"]
+    , run 4 False [ConfAssertion ["--string=b", "--string=a"] stringConfigR "|ab"]
+    , run 5 True [ConfAssertion ["--string=b", "--string=a"] stringConfigR "|ba"]
+
+    , run 6 False [ConfAssertion ["--string=aaa", "--string=bbb"] stringConfigR "|bbbaaa"]
+    , run 7 True [ConfAssertion ["--string=aaa", "--string=bbb"] stringConfigR "|aaabbb"]
+    , run 8 True [ConfAssertion ["--string=bbb", "--string=aaa"] stringConfigR "|bbbaaa"]
+    , run 9 False [ConfAssertion ["--string=bbb", "--string=aaa"] stringConfigR "|aaabbb"]
+    ]
+  where
+    run (x ∷ Int) = runTest pkgInfo mi ("stringR-" ⊕ sshow x)
+    mi = programInfoValidate "Routing Table" pStringConfigR defaultStringConfigR (const $ return ())
+
+textAppendTestsFilesR ∷ [IO Bool]
+textAppendTestsFilesR =
+    [ run ca 0 True [ConfAssertion [] stringConfigR "|a"]
+
+    , run ca 2 True [ConfAssertion ["--string=b"] stringConfigR "|ab"]
+    , run ca 3 False [ConfAssertion ["--string=b"] stringConfigR "|ba"]
+    , run cb 4 False [ConfAssertion ["--string=a"] stringConfigR "|ab"]
+    , run cb 5 True [ConfAssertion ["--string=a"] stringConfigR "|ba"]
+
+    , run2 ca ca 6 True [ConfAssertion [] stringConfigR "|aa"]
+    , run2 ca cb 6 False [ConfAssertion [] stringConfigR "|ba"]
+    , run2 ca cb 7 True [ConfAssertion [] stringConfigR "|ab"]
+    , run2 cb ca 8 True [ConfAssertion [] stringConfigR "|ba"]
+    , run2 cb ca 9 False [ConfAssertion [] stringConfigR "|ab"]
+    ]
+  where
+    ca = StringConfigR "a"
+    cb = StringConfigR "b"
+    run c (x ∷ Int) b a = withConfigFile c $ \file →
+        runTest pkgInfo (mi [file]) ("stringL-file1-" ⊕ sshow x) b a
+
+    run2 c0 c1 (x ∷ Int) b a =
+        withConfigFile c0 $ \file0 →
+        withConfigFile c1 $ \file1 →
+        runTest pkgInfo (mi [file0,file1]) ("stringL-file2-" ⊕ sshow x) b a
+
+    mi files = set piConfigurationFiles (map ConfigFileRequired files) $
+      programInfoValidate "Routing Table" pStringConfigR defaultStringConfigR (const $ return ())
+
+-- Text with left append
+--
+newtype StringConfigL = StringConfigL { _stringConfigL ∷ T.Text }
+
+stringConfigL ∷ Lens' StringConfigL T.Text
+stringConfigL = lens _stringConfigL $ \a b → a { _stringConfigL = b }
+
+defaultStringConfigL ∷ StringConfigL
+defaultStringConfigL = StringConfigL "|"
+
+instance ToJSON StringConfigL where
+    toJSON StringConfigL{..} = object
+        [ "string" .= _stringConfigL
+        ]
+
+instance FromJSON (StringConfigL → StringConfigL) where
+    parseJSON = withObject "StringConfigL" $ \o → id
+        <$< stringConfigL . fromLeftMonoidalUpdate %.: "string" × o
+
+pStringConfigL ∷ MParser StringConfigL
+pStringConfigL = stringConfigL %:: pLeftMonoidalUpdate pString
+  where
+    pString = T.pack <$> strOption × long "string"
+
+textAppendTestsL ∷ [IO Bool]
+textAppendTestsL =
+    [ run 0 True [ConfAssertion [] stringConfigL "|"]
+    , run 1 True [ConfAssertion ["--string=a"] stringConfigL "a|"]
+
+    , run 2 True [ConfAssertion ["--string=a", "--string=b"] stringConfigL "ba|"]
+    , run 3 False [ConfAssertion ["--string=a", "--string=b"] stringConfigL "ab|"]
+    , run 4 False [ConfAssertion ["--string=b", "--string=a"] stringConfigL "ba|"]
+    , run 5 True [ConfAssertion ["--string=b", "--string=a"] stringConfigL "ab|"]
+
+    , run 6 True [ConfAssertion ["--string=aaa", "--string=bbb"] stringConfigL "bbbaaa|"]
+    , run 7 False [ConfAssertion ["--string=aaa", "--string=bbb"] stringConfigL "aaabbb|"]
+    , run 8 False [ConfAssertion ["--string=bbb", "--string=aaa"] stringConfigL "bbbaaa|"]
+    , run 9 True [ConfAssertion ["--string=bbb", "--string=aaa"] stringConfigL "aaabbb|"]
+    ]
+  where
+    run (x ∷ Int) = runTest pkgInfo mi ("stringL-" ⊕ sshow x)
+    mi = programInfoValidate "Routing Table" pStringConfigL defaultStringConfigL (const $ return ())
+
+textAppendTestsFilesL ∷ [IO Bool]
+textAppendTestsFilesL =
+    [ run ca 1 True [ConfAssertion [] stringConfigL "a|"]
+
+    , run ca 2 True [ConfAssertion ["--string=b"] stringConfigL "ba|"]
+    , run ca 3 False [ConfAssertion ["--string=b"] stringConfigL "ab|"]
+    , run cb 4 False [ConfAssertion ["--string=a"] stringConfigL "ba|"]
+    , run cb 5 True [ConfAssertion ["--string=a"] stringConfigL "ab|"]
+
+    , run2 ca ca 1 True [ConfAssertion [] stringConfigL "aa|"]
+    , run2 ca cb 2 True [ConfAssertion [] stringConfigL "ba|"]
+    , run2 ca cb 3 False [ConfAssertion [] stringConfigL "ab|"]
+    , run2 cb ca 4 False [ConfAssertion [] stringConfigL "ba|"]
+    , run2 cb ca 5 True [ConfAssertion [] stringConfigL "ab|"]
+    ]
+  where
+    ca = StringConfigL "a"
+    cb = StringConfigL "b"
+    run c (x ∷ Int) b a = withConfigFile c $ \file →
+        runTest pkgInfo (mi [file]) ("stringL-file1-" ⊕ sshow x) b a
+
+    run2 c0 c1 (x ∷ Int) b a =
+        withConfigFile c0 $ \file0 →
+        withConfigFile c1 $ \file1 →
+        runTest pkgInfo (mi [file0,file1]) ("stringL-file2-" ⊕ sshow x) b a
+
+    mi files = set piConfigurationFiles (map ConfigFileRequired files) $
+      programInfoValidate "Routing Table" pStringConfigL defaultStringConfigL (const $ return ())

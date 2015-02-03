@@ -18,6 +18,7 @@ module Configuration.Utils.Internal
 , Lens'
 , Lens
 , Iso'
+, Iso
 , iso
 
 -- * Misc Utils
@@ -81,9 +82,10 @@ view l = asks (getConst #. l Const)
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Iso' β α = (Profunctor π, Functor φ) ⇒ π α (φ α) → π β (φ β)
+type Iso σ τ α β = (Profunctor π, Functor φ) ⇒ π α (φ β) → π σ (φ τ)
+type Iso' σ α = Iso σ σ α α
 
-iso ∷ (β → α) → (α → β) → Iso' β α
+iso ∷ (σ → α) → (β → τ) → Iso σ τ α β
 iso f g = dimap f (fmap g)
 {-# INLINE iso #-}
 
