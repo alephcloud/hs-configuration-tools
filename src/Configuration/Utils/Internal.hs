@@ -69,11 +69,11 @@ lens ∷ (σ → α) → (σ → β → τ) → Lens σ τ α β
 lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
 {-# INLINE lens #-}
 
-over ∷ ((α → Identity α) → β → Identity β) → (α → α) → β → β
+over ∷ ((α → Identity β) → σ → Identity τ) → (α → β) → σ → τ
 over s f = runIdentity . s (Identity . f)
 {-# INLINE over #-}
 
-set ∷ ((α → Identity α) → β → Identity β) → α → β → β
+set ∷ ((α → Identity β) → σ → Identity τ) → β → σ → τ
 set s a = runIdentity . s (const $ Identity a)
 {-# INLINE set #-}
 
