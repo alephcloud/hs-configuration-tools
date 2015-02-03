@@ -18,98 +18,54 @@ module Main
 ( main
 ) where
 
+import TestTools
+
 import Configuration.Utils
 import Configuration.Utils.Internal
 
-import Control.Exception
 import Control.Monad
 
-import qualified Data.ByteString.Char8 as B8
-import Data.IORef
 import qualified Data.List as L
 import Data.Monoid.Unicode
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
-import qualified Data.Yaml as Yaml
-
-import Distribution.Simple.Utils (withTempFile)
 
 import Example hiding (main)
 
 import Prelude.Unicode
 
-import System.Environment
-import System.IO
-
 import PkgInfo_url_example_test
-
-#ifdef REMOTE_CONFIGS
-import Control.Concurrent
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.Text.Encoding as T
-import qualified Network.Wai as WAI
-import qualified Network.Wai.Handler.Warp as WARP
-import qualified Network.HTTP.Types as HTTP
-#endif
-
--- -------------------------------------------------------------------------- --
--- Poor man's debugging
-
-enableDebug ∷ Bool
-enableDebug = False
-
-debug
-    ∷ Monad m
-    ⇒ m ()
-    → m ()
-debug a
-    | enableDebug = a
-    | otherwise = return ()
 
 -- -------------------------------------------------------------------------- --
 -- main
 
-#ifdef REMOTE_CONFIGS
-serverPort ∷ Int
-serverPort = 8283
-
-serverUrl ∷ T.Text
-serverUrl = "http://127.0.0.1:" ⊕ sshow serverPort
-#endif
-
 main ∷ IO ()
 main =
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath0 tmpHandle0 →
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath1 tmpHandle1 → do
-
-        B8.hPutStrLn tmpHandle0 ∘ Yaml.encode $ config0
-        hClose tmpHandle0
-
-        T.hPutStrLn tmpHandle1 config1Part
-        hClose tmpHandle1
+    withConfigFile config0 $ \tmpPath0 →
+    withConfigFileText config1Part$ \tmpPath1 → do
 
 #ifdef REMOTE_CONFIGS
-        void ∘ forkIO $ server serverPort
+    withConfigFileServer [("config0", ConfigType config0)] [("config1", config1Part), ("invalid", "invalid: invalid")] $ do
 #endif
         (successes, failures) ← L.partition id <$> sequence
             × tests0
-            ⊕ testsConfigFile [T.pack tmpPath0, T.pack tmpPath1]
-            ⊕ tests2Files1 [T.pack tmpPath0, T.pack tmpPath1]
-            ⊕ tests2Files2 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
-            ⊕ tests2Files3 "local-" (T.pack tmpPath0) (T.pack tmpPath1)
+            ⊕ testsConfigFile [tmpPath0, tmpPath1]
+            ⊕ tests2Files1 [tmpPath0, tmpPath1]
+            ⊕ tests2Files2 "local-" (tmpPath0) (tmpPath1)
+            ⊕ tests2Files3 "local-" (tmpPath0) (tmpPath1)
 #ifdef REMOTE_CONFIGS
             ⊕ tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ tests2Files3 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
 #endif
-            ⊕ testPrintHelp [T.pack tmpPath0, T.pack tmpPath1]
+            ⊕ testPrintHelp [tmpPath0, tmpPath1]
 
         T.putStrLn $ "success: " ⊕ sshow (length successes)
         T.putStrLn $ "failures: " ⊕ sshow (length failures)
         unless (length failures ≡ 0) $ do
             debug $ do
-                T.readFile tmpPath0 >>= T.putStrLn
-                T.readFile tmpPath1 >>= T.putStrLn
+                T.readFile (T.unpack tmpPath0) >>= T.putStrLn
+                T.readFile (T.unpack tmpPath1) >>= T.putStrLn
             error "test suite failed"
 
 -- -------------------------------------------------------------------------- --
@@ -120,15 +76,15 @@ main =
 --
 testPrintHelp ∷ [T.Text] → [IO Bool]
 testPrintHelp files =
-    [ runTest (mainInfoConfigFile configFiles) "print-help" False [trueAssertion ["-?"]]
+    [ runTest pkgInfo (mainInfoConfigFile configFiles) "print-help" False [trueAssertion ["-?"]]
     ]
   where
     configFiles = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) files
 
 testsConfigFile ∷ [T.Text] → [IO Bool]
 testsConfigFile files =
-    [ runTest (mainInfoConfigFile configFiles0) "config-file-1" True [trueAssertion []]
-    , runTest (mainInfoConfigFile configFiles1) "config-file-2" False [trueAssertion []]
+    [ runTest pkgInfo (mainInfoConfigFile configFiles0) "config-file-1" True [trueAssertion []]
+    , runTest pkgInfo (mainInfoConfigFile configFiles1) "config-file-2" False [trueAssertion []]
     ]
   where
     configFiles0 = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) (files ⊕ ["./invalid"])
@@ -139,8 +95,8 @@ testsConfigFile files =
 --
 testsInvalidUrl ∷ [IO Bool]
 testsInvalidUrl =
-    [ runTest mainInfo "invalidUrl-0" False [x0 d1]
-    , runTest mainInfo "invalidUrl-1" False [x1 d1]
+    [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0 d1]
+    , runTest pkgInfo mainInfo "invalidUrl-1" False [x1 d1]
     ]
   where
     x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=http://invalid"):args) l v
@@ -206,7 +162,7 @@ twoFileCasesC0C1 prefix files x =
   where
     c0 = config0
     c1 = config1
-    runf = runTest ∘ mainInfoConfigFile ∘ map ConfigFileRequired
+    runf = runTest pkgInfo ∘ mainInfoConfigFile ∘ map ConfigFileRequired
 
 -- | Tests with two configuration files c1 then c0
 --
@@ -221,7 +177,7 @@ twoFileCasesC1C0 prefix files x =
   where
     c0 = config0
     c1 = config1
-    runf = runTest ∘ mainInfoConfigFile ∘ map ConfigFileRequired
+    runf = runTest pkgInfo ∘ mainInfoConfigFile ∘ map ConfigFileRequired
 
 -- -------------------------------------------------------------------------- --
 -- Command Line argument tests
@@ -269,7 +225,7 @@ tests0 =
     , run "test31" False [t0, t1, t2, t3, t4]
     ]
   where
-    run = runTest mainInfo
+    run = runTest pkgInfo mainInfo
 
 -- -------------------------------------------------------------------------- --
 -- Test Data
@@ -318,22 +274,6 @@ mainInfoConfigFile files = set piConfigurationFiles files mainInfo
 -- -------------------------------------------------------------------------- --
 -- Building blocks for tests
 
--- | Specify a assertion about the parsed configuration
---
--- The parameters are
---
--- 1. list of command line arguments,
--- 2. lens for the configuration value
--- 3. the expected value
---
-data ConfAssertion β = ∀ α . Eq α ⇒ ConfAssertion [String] (Lens' β α) α
-
-trueLens ∷ Lens' β ()
-trueLens = lens (const ()) const
-
-trueAssertion ∷ [String] → ConfAssertion β
-trueAssertion args = ConfAssertion args trueLens ()
-
 -- assert values from given configuration
 
 f1 ∷ HttpURL → ConfAssertion HttpURL
@@ -380,80 +320,3 @@ t3 = ConfAssertion ["--user=c_u"] (auth ∘ user) "c_u"
 t4 ∷ ConfAssertion HttpURL
 t4 = ConfAssertion ["--pwd=c_pwd"] (auth ∘ pwd) "c_pwd"
 
--- -------------------------------------------------------------------------- --
--- Test execution
-
--- Check the given list of assertions for the given configuration value
---
-check
-    ∷ α
-    → [ConfAssertion α]
-    → IO Bool
-check conf assertions =
-    foldM (\a (b,n) → (&& a) <$> go b n) True $ zip assertions [0 ∷ Int ..]
-  where
-    go (ConfAssertion _ l v) n =
-        if view l conf ≡ v
-          then do
-            debug ∘ T.putStrLn $ "DEBUG: assertion " ⊕ sshow n ⊕ " succeeded"
-            return True
-          else do
-            debug ∘ T.putStrLn $ "DEBUG: assertion " ⊕ sshow n ⊕ " failed"
-            return False
-
--- | Run a test with an expected outcome ('True' or 'False')
--- for a given that of assertions.
---
-runTest
-    ∷ (FromJSON (α → α), ToJSON α)
-    ⇒ ProgramInfoValidate α []
-    → T.Text
-        -- ^ label for the test case
-    → Bool
-        -- ^ expected outcome
-    → [ConfAssertion α]
-        -- ^ test assertions
-    → IO Bool
-runTest mInfo label succeed assertions = do
-
-    debug ∘ T.putStrLn $ "\nDEBUG: ======> " ⊕ label
-
-    debug ∘ T.putStrLn $ "DEBUG: runWithPkgInfoConfiguration"
-    a ← run $ runWithPkgInfoConfiguration mInfo pkgInfo
-
-    debug ∘ T.putStrLn $ "DEBUG: runWithConfiguration"
-    b ← run $ runWithConfiguration mInfo
-
-    if a ≡ b && succeed ≡ (a && b)
-      then
-        return True
-      else do
-        T.putStrLn $ "WARNING: test " ⊕ label ⊕ " failed"
-        return False
-  where
-    run f = do
-        ref ← newIORef False
-        handle (handler ref) $ withArgs args ∘ f $ \conf →
-            writeIORef ref =<< check conf assertions
-        readIORef ref
-
-    args = concatMap (\(ConfAssertion x _ _) → x) assertions
-
-    handler ref (e ∷ SomeException) = do
-        writeIORef ref False
-        debug ∘ T.putStrLn $ "DEBUG: caugth exception: " ⊕ sshow e
-
-#ifdef REMOTE_CONFIGS
--- -------------------------------------------------------------------------- --
--- Test HTTP server for serving configurations
---
-
-server ∷ Int → IO ()
-server port = WARP.run port $ \req respond → do
-    let body = LB.fromStrict $ case WAI.pathInfo req of
-            ("config0":_) → Yaml.encode $ config0
-            ("config1":_) → T.encodeUtf8 $ config1Part
-            _ → "invalid: invalid"
-    respond $ WAI.responseLBS HTTP.status200 [] body
-
-#endif

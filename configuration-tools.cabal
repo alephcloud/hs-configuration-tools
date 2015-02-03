@@ -112,6 +112,7 @@ Test-Suite url-example-test
 
     other-modules:
         Example
+        TestTools
 
     build-depends:
         base >= 4.6 && < 5.0,
