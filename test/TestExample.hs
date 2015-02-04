@@ -106,12 +106,12 @@ testsConfigFile files =
 --
 testsInvalidUrl ∷ [IO Bool]
 testsInvalidUrl =
-    [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0 d1]
-    , runTest pkgInfo mainInfo "invalidUrl-1" False [x1 d1]
+    [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0, d1]
+    , runTest pkgInfo mainInfo "invalidUrl-1" False [x1, d1]
     ]
   where
-    x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=http://invalid"):args) l v
-    x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"):args) l v
+    x0 = trueAssertion ["--config-file=http://invalid"]
+    x1 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"]
 #endif
 
 -- -------------------------------------------------------------------------- --
