@@ -96,8 +96,10 @@ Library
 
     if flag(remote-configs)
         build-depends:
+            connection >= 0.2,
             enclosed-exceptions >= 1.0,
-            http-conduit >= 2.1,
+            http-client >= 0.4,
+            http-client-tls >= 0.2,
             monad-control >= 1.0
 
         cpp-options: -DREMOTE_CONFIGS
@@ -132,7 +134,8 @@ Test-Suite url-example-test
             http-types >= 0.8,
             monad-control >= 1.0,
             wai >= 3.0,
-            warp >= 3.0
+            warp >= 3.0,
+            warp-tls >= 3.0
 
         cpp-options: -DREMOTE_CONFIGS
 

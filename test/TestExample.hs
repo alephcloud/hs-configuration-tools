@@ -62,6 +62,7 @@ main =
             ⊕ tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ tests2Files3 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
+            ⊕ testsTlsUrl
 #endif
             ⊕ routingTableTests
             ⊕ textAppendTestsR
@@ -106,12 +107,25 @@ testsConfigFile files =
 --
 testsInvalidUrl ∷ [IO Bool]
 testsInvalidUrl =
-    [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0 d1]
-    , runTest pkgInfo mainInfo "invalidUrl-1" False [x1 d1]
+    [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0, d1]
+    , runTest pkgInfo mainInfo "invalidUrl-1" False [x1, d1]
     ]
   where
-    x0 (ConfAssertion args l v) = ConfAssertion (("--config-file=http://invalid"):args) l v
-    x1 (ConfAssertion args l v) = ConfAssertion (("--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"):args) l v
+    x0 = trueAssertion ["--config-file=http://invalid"]
+    x1 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"]
+
+testsTlsUrl ∷ [IO Bool]
+testsTlsUrl =
+    [ runTest pkgInfo mainInfo "tlsUrl-0" True [cf0, f1 c0]
+    , runTest pkgInfo mainInfo "tlsUrl-1" False [cf0t, f1 c0]
+    , runTest pkgInfo mainInfo "tlsUrl-2" True [insec, cf0, f1 c0]
+    , runTest pkgInfo mainInfo "tlsUrl-2" True [insec, cf0t, f1 c0]
+    ]
+  where
+    cf0 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/config0"]
+    cf0t = trueAssertion ["--config-file=" ⊕ T.unpack serverTlsUrl ⊕ "/config0"]
+    insec = trueAssertion ["--insecure-remote-config-files"]
+    c0 = config0
 #endif
 
 -- -------------------------------------------------------------------------- --
