@@ -21,6 +21,7 @@ module Main
 ) where
 
 import TestTools
+import Tests.BoolOption
 
 import Configuration.Utils
 import Configuration.Utils.Internal
@@ -69,8 +70,8 @@ main =
             ⊕ textAppendTestsFilesR
             ⊕ textAppendTestsL
             ⊕ textAppendTestsFilesL
+            ⊕ boolOptionTests pkgInfo
             ⊕ testPrintHelp [tmpPath0, tmpPath1]
-
 
         T.putStrLn $ "success: " ⊕ sshow (length successes)
         T.putStrLn $ "failures: " ⊕ sshow (length failures)
@@ -556,3 +557,4 @@ textAppendTestsFilesL =
 
     mi files = set piConfigurationFiles (map ConfigFileRequired files) $
       programInfoValidate "Routing Table" pStringConfigL defaultStringConfigL (const $ return ())
+
