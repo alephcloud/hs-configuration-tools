@@ -60,9 +60,9 @@ mainly through nested records.
 In addition to the user defined command line options the following
 options are recognized by the application:
 
-`--config-file, -c`
-:   parses the given file as a (partial) configuration in YAML format.
-    The file location can be provided either as a local filesystem path
+*   `--config-file, -c`
+    parses the given file as a --possibly partial-- configuration in YAML
+    format. The file location can be provided either as a local filesystem path
     or as a remote HTTP or HTTPS URL. In addition a list of static
     configuration file locations can be defined in the code.
 
@@ -72,19 +72,33 @@ options are recognized by the application:
     precedence over earlier settings. Files from static locations are
     loaded before files that are specified on the command line.
 
-`print-config, -p`
-:   configures the application and prints the configuration in YAML format
+*   `print-config, -p`
+    configures the application and prints the configuration in YAML format
     to standard out and exits. The printed configuration is exactly the
     configuration that otherwise would be used to run the application.
 
-`--help, -h`
-:   prints a help message and exits.
+*   `--help, -h`
+    prints a help message and exits.
 
-The operators assume that [lenses](http://hackage.haskell.org/package/lens)
-are provided for field of the configuration record types.
+As long as the package wasn't build with `-f-remote-configs` the following
+two options are availabe. They affect how configuration files
+are loaded from remote URLs.
 
-An complete usage example can be found in the file `example/Example.hs` of the
-cabal package.
+*   `--config-https-insecure=true|false`
+    Bypass certificate validation for all HTTPS
+    connections to all services.
+
+*   `--config-https-allow-cert=HOSTNAME:PORT:FINGERPRINT`
+    Unconditionally trust the certificate for connecting
+    to the service.
+
+The operators provided in this package assume that
+[lenses](http://hackage.haskell.org/package/lens) are provided for field of the
+configuration record types.
+
+An complete usage example can be found in the file
+[example/Example.hs](https://github.com/alephcloud/hs-configuration-tools/blob/master/examples/Example.hs)
+of the cabal package.
 
 Usage Example
 -------------
@@ -290,57 +304,8 @@ this means that for a type `a` one has to provide an `FromJSON` instance for `a`
 and use the `..:` operator. Similarly for the option parser one has to define a
 parser that yields an `a` and use it with the `.::` operator.
 
-Optional Configuration Values
------------------------------
-
-For simple `Maybe` values the standard `FromJSON` instance from the aeson
-package can be used along with the `..:` operator. When defining command line
-option parsers with `.::` and `%::` all options are optional. When an option is
-not present on the command line the default value is used. For `Maybe` values
-it is therefore enough to wrap the parsed value into `Just`.
-
-For configuration values of type `Maybe a` where `a` is a record type we provide
-an orphan[^1] `FromJSON` instance of the form
-
-~~~{.haskell}
-instance (FromJSON a, FromJSON (a -> a)) => FromJSON (Maybe a -> Maybe a)
-~~~
-
-that has the following behavior:
-
-If the parsed configuration value is `Null` the resulting function constantly
-returns `Nothing`. Otherwise
-
-*   If the parsed configuration value is `Null` the result is `Nothing`.
-*   If the parsed configuration value is not `Null` then the result is
-    an update function that
-
-    *   updates the given default value if this value is `Just x` or
-    *   is a constant function that returns the value that is parsed
-        from the configuration using the `FromJSON` instance for the
-        configuration type.
-
-The `FromJSON a` instance may either require that the parsed configuration fully
-specifies the value of `a` (and raise a failure otherwise) or the `FromJSON a`
-instance may do an pointwise update of a hardcoded default value based on
-the existing `FromJSON (a -> a)` instance.
-
-For instance, assuming that there is already an `FromJSON` instance for `MyType
--> MyType` and a default value `defaultMyType` the following pattern can be
-used:
-
-~~~{.haskell}
-instance FromJSON MyType where
-    parseJSON v = parseJSON v <*> defaultMyType
-~~~
-
-[^1]: Using an orphan instance is generally problematic but convenient in
-      this case. It's unlike that such an instance is needed elsewhere. If this
-      is an issue for you, please let me know. In that case we can define a new
-      type for optional configuration values.
-
-The function `maybeOption` is provided for defining command line parser for
-`Maybe` record values.
+The module `Configuration.Utils.Maybe` provides tools for dealing with
+`Maybe` values.
 
 Package and Build Information
 =============================
@@ -415,22 +380,22 @@ main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello wo
 With that the resulting application supports the following additional command
 line options:
 
-`--version, -v`
-:    prints the version of the application and exits.
+*   `--version, -v`
+    prints the version of the application and exits.
 
-`--info, -i`
-:   prints a short info message for the application and exits.
+*   `--info, -i`
+    prints a short info message for the application and exits.
 
-`--long-info`
-:   print a detailed info message for the application and exits.
+*   `--long-info`
+    print a detailed info message for the application and exits.
     Beside component name, package name, version, revision, and copyright
     the message also contain information about the compiler that
     was used for the build, the build architecture, build flags,
     the author, the license type, and a list of all direct and
     indirect dependencies along with their licenses and copyrights.
 
-`--license`
-:   prints the text of the lincense of the application and exits.
+*   `--license`
+    prints the text of the lincense of the application and exits.
 
 Here is the example output of `--long-info` for the example
 `examples/Trivial.hs` from this package:
@@ -524,9 +489,6 @@ TODO
 This package is in an early stage of development and more features
 are planned.
 
-*   Teach optparse-applicative to not print usage-message for
-    info options.
-
 *   Simplify specification of Configuration data types by
     integrating the aeson instances and the option parser.
 
@@ -540,16 +502,6 @@ are planned.
     By providing a default value for each such class partial configurations that
     are defined through point-wise updates can always be applied in a meaningful
     way.
-
-    We may use GHC Generics to derive the type for representing default values
-    for all constructure classes. We can then define an operator that allows to
-    construct the generic default value by combining values for the different
-    constructors of the original sum type.
-
-    The definition of the JSON instances and option parsers would use prisms
-    that would update a value only for supported constructor contexts. In
-    addition we may provide a way to configure the choice of a particular
-    constructor.
 
 *   Include help text as comments in YAML serialization of configuration
     values.
@@ -572,5 +524,3 @@ are planned.
 
 *   Add functionality optparse-applicative that allows to group options.
 
-*   Raise parser error for sub-ordinate "maybe" options when not enabled
-    the respective optional value is not enabled.
