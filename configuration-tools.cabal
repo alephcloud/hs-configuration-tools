@@ -131,6 +131,7 @@ Test-Suite url-example-test
         Example
         TestTools
         Tests.BoolOption
+        Tests.MonoidConfig
 
     build-depends:
         base >= 4.6 && < 5.0,
