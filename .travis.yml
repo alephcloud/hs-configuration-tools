@@ -23,7 +23,7 @@ before_install:
     # - export PATH=/opt/cabal/$CABALVER/bin:$PATH
     - travis_retry cabal update
     - mkdir $HOME/bin
-    - cabal install cabal-install --bindir=$HOME/bin --constraint="Cabal<$CABALBOUND"
+    - travis_retry cabal install cabal-install --bindir=$HOME/bin --constraint="Cabal<$CABALBOUND"
     - export PATH=$HOME/bin:$PATH
 
 install:
