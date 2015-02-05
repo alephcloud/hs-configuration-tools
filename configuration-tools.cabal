@@ -1,5 +1,5 @@
 -- ------------------------------------------------------ --
--- Copyright © 2014 AlephCloud Systems, Inc.
+-- Copyright © 2014-2015 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
 Name:                configuration-tools
@@ -67,10 +67,18 @@ Library
 
     exposed-modules:
         Configuration.Utils
+        Configuration.Utils.CommandLine
+        Configuration.Utils.ConfigFile
         Configuration.Utils.Http
         Configuration.Utils.Internal
+        Configuration.Utils.Maybe
+        Configuration.Utils.Monoid
+        Configuration.Utils.Operators
         Configuration.Utils.Setup
         Configuration.Utils.Validation
+    if flag(remote-configs)
+        exposed-modules:
+            Configuration.Utils.HttpsCertPolicy
 
     build-depends:
         Cabal >= 1.20,
@@ -96,12 +104,19 @@ Library
 
     if flag(remote-configs)
         build-depends:
+            base64-bytestring >= 1.0,
             connection >= 0.2,
+            data-default >= 0.5,
             enclosed-exceptions >= 1.0,
             http-client >= 0.4,
             http-client-tls >= 0.2,
-            monad-control >= 1.0
+            monad-control >= 1.0,
+            tls >= 1.2,
+            x509 >= 1.5,
+            x509-system >= 1.5,
+            x509-validation >= 1.5.1
 
+    if flag(remote-configs)
         cpp-options: -DREMOTE_CONFIGS
 
     ghc-options: -Wall

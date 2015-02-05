@@ -1,13 +1,17 @@
--- ------------------------------------------------------ --
--- Copyright © 2014 AlephCloud Systems, Inc.
--- ------------------------------------------------------ --
-
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RankNTypes #-}
 
+-- |
+-- Module: Configuration.Utils.Interal
+-- Description: Internal utilities of the configuration-tools package
+-- Copyright: Copyright © 2014-2015 PivotCloud, Inc.
+-- License: MIT
+-- Maintainer: Lars Kuhtz <lkuhtz@pivotmail.com>
+-- Stability: experimental
+--
 module Configuration.Utils.Internal
 (
 -- * Lenses
