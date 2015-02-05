@@ -55,6 +55,7 @@ import Control.Applicative
 import Control.Monad.Writer hiding (mapM_)
 
 import qualified Data.CaseInsensitive as CI
+import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 
@@ -66,6 +67,8 @@ import qualified Options.Applicative as O
 import Prelude hiding (concatMap, mapM_, any)
 
 import qualified Text.ParserCombinators.ReadP as P hiding (string)
+
+import Prelude.Unicode
 
 -- -------------------------------------------------------------------------- --
 -- Applicative Option Parsing with Default Values
@@ -152,8 +155,8 @@ boolReader
 boolReader x = case CI.mk x of
     "true" → Right True
     "false" → Right False
-    _ → Left $ "failed to read Boolean value " <> fromString (show x)
-        <> ". Expected either \"true\" or \"false\""
+    _ → Left $ "failed to read Boolean value " ⊕ fromString (show x)
+        ⊕ ". Expected either \"true\" or \"false\""
 
 -- | The 'boolOption' is an alternative to 'O.switch'.
 --
@@ -170,17 +173,17 @@ boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
 boolOption mods = O.option (O.eitherReader boolReader)
-    % O.metavar "true|false"
-    <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
-    <> mods
+    × O.metavar "true|false"
+    ⊕ O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
+    ⊕ mods
 
 fileOption
     ∷ O.Mod O.OptionFields String
     → O.Parser FilePath
 fileOption mods = O.strOption
-    % O.metavar "FILE"
-    <> O.action "file"
-    <> mods
+    × O.metavar "FILE"
+    ⊕ O.action "file"
+    ⊕ mods
 
 eitherReadP
     ∷ T.Text
@@ -190,6 +193,6 @@ eitherReadP
 eitherReadP label p s =
     case [ x | (x,"") ← P.readP_to_S p (T.unpack s) ] of
         [x] → Right x
-        []  → Left $ "eitherReadP: no parse for " <> label <> " of " <> s
-        _  → Left $ "eitherReadP: ambigous parse for " <> label <> " of " <> s
+        []  → Left $ "eitherReadP: no parse for " ⊕ label ⊕ " of " ⊕ s
+        _  → Left $ "eitherReadP: ambigous parse for " ⊕ label ⊕ " of " ⊕ s
 
