@@ -196,12 +196,8 @@ boolOption mods = O.option (O.eitherReader boolReader)
 boolOption_
     ∷ O.Mod O.FlagFields Bool
     → O.Parser Bool
-boolOption_ mods = flag' True mods <|> noFlag
+boolOption_ mods = flag' True mods <|> flag' False nomods
   where
-    noFlag = flag' False
-        × nomods
-        ⊕ maybe mempty (\l → help $ "unset flag " ⊕ l) (listToMaybe longNames)
-
     O.Mod f d o = mods
     O.FlagFields names _ = f $ O.FlagFields [] False
 
@@ -214,6 +210,7 @@ boolOption_ mods = flag' True mods <|> noFlag
         { O.flagNames = mapMaybe (\l → O.OptLong ∘ noName <$> longName l) (O.flagNames flags)
         }
     nomods = O.Mod (mapFlags ∘ f) d o
+        ⊕ maybe mempty (\l → help $ "unset flag " ⊕ l) (listToMaybe $ reverse longNames)
 
 -- | An option parser for flags that are enabled via the flag name prefixed
 -- with @--enable-@ and disabled via the flag name prefix @--disable-@. The
