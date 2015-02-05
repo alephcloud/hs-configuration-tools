@@ -1,13 +1,17 @@
--- ------------------------------------------------------ --
--- Copyright © 2014 AlephCloud Systems, Inc.
--- ------------------------------------------------------ --
-
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RankNTypes #-}
 
+-- |
+-- Module: Configuration.Utils.Interal
+-- Description: Internal utilities of the configuration-tools package
+-- Copyright: Copyright © 2014-2015 PivotCloud, Inc.
+-- License: MIT
+-- Maintainer: Lars Kuhtz <lkuhtz@pivotmail.com>
+-- Stability: experimental
+--
 module Configuration.Utils.Internal
 (
 -- * Lenses
@@ -26,6 +30,7 @@ module Configuration.Utils.Internal
 , sshow
 , exceptT
 , errorT
+, fmapL
 ) where
 
 import Control.Applicative (Const(..))
@@ -122,4 +127,8 @@ errorT
     → μ α
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
 {-# INLINE errorT #-}
+
+fmapL ∷ (α → β) → Either α γ → Either β γ
+fmapL f = either (Left ∘ f) Right
+{-# INLINE fmapL #-}
 

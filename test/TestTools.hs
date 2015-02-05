@@ -10,12 +10,13 @@
 
 -- |
 -- Module: TestTools
+-- Description: Tools for testing program configurations
 -- Copyright: Copyright © 2015 PivotCloud, Inc.
 -- License: MIT
 -- Maintainer: Lars Kuhtz <lkuhtz@pivotmail.com>
 -- Stability: experimental
 --
--- TODO
+-- Tools for testing program configurations
 --
 module TestTools
 (
@@ -32,7 +33,7 @@ module TestTools
 , check
 , runTest
 
--- * Test Config Files
+-- * Test Configuration Files
 , withConfigFile
 , withConfigFileText
 #ifdef REMOTE_CONFIGS
@@ -169,7 +170,7 @@ runTest pkgInfo mInfo label succeed assertions = do
 
     handler ref (e ∷ SomeException) = do
         writeIORef ref False
-        debug ∘ T.putStrLn $ "DEBUG: caugth exception: " ⊕ sshow e
+        debug ∘ T.putStrLn $ "DEBUG: caught exception: " ⊕ sshow e
 
 -- -------------------------------------------------------------------------- --
 -- Test Config Files

@@ -11,7 +11,7 @@
 
 -- |
 -- Module: Main
--- Copyright: Copyright © 2014 AlephCloud Systems, Inc.
+-- Copyright: Copyright © 2014-2015 AlephCloud Systems, Inc.
 -- License: MIT
 -- Maintainer: Lars Kuhtz <lars@alephcloud.com>
 -- Stability: experimental
@@ -118,13 +118,19 @@ testsTlsUrl ∷ [IO Bool]
 testsTlsUrl =
     [ runTest pkgInfo mainInfo "tlsUrl-0" True [cf0, f1 c0]
     , runTest pkgInfo mainInfo "tlsUrl-1" False [cf0t, f1 c0]
-    , runTest pkgInfo mainInfo "tlsUrl-2" True [insec, cf0, f1 c0]
-    , runTest pkgInfo mainInfo "tlsUrl-2" True [insec, cf0t, f1 c0]
+    , runTest pkgInfo mainInfo "tlsUrl-2" False [cf0tl, f1 c0]
+    , runTest pkgInfo mainInfo "tlsUrl-3" False [cf0t, f1 c0, fingerF]
+    , runTest pkgInfo mainInfo "tlsUrl-4" True [cf0t, f1 c0, fingerT]
+    , runTest pkgInfo mainInfo "tlsUrl-5" True [insec, cf0, f1 c0]
+    , runTest pkgInfo mainInfo "tlsUrl-6" True [insec, cf0t, f1 c0]
     ]
   where
     cf0 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/config0"]
     cf0t = trueAssertion ["--config-file=" ⊕ T.unpack serverTlsUrl ⊕ "/config0"]
-    insec = trueAssertion ["--insecure-remote-config-files"]
+    cf0tl = trueAssertion ["--config-file=" ⊕ "https://localhost:8284" ⊕ "/config0"] -- FIXME don't hardcode this
+    insec = trueAssertion ["--config-https-insecure=true"]
+    fingerF = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack serverTlsUrl) ⊕ ":0x+SV6/D6JSIKK8pPCpaMZvMXelXb2CnJ8xWo8qi4Fo="]
+    fingerT = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack serverTlsUrl) ⊕ ":HK4/ZeG/3c+H5R/3eTlysmJxmrBil6w8oLdvOdHFlsg="]
     c0 = config0
 #endif
 
@@ -382,8 +388,6 @@ pRoutingTable = routingTableMap %:: pLeftMonoidalUpdate pRoute
             return $ HM.singleton (T.pack a) (T.pack b)
         _ → Left "missing colon between APIROUTE and APIURL"
 
-    fmapL f = either (Left . f) Right
-
 mainInfoRoutingTable ∷ ProgramInfoValidate RoutingTable []
 mainInfoRoutingTable = programInfoValidate "Routing Table" pRoutingTable defaultRoutingTable (const $ return ())
 
@@ -402,9 +406,9 @@ routingTableTests =
     b1 = "https://b1"
     run (x ∷ Int) = runTest pkgInfo mainInfoRoutingTable ("routing-table-" ⊕ sshow x) True
 
-    at k f m = f mv <&> \r -> case r of
-        Nothing -> maybe m (const (HM.delete k m)) mv
-        Just v' -> HM.insert k v' m
+    at k f m = f mv <&> \r → case r of
+        Nothing → maybe m (const (HM.delete k m)) mv
+        Just v' → HM.insert k v' m
       where
         mv = HM.lookup k m
         (<&>) = flip fmap
