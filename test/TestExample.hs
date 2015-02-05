@@ -129,7 +129,7 @@ testsTlsUrl =
     cf0 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/config0"]
     cf0t = trueAssertion ["--config-file=" ⊕ T.unpack serverTlsUrl ⊕ "/config0"]
     cf0tl = trueAssertion ["--config-file=" ⊕ "https://localhost:8284" ⊕ "/config0"] -- FIXME don't hardcode this
-    insec = trueAssertion ["--config-https-insecure=true"]
+    insec = trueAssertion ["--config-https-insecure"]
     fingerF = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack serverTlsUrl) ⊕ ":0x+SV6/D6JSIKK8pPCpaMZvMXelXb2CnJ8xWo8qi4Fo="]
     fingerT = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack serverTlsUrl) ⊕ ":HK4/ZeG/3c+H5R/3eTlysmJxmrBil6w8oLdvOdHFlsg="]
     c0 = config0
