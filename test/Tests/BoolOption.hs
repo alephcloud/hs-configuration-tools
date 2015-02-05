@@ -13,6 +13,10 @@
 -- Maintainer: Lars Kuhtz <lkuhtz@pivotmail.com>
 -- Stability: experimental
 --
+-- load in ghci with:
+--
+-- > ghci -isrc -idist/build/autogen -itest -iexamples -DREMOTE_CONFIGS test/TestExample.hs
+--
 module Tests.BoolOption
 ( mainA
 , boolOptionTests
