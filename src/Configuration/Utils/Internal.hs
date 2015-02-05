@@ -26,6 +26,7 @@ module Configuration.Utils.Internal
 , sshow
 , exceptT
 , errorT
+, fmapL
 ) where
 
 import Control.Applicative (Const(..))
@@ -122,4 +123,8 @@ errorT
     → μ α
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
 {-# INLINE errorT #-}
+
+fmapL ∷ (α → β) → Either α γ → Either β γ
+fmapL f = either (Left ∘ f) Right
+{-# INLINE fmapL #-}
 

@@ -382,8 +382,6 @@ pRoutingTable = routingTableMap %:: pLeftMonoidalUpdate pRoute
             return $ HM.singleton (T.pack a) (T.pack b)
         _ → Left "missing colon between APIROUTE and APIURL"
 
-    fmapL f = either (Left . f) Right
-
 mainInfoRoutingTable ∷ ProgramInfoValidate RoutingTable []
 mainInfoRoutingTable = programInfoValidate "Routing Table" pRoutingTable defaultRoutingTable (const $ return ())
 
