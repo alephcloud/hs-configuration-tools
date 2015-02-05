@@ -31,6 +31,34 @@ Once we feel that the developed patterns cover a sufficient portion of
 real world requirements we plan to rewrite this package such that
 the boilerplate is hidden behind a clean and simple DSL.
 
+Installation
+============
+
+Assuming that you have a recent version verison of `GHC` and `Cabal`
+installed in your system this package can be install from [Hackage](http://hackage.haskell.org/)
+via
+
+```bash
+cabal install configuration-tools
+```
+
+If you don't need support for remote configuration files this package
+can be build with a much smaller set of dependencies via
+
+```bash
+cabal install -f-remote-configs configuration-tools
+```
+
+The package can be tested via
+
+```bash
+git clone https://github.com/alephcloud/hs-configuration-tools.git
+cd hs-configurationt-tools
+cabal configure --enable-tests
+cabal build
+cabal test
+```
+
 Configuration Management
 ========================
 
