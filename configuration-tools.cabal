@@ -130,6 +130,7 @@ Test-Suite url-example-test
     other-modules:
         Example
         TestTools
+        Tests.BoolOption
 
     build-depends:
         base >= 4.6 && < 5.0,

@@ -43,6 +43,7 @@ module Configuration.Utils.CommandLine
 -- * Misc Utils
 , boolReader
 , boolOption
+, boolOption_
 , fileOption
 , eitherReadP
 , module Options.Applicative
@@ -55,6 +56,8 @@ import Control.Applicative
 import Control.Monad.Writer hiding (mapM_)
 
 import qualified Data.CaseInsensitive as CI
+import Data.Maybe
+import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 
@@ -62,10 +65,13 @@ import Options.Applicative hiding (Parser, Success)
 import qualified Options.Applicative.Types as O
 
 import qualified Options.Applicative as O
+import qualified Options.Applicative.Builder.Internal as O
 
 import Prelude hiding (concatMap, mapM_, any)
 
 import qualified Text.ParserCombinators.ReadP as P hiding (string)
+
+import Prelude.Unicode
 
 -- -------------------------------------------------------------------------- --
 -- Applicative Option Parsing with Default Values
@@ -152,8 +158,8 @@ boolReader
 boolReader x = case CI.mk x of
     "true" → Right True
     "false" → Right False
-    _ → Left $ "failed to read Boolean value " <> fromString (show x)
-        <> ". Expected either \"true\" or \"false\""
+    _ → Left $ "failed to read Boolean value " ⊕ fromString (show x)
+        ⊕ ". Expected either \"true\" or \"false\""
 
 -- | The 'boolOption' is an alternative to 'O.switch'.
 --
@@ -170,17 +176,51 @@ boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
 boolOption mods = O.option (O.eitherReader boolReader)
-    % O.metavar "true|false"
-    <> O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
-    <> mods
+    × O.metavar "true|false"
+    ⊕ O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
+    ⊕ mods
+
+-- | An alternative syntax for 'boolOption' for options with long names.
+--
+-- Instead of taking a boolean argument the presence of the option acts as a
+-- switch to set the respective configuration setting to 'True'. If the option
+-- is not present the setting is left unchanged.
+--
+-- In addition for long option names a respective /unset flag/ is provided. For
+-- instance for a flag @--verbose@ there will also be a flag @--no-verbose@.
+--
+-- This can still be used with short option names only, but no /unset flag/
+-- would be provided.
+--
+boolOption_
+    ∷ O.Mod O.FlagFields Bool
+    → O.Parser Bool
+boolOption_ mods = flag' True mods <|> noFlag
+  where
+    noFlag = flag' False
+        × nomods
+        ⊕ maybe mempty (\l → help $ "unset flag " ⊕ l) (listToMaybe longNames)
+
+    O.Mod f d o = mods
+    O.FlagFields names _ = f $ O.FlagFields [] False
+
+    longName (O.OptShort _) = Nothing
+    longName (O.OptLong l) = Just l
+    longNames = mapMaybe longName names
+
+    noName l = "no-" ⊕ l
+    mapFlags flags = flags
+        { O.flagNames = mapMaybe (\l → O.OptLong ∘ noName <$> longName l) (O.flagNames flags)
+        }
+    nomods = O.Mod (mapFlags ∘ f) d o
 
 fileOption
     ∷ O.Mod O.OptionFields String
     → O.Parser FilePath
 fileOption mods = O.strOption
-    % O.metavar "FILE"
-    <> O.action "file"
-    <> mods
+    × O.metavar "FILE"
+    ⊕ O.action "file"
+    ⊕ mods
 
 eitherReadP
     ∷ T.Text
@@ -190,6 +230,6 @@ eitherReadP
 eitherReadP label p s =
     case [ x | (x,"") ← P.readP_to_S p (T.unpack s) ] of
         [x] → Right x
-        []  → Left $ "eitherReadP: no parse for " <> label <> " of " <> s
-        _  → Left $ "eitherReadP: ambigous parse for " <> label <> " of " <> s
+        []  → Left $ "eitherReadP: no parse for " ⊕ label ⊕ " of " ⊕ s
+        _  → Left $ "eitherReadP: ambigous parse for " ⊕ label ⊕ " of " ⊕ s
 

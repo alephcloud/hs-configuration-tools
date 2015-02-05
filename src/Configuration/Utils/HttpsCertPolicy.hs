@@ -98,10 +98,9 @@ pHttpsCertPolicy
         -- ^ prefix for the command line options
     → MParser HttpsCertPolicy
 pHttpsCertPolicy prefix = id
-    <$< certPolicyInsecure .:: boolOption
+    <$< certPolicyInsecure .:: boolOption_
         × O.long (T.unpack prefix ⊕ "https-insecure")
         ⊕ O.help "Bypass certificate validation for all HTTPS connections to all services. ONLY USE THIS WHEN YOU UNDERSTAND WHAT YOU DO."
-        ⊕ O.showDefault
     <*< certPolicyHostFingerprints %:: pLeftMonoidalUpdate × pRule
   where
     pRule = O.option (O.eitherReader readFingerprint)
