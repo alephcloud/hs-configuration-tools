@@ -44,6 +44,7 @@ module Configuration.Utils.CommandLine
 , boolReader
 , boolOption
 , boolOption_
+, enableDisableFlag
 , fileOption
 , eitherReadP
 , module Options.Applicative
@@ -213,6 +214,43 @@ boolOption_ mods = flag' True mods <|> noFlag
         { O.flagNames = mapMaybe (\l → O.OptLong ∘ noName <$> longName l) (O.flagNames flags)
         }
     nomods = O.Mod (mapFlags ∘ f) d o
+
+-- | An option parser for flags that are enabled via the flag name prefixed
+-- with @--enable-@ and disabled via the flag name prefix @--disable-@. The
+-- prefixes are applied to all long option names. Short option names are parsed
+-- unchanged and and cause the flag to be enabled.
+--
+-- This resembles the style of flags that is used for instances with Cabal.
+--
+enableDisableFlag
+    ∷ O.Mod O.FlagFields Bool
+    → O.Parser Bool
+enableDisableFlag mods = flag' True enmods <|> flag' False dismods
+  where
+    O.Mod f d o = mods
+    O.FlagFields names _ = f $ O.FlagFields [] False
+
+    longName (O.OptShort _) = Nothing
+    longName (O.OptLong l) = Just l
+    longNames = mapMaybe longName names
+
+    disName l = "disable-" ⊕ l
+    enName l = "enable-" ⊕ l
+
+    -- disable flags
+    mapDisFlags flags = flags
+        { O.flagNames = mapMaybe (\l → O.OptLong ∘ disName <$> longName l) (O.flagNames flags)
+        }
+    dismods = O.Mod (mapDisFlags ∘ f) d o
+        ⊕ maybe mempty (\l → help $ "unset flag " ⊕ l) (listToMaybe $ reverse longNames)
+
+    -- enable flags
+    mapLong g (O.OptLong l) = O.OptLong (g l)
+    mapLong _ s = s
+    mapEnFlags flags = flags
+        { O.flagNames = map (mapLong enName) (O.flagNames flags)
+        }
+    enmods = O.Mod (mapEnFlags ∘ f) d o
 
 fileOption
     ∷ O.Mod O.OptionFields String
