@@ -169,7 +169,7 @@ runTest pkgInfo mInfo label succeed assertions = do
 
     handler ref (e ∷ SomeException) = do
         writeIORef ref False
-        debug ∘ T.putStrLn $ "DEBUG: caugth exception: " ⊕ sshow e
+        debug ∘ T.putStrLn $ "DEBUG: caught exception: " ⊕ sshow e
 
 -- -------------------------------------------------------------------------- --
 -- Test Config Files
