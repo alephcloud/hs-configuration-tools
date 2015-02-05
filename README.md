@@ -31,6 +31,34 @@ Once we feel that the developed patterns cover a sufficient portion of
 real world requirements we plan to rewrite this package such that
 the boilerplate is hidden behind a clean and simple DSL.
 
+Installation
+============
+
+Assuming that you have a recent version verison of `GHC` and `Cabal`
+installed in your system this package can be install from [Hackage](http://hackage.haskell.org/)
+via
+
+```bash
+cabal install configuration-tools
+```
+
+If you don't need support for remote configuration files this package
+can be build with a much smaller set of dependencies via
+
+```bash
+cabal install -f-remote-configs configuration-tools
+```
+
+The package can be tested via
+
+```bash
+git clone https://github.com/alephcloud/hs-configuration-tools.git
+cd hs-configurationt-tools
+cabal configure --enable-tests
+cabal build
+cabal test
+```
+
 Configuration Management
 ========================
 
@@ -290,11 +318,9 @@ is non-determinism in the choice of the constructor, too.
 
 An update function for a product type can be defined pointwise as a mapping from
 constructor parameters to values. An update for a sum type must take the
-constructor context into account. Therefore a configuration that defines an
-update function for a sum types must also specify the constructor context.
-Moreover, when applied to a given default value the function may not be
-applicable at all if the default value uses a different constructor context
-than what the update assumes.
+constructor context into account. Moreover, when applied to a given default
+value the function may not be applicable at all if the default value uses a
+different constructor context than what the update assumes.
 
 For the future we plan to provide a general solution for configurations of sum
 types which would be based on the possibility to define default values for more

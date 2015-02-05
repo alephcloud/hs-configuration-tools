@@ -1,3 +1,41 @@
+0.2.9
+=====
+
+*   Use tight constraint for all validation functions. Previously the
+    constraint where unessecarly restrictive.
+
+*   Added `updateProperty` function that generalized `%.:` in the same
+    way as `setProperty` generalizes `..:`.
+
+*   Added validation function for config file arguments.
+
+*   Allow usage of more than a single `--config-file` option on the
+    command line.
+
+*   Support for static configuration file locations. Configuration files
+    can be marked as `required` or `optional`.
+
+*   Support loading of configuraiton files form HTTP and HTTPS URLs
+    including flags for disabling validation of SSL certificates and
+    whitelisting SSL certificates based on their fingerprint.
+
+*   Added tools for updating configurations with a monoid instance.
+
+*   Added two new option parsers for boolean flags.
+
+    *   The `boolOption_` parser uses the syntax `--feature` and
+        `--no-feature` to enable and respectively disable a feature.
+
+    *   The `enableDisableFlag` parser uses the syntax `--enable-feature`
+        and `--disable-feature` to enable and respectively disable a feature.
+
+*   Refactored the module layout. The API of the existing modules is
+    is backward compatible, but a lot of code got moved into submodules.
+
+*   Improved documentation.
+
+*   Improved test suite.
+
 0.2.8
 =====
 
@@ -39,7 +77,7 @@
 0.2.5
 =====
 
-*   `Configuration.Utils.Setup`: export `mkPkgInfoModules` function 
+*   `Configuration.Utils.Setup`: export `mkPkgInfoModules` function
     that modifies a given `UserHooks` record to generate an `PkgInfo`
     module during configuration.
 
