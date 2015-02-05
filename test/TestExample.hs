@@ -400,9 +400,9 @@ routingTableTests =
     b1 = "https://b1"
     run (x ∷ Int) = runTest pkgInfo mainInfoRoutingTable ("routing-table-" ⊕ sshow x) True
 
-    at k f m = f mv <&> \r -> case r of
-        Nothing -> maybe m (const (HM.delete k m)) mv
-        Just v' -> HM.insert k v' m
+    at k f m = f mv <&> \r → case r of
+        Nothing → maybe m (const (HM.delete k m)) mv
+        Just v' → HM.insert k v' m
       where
         mv = HM.lookup k m
         (<&>) = flip fmap
