@@ -1,13 +1,27 @@
+0.2.10
+======
+
+*   Moved all internal APIs to the `Internal` name space. Exposing them
+    in 0.2.9 was considered a bug.
+
+*   Configuration files can be formatted either as JSON or as YAML.
+    For remote configuration files the HTTP `Content-Type` header is used to
+    determine the format, for local files the file suffix is used.
+    The default format is YAML.
+
+*   Set the HTTP `accept` header for JSON and YAML when requesting remote
+    configuration files.
+
 0.2.9
 =====
 
 *   Use tight constraint for all validation functions. Previously the
-    constraint where unessecarly restrictive.
+    constraint where unnecessarily restrictive.
 
 *   Added `updateProperty` function that generalized `%.:` in the same
     way as `setProperty` generalizes `..:`.
 
-*   Added validation function for config file arguments.
+*   Added a validation function for configuration file arguments.
 
 *   Allow usage of more than a single `--config-file` option on the
     command line.
@@ -15,9 +29,9 @@
 *   Support for static configuration file locations. Configuration files
     can be marked as `required` or `optional`.
 
-*   Support loading of configuraiton files form HTTP and HTTPS URLs
-    including flags for disabling validation of SSL certificates and
-    whitelisting SSL certificates based on their fingerprint.
+*   Support for loading of configuration files form HTTP and HTTPS URLs.
+    There are new flags for disabling validation of SSL certificates and
+    white listing SSL certificates based on their fingerprint.
 
 *   Added tools for updating configurations with a monoid instance.
 
@@ -39,7 +53,7 @@
 0.2.8
 =====
 
-*   Added validation funcitons for Boolean values, numberic values and
+*   Added validation functions for Boolean values, numeric values and
     orders.
 
 *   Added operator `!..:` for parsing of configuration values that are
@@ -53,7 +67,7 @@
 0.2.7
 =====
 
-*   Added `view` funtion for lenses to `Configuration.Utils.Internal`.
+*   Added `view` function for lenses to `Configuration.Utils.Internal`.
 
 *   Added support for validation of configuration values.
 
@@ -90,7 +104,7 @@
 =====
 
 *   Configuration.Utils.Setup: fixed generation of `PkgInfo` module for
-    package configurations with explict flags.
+    package configurations with explicit flags.
 
 *   Improved documentation for `Maybe` values.
 
