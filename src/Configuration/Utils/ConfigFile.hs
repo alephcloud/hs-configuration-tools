@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
@@ -61,16 +60,10 @@ module Configuration.Utils.ConfigFile
 -- * Miscellaneous Utilities
 , dropAndUncaml
 , module Data.Aeson
-
--- * Internal Tools for Parsing Configuration Files
-, parseConfigFiles
 ) where
 
 import Configuration.Utils.CommandLine
 import Configuration.Utils.Internal
-import Configuration.Utils.Validation
-
-import Control.Monad.Except hiding (mapM_)
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
@@ -82,26 +75,12 @@ import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 import Data.Typeable
-import qualified Data.Yaml as Yaml
 
 import Prelude hiding (concatMap, mapM_, any)
 
 #ifdef REMOTE_CONFIGS
-import Configuration.Utils.HttpsCertPolicy
+import Configuration.Utils.Internal.HttpsCertPolicy
 import Configuration.Utils.Operators
-
-import Control.Exception.Enclosed
-import Control.Monad.Trans.Control
-
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.List as L
-import qualified Data.Text.IO as T
-
-import qualified Network.HTTP.Client as HTTP
-
-import Prelude.Unicode
-
-import System.IO
 #endif
 
 -- | A JSON 'Value' parser for a property of a given
@@ -288,102 +267,6 @@ defaultConfigFilesConfig = ConfigFilesConfig {}
 
 pConfigFilesConfig ∷ MParser ConfigFilesConfig
 pConfigFilesConfig = pure id
-#endif
-
--- -------------------------------------------------------------------------- --
--- Tools for parsing configuration files
-
-#ifdef REMOTE_CONFIGS
-type ConfigFileParser μ =
-    ( Functor μ
-    , Applicative μ
-    , MonadIO μ
-    , MonadBaseControl IO μ
-    , MonadError T.Text μ
-    )
-#else
-type ConfigFileParser μ =
-    ( Functor μ
-    , Applicative μ
-    , MonadIO μ
-    , MonadError T.Text μ
-    )
-#endif
-
-parseConfigFiles
-    ∷ (ConfigFileParser μ, FromJSON (α → α))
-    ⇒ ConfigFilesConfig
-    → α
-        -- ^ default configuration value
-    → [ConfigFile]
-        -- ^ list of configuration file paths
-    → μ α
-parseConfigFiles conf = foldM $ \val file →
-    readConfigFile conf file <*> pure val
-
-readConfigFile
-    ∷ (ConfigFileParser μ, FromJSON (α → α))
-    ⇒ ConfigFilesConfig
-    → ConfigFile
-        -- ^ file path
-    → μ (α → α)
-readConfigFile _conf file =
-#ifdef REMOTE_CONFIGS
-    if isRemote file then loadRemote _conf file else loadLocal file
-#else
-    loadLocal file
-#endif
-
-loadLocal
-    ∷ (Functor μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
-    ⇒ ConfigFile
-        -- ^ file path
-    → μ (α → α)
-loadLocal path = do
-    validateFilePath "config-file" (T.unpack file)
-    exists ← (True <$ validateFile "config-file" (T.unpack file)) `catchError` \e → case path of
-        ConfigFileOptional _ → return False
-        ConfigFileRequired _ → throwError $ "failed to read config file: " ⊕ e
-    if exists
-      then
-        liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
-            Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
-            Right r → return r
-      else
-        return id
-  where
-    file = getConfigFile path
-
-#ifdef REMOTE_CONFIGS
-isRemote
-    ∷ ConfigFile
-    → Bool
-isRemote path = L.any (`T.isPrefixOf` getConfigFile path) ["http://", "https://"]
-
-loadRemote
-    ∷ (ConfigFileParser μ, FromJSON (α → α))
-    ⇒ ConfigFilesConfig
-    → ConfigFile
-        -- ^ URL
-    → μ (α → α)
-loadRemote conf path = do
-    validateHttpOrHttpsUrl "config-file" (T.unpack url)
-    dat ← (Just <$> doHttp) `catchAnyDeep` \e →
-        case path of
-            ConfigFileOptional _ → do
-                liftIO ∘ T.hPutStrLn stderr $ "WARNING: failed to download remote configuration file " ⊕ url ⊕ ": " ⊕ sshow e
-                return Nothing
-            ConfigFileRequired _ → throwError $ "failed to download remote configuration file " ⊕ url ⊕ ": " ⊕ sshow e
-
-    case dat of
-        Nothing → return id
-        Just d → case Yaml.decodeEither' d of
-            Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ sshow e
-            Right r → return r
-  where
-    url = getConfigFile path
-    policy = _cfcHttpsPolicy conf
-    doHttp = LB.toStrict ∘ HTTP.responseBody <$> liftIO × httpWithValidationPolicy url policy
 #endif
 
 -- -------------------------------------------------------------------------- --

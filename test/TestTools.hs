@@ -46,11 +46,13 @@ module TestTools
 
 import Configuration.Utils
 import Configuration.Utils.Internal
+import Configuration.Utils.Internal.ConfigFileReader
 
 import Control.Exception
 import Control.Monad
 
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy as LB
 import Data.IORef
 import Data.Monoid.Unicode
 import qualified Data.Text as T
@@ -66,7 +68,7 @@ import System.IO
 
 #ifdef REMOTE_CONFIGS
 import Control.Concurrent
-import qualified Data.ByteString.Lazy as LB
+import qualified Data.List as L
 import Data.Maybe
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as WAI
@@ -178,21 +180,27 @@ runTest pkgInfo mInfo label succeed assertions = do
 
 withConfigFile
     ∷ ToJSON γ
-    ⇒ γ
+    ⇒ ConfigFileFormat
+    → γ
     → (T.Text → IO α)
     → IO α
-withConfigFile config inner =
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath tmpHandle → do
-        B8.hPutStrLn tmpHandle ∘ Yaml.encode $ config
+withConfigFile format config inner =
+    withTempFile "." ("tmp_TestExample." ⊕ suffix format) $ \tmpPath tmpHandle → do
+        B8.hPutStrLn tmpHandle ∘ formatter format $ config
         hClose tmpHandle
         inner $ T.pack tmpPath
+  where
+    suffix Json = "json"
+    suffix _ = "yaml"
+    formatter Json = LB.toStrict ∘ encode
+    formatter _ = Yaml.encode
 
 withConfigFileText
     ∷ T.Text
     → (T.Text → IO α)
     → IO α
 withConfigFileText configText inner =
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath tmpHandle → do
+    withTempFile "." "tmp_TestExample.txt" $ \tmpPath tmpHandle → do
         T.hPutStrLn tmpHandle configText
         hClose tmpHandle
         inner $ T.pack tmpPath
@@ -207,24 +215,38 @@ instance ToJSON ConfigType where
 withConfigFileServer
     ∷ [(T.Text, ConfigType)]
     → [(T.Text, T.Text)]
+    → Maybe ConfigFileFormat
     → IO α
     → IO α
-withConfigFileServer configs configTexts inner = do
-    void ∘ forkIO $ WARP.run serverPort app
-    void ∘ forkIO $ WARP.runTLS tlsSettings (warpSettings serverTlsPort) app
-    inner
+withConfigFileServer configs configTexts maybeFormat inner = do
+    w0 ← forkIO $ WARP.run serverPort app
+    w1 ←  forkIO $ WARP.runTLS tlsSettings (warpSettings serverTlsPort) app
+    inner `finally` do
+        killThread w0
+        killThread w1
+
   where
     app req respond = do
-        let maybeBody = LB.fromStrict <$> do
+
+        let format = fromMaybe Other $ maybeFormat
+                <|> (contentType <$> L.lookup HTTP.hAccept × WAI.requestHeaders req)
+
+            maybeBody = LB.fromStrict <$> do
                 p ← listToMaybe $ WAI.pathInfo req
                 do
-                    Yaml.encode <$> lookup p configs
+                    formatter format <$> lookup p configs
                     <|>
                     (T.encodeUtf8 <$> lookup p configTexts)
 
         respond $ case maybeBody of
             Just body → WAI.responseLBS HTTP.status200 [] body
-            Nothing → WAI.responseLBS HTTP.status404 [] "resource not found"
+            Nothing → WAI.responseLBS HTTP.status404 [contentTypeHeader format] "resource not found"
+
+    formatter Json = LB.toStrict ∘ encode
+    formatter _ = Yaml.encode
+
+    contentTypeHeader Json = (HTTP.hContentType, head jsonMimeType)
+    contentTypeHeader _ = (HTTP.hContentType, head yamlMimeType)
 
 serverPort ∷ Int
 serverPort = 8283

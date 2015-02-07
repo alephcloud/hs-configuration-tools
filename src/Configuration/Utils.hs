@@ -124,8 +124,8 @@ module Configuration.Utils
 ) where
 
 import Configuration.Utils.CommandLine
-import Configuration.Utils.ConfigFile hiding (parseConfigFiles)
-import qualified Configuration.Utils.ConfigFile as CF (parseConfigFiles)
+import Configuration.Utils.ConfigFile
+import qualified Configuration.Utils.Internal.ConfigFileReader as CF
 import Configuration.Utils.Internal
 import Configuration.Utils.Maybe
 import Configuration.Utils.Monoid
@@ -375,7 +375,7 @@ pAppConfiguration mainParser = AppConfiguration
         × O.long "config-file"
         ⊕ O.short 'c'
         ⊕ O.metavar "FILE"
-        ⊕ O.help "Configuration file in YAML format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
+        ⊕ O.help "Configuration file in YAML or JSON format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration without Package Info
@@ -387,7 +387,7 @@ pAppConfiguration mainParser = AppConfiguration
 -- options are recognized:
 --
 -- [@--config-file, -c@]
---     Parse the given file path as a (partial) configuration in YAML
+--     Parse the given file path as a (partial) configuration in YAML or JSON
 --     format.
 --
 -- [@--print-config, -p@]
@@ -471,7 +471,7 @@ type PkgInfo =
 -- options are recognized:
 --
 -- [@--config-file, -c@]
---     Parse the given file path as a (partial) configuration in YAML
+--     Parse the given file path as a (partial) configuration in YAML or JSON
 --     format.
 --
 -- [@--print-config, -p@]
