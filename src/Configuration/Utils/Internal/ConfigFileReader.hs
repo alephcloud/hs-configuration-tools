@@ -44,6 +44,8 @@ import Control.Applicative
 import Control.DeepSeq (NFData)
 import Control.Monad.Except hiding (mapM_)
 
+import qualified Data.ByteString.Char8 as B8
+import qualified Data.CaseInsensitive as CI
 import Data.Monoid.Unicode
 import qualified Data.Text as T
 import Data.Typeable
@@ -52,6 +54,7 @@ import qualified Data.Yaml as Yaml
 import GHC.Generics
 
 import Prelude hiding (concatMap, mapM_, any)
+import Prelude.Unicode
 
 #ifdef REMOTE_CONFIGS
 import Configuration.Utils.Internal.HttpsCertPolicy
@@ -59,17 +62,13 @@ import Configuration.Utils.Internal.HttpsCertPolicy
 import Control.Exception.Enclosed
 import Control.Monad.Trans.Control
 
-import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Lazy as LB
-import qualified Data.CaseInsensitive as CI
 import qualified Data.List as L
 import Data.String
 import qualified Data.Text.IO as T
 
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Types.Header as HTTP
-
-import Prelude.Unicode
 
 import System.IO
 #endif
@@ -118,6 +117,14 @@ readConfigFile _conf file =
     loadLocal file
 #endif
 
+fileType ∷ T.Text → ConfigFileFormat
+fileType f
+    | CI.foldCase ".yaml" `T.isSuffixOf` CI.foldCase f = Yaml
+    | CI.foldCase ".yml" `T.isSuffixOf` CI.foldCase f = Yaml
+    | CI.foldCase ".json" `T.isSuffixOf` CI.foldCase f = Json
+    | CI.foldCase ".js" `T.isSuffixOf` CI.foldCase f = Json
+    | otherwise = Other
+
 loadLocal
     ∷ (Functor μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
     ⇒ ConfigFile
@@ -130,13 +137,16 @@ loadLocal path = do
         ConfigFileRequired _ → throwError $ "failed to read config file: " ⊕ e
     if exists
       then
-        liftIO (Yaml.decodeFileEither (T.unpack file)) >>= \case
+        liftIO (parser (fileType file) file) >>= \case
             Left e → throwError $ "failed to parse configuration file " ⊕ file ⊕ ": " ⊕ sshow e
             Right r → return r
       else
         return id
   where
     file = getConfigFile path
+
+    parser Json f = fmapL T.pack ∘ eitherDecodeStrict' <$> B8.readFile (T.unpack f)
+    parser _ f = fmapL sshow <$> Yaml.decodeFileEither (T.unpack f)
 
 data ConfigFileFormat
     = Yaml
