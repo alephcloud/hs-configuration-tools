@@ -65,8 +65,10 @@ import System.Environment
 import System.IO
 
 #ifdef REMOTE_CONFIGS
+import Configuration.Utils.Internal.ConfigFileReader
 import Control.Concurrent
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.List as L
 import Data.Maybe
 import qualified Data.Text.Encoding as T
 import qualified Network.Wai as WAI
@@ -207,24 +209,38 @@ instance ToJSON ConfigType where
 withConfigFileServer
     ∷ [(T.Text, ConfigType)]
     → [(T.Text, T.Text)]
+    → Maybe ConfigFileFormat
     → IO α
     → IO α
-withConfigFileServer configs configTexts inner = do
-    void ∘ forkIO $ WARP.run serverPort app
-    void ∘ forkIO $ WARP.runTLS tlsSettings (warpSettings serverTlsPort) app
-    inner
+withConfigFileServer configs configTexts maybeFormat inner = do
+    w0 ← forkIO $ WARP.run serverPort app
+    w1 ←  forkIO $ WARP.runTLS tlsSettings (warpSettings serverTlsPort) app
+    inner `finally` do
+        killThread w0
+        killThread w1
+
   where
     app req respond = do
-        let maybeBody = LB.fromStrict <$> do
+
+        let format = fromMaybe Other $ maybeFormat
+                <|> (contentType <$> L.lookup HTTP.hAccept × WAI.requestHeaders req)
+
+            maybeBody = LB.fromStrict <$> do
                 p ← listToMaybe $ WAI.pathInfo req
                 do
-                    Yaml.encode <$> lookup p configs
+                    formatter format <$> lookup p configs
                     <|>
                     (T.encodeUtf8 <$> lookup p configTexts)
 
         respond $ case maybeBody of
             Just body → WAI.responseLBS HTTP.status200 [] body
-            Nothing → WAI.responseLBS HTTP.status404 [] "resource not found"
+            Nothing → WAI.responseLBS HTTP.status404 [contentTypeHeader format] "resource not found"
+
+    formatter Json = LB.toStrict ∘ encode
+    formatter _ = Yaml.encode
+
+    contentTypeHeader Json = (HTTP.hContentType, head jsonMimeType)
+    contentTypeHeader _ = (HTTP.hContentType, head yamlMimeType)
 
 serverPort ∷ Int
 serverPort = 8283

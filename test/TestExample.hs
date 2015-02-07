@@ -26,6 +26,10 @@ import Tests.MonoidConfig
 import Configuration.Utils
 import Configuration.Utils.Internal
 
+#ifdef REMOTE_CONFIGS
+import Configuration.Utils.Internal.ConfigFileReader
+#endif
+
 import Control.Monad
 
 import qualified Data.List as L
@@ -45,34 +49,49 @@ import PkgInfo_url_example_test
 main ∷ IO ()
 main =
     withConfigFile config0 $ \tmpPath0 →
-    withConfigFileText config1Part$ \tmpPath1 → do
+    withConfigFile config1Part $ \tmpPath1 → do
 
+    -- run tests
+    remoteResults ← remoteTests
+    localResults ← sequence
+        × tests0
+        ⊕ testsConfigFile [tmpPath0, tmpPath1]
+        ⊕ tests2Files1 [tmpPath0, tmpPath1]
+        ⊕ tests2Files2 "local-" (tmpPath0) (tmpPath1)
+        ⊕ tests2Files3 "local-" (tmpPath0) (tmpPath1)
+        ⊕ monoidUpdateTests pkgInfo
+        ⊕ boolOptionTests pkgInfo
+        ⊕ testPrintHelp [tmpPath0, tmpPath1]
+
+    -- report results
+    let (successes, failures) = L.partition id
+            × remoteResults
+            ⊕ localResults
+
+    T.putStrLn $ "success: " ⊕ sshow (length successes)
+    T.putStrLn $ "failures: " ⊕ sshow (length failures)
+    unless (length failures ≡ 0) $ do
+        debug $ do
+            T.readFile (T.unpack tmpPath0) >>= T.putStrLn
+            T.readFile (T.unpack tmpPath1) >>= T.putStrLn
+        error "test suite failed"
+
+remoteTests ∷ IO [Bool]
 #ifdef REMOTE_CONFIGS
-    withConfigFileServer [("config0", ConfigType config0)] [("config1", config1Part), ("invalid", "invalid: invalid")] $ do
-#endif
-        (successes, failures) ← L.partition id <$> sequence
-            × tests0
-            ⊕ testsConfigFile [tmpPath0, tmpPath1]
-            ⊕ tests2Files1 [tmpPath0, tmpPath1]
-            ⊕ tests2Files2 "local-" (tmpPath0) (tmpPath1)
-            ⊕ tests2Files3 "local-" (tmpPath0) (tmpPath1)
-#ifdef REMOTE_CONFIGS
-            ⊕ tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+remoteTests = concat <$> mapM run [Just Yaml, Just Json, Nothing]
+  where
+    typedConfigs = [("config0", ConfigType config0), ("config1", ConfigType config1Part)]
+    textConfigs = [("invalid", "invalid: invalid")]
+
+    run format = withConfigFileServer typedConfigs textConfigs format $ do
+        sequence
+            × tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ tests2Files3 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
             ⊕ testsTlsUrl
+#else
+remoteTests = return []
 #endif
-            ⊕ monoidUpdateTests pkgInfo
-            ⊕ boolOptionTests pkgInfo
-            ⊕ testPrintHelp [tmpPath0, tmpPath1]
-
-        T.putStrLn $ "success: " ⊕ sshow (length successes)
-        T.putStrLn $ "failures: " ⊕ sshow (length failures)
-        unless (length failures ≡ 0) $ do
-            debug $ do
-                T.readFile (T.unpack tmpPath0) >>= T.putStrLn
-                T.readFile (T.unpack tmpPath1) >>= T.putStrLn
-            error "test suite failed"
 
 -- -------------------------------------------------------------------------- --
 -- Test Cases
@@ -281,11 +300,12 @@ config1 = defaultHttpURL
 
 -- | A partial version of configuration 1
 --
-config1Part ∷ T.Text
-config1Part = T.unlines
-    [ "domain: " ⊕ T.pack (view domain config1)
-    , "auth:"
-    , "    user: " ⊕ T.pack (view (auth ∘ user) config1)
+config1Part ∷ Value
+config1Part = object
+    [ "domain" .= view domain config1
+    , "auth" .= object
+        [ "user" .= view (auth ∘ user) config1
+        ]
     ]
 
 mainInfo ∷ ProgramInfoValidate HttpURL []
