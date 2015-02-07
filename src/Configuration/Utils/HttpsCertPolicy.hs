@@ -25,6 +25,7 @@ module Configuration.Utils.HttpsCertPolicy
 , pHttpsCertPolicy
 
 -- * HTTP Requests With Certificate Validation Policy
+, simpleHttpWithValidationPolicy
 , httpWithValidationPolicy
 , VerboseTlsException(..)
 ) where
@@ -132,13 +133,20 @@ pHttpsCertPolicy prefix = id
 -- request. HTTPS certificates validation results are not cached between different
 -- requests.
 --
-httpWithValidationPolicy
+simpleHttpWithValidationPolicy
     ∷ T.Text
         -- ^ HTTP or HTTPS URL
     → HttpsCertPolicy
     → IO (HTTP.Response LB.ByteString)
-httpWithValidationPolicy url policy = do
-    request ← HTTP.parseUrl $ T.unpack url
+simpleHttpWithValidationPolicy url policy = do
+    request ← (HTTP.parseUrl $ T.unpack url)
+    httpWithValidationPolicy request policy
+
+httpWithValidationPolicy
+    ∷ HTTP.Request
+    → HttpsCertPolicy
+    → IO (HTTP.Response LB.ByteString)
+httpWithValidationPolicy request policy = do
     certVar ← newIORef Nothing
     settings ← getSettings policy certVar
     HTTP.withManager settings (HTTP.httpLbs request) `catch` \httpEx → case httpEx of

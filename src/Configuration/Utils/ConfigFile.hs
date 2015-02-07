@@ -383,7 +383,7 @@ loadRemote conf path = do
   where
     url = getConfigFile path
     policy = _cfcHttpsPolicy conf
-    doHttp = LB.toStrict ∘ HTTP.responseBody <$> liftIO × httpWithValidationPolicy url policy
+    doHttp = LB.toStrict ∘ HTTP.responseBody <$> liftIO × simpleHttpWithValidationPolicy url policy
 #endif
 
 -- -------------------------------------------------------------------------- --
