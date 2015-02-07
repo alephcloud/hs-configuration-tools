@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -70,6 +71,7 @@ import Configuration.Utils.CommandLine
 import Configuration.Utils.Internal
 import Configuration.Utils.Validation
 
+import Control.DeepSeq (NFData)
 import Control.Monad.Except hiding (mapM_)
 
 import Data.Aeson
@@ -84,6 +86,8 @@ import qualified Data.Text as T
 import Data.Typeable
 import qualified Data.Yaml as Yaml
 
+import GHC.Generics
+
 import Prelude hiding (concatMap, mapM_, any)
 
 #ifdef REMOTE_CONFIGS
@@ -93,7 +97,9 @@ import Configuration.Utils.Operators
 import Control.Exception.Enclosed
 import Control.Monad.Trans.Control
 
+import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.CaseInsensitive as CI
 import qualified Data.List as L
 import qualified Data.Text.IO as T
 
@@ -355,11 +361,36 @@ loadLocal path = do
   where
     file = getConfigFile path
 
+data ConfigFileFormat
+    = Yaml
+    | Json
+    | Other
+    deriving (Show, Read, Eq, Ord, Enum, Bounded, Typeable, Generic)
+
+instance NFData ConfigFileFormat
+
 #ifdef REMOTE_CONFIGS
 isRemote
     ∷ ConfigFile
     → Bool
 isRemote path = L.any (`T.isPrefixOf` getConfigFile path) ["http://", "https://"]
+
+yamlMimeType ∷ IsString s ⇒ [s]
+yamlMimeType = map fromString ["application/x-yaml", "text/yaml"]
+
+-- | Defined in  RFC 4627
+--
+jsonMimeType ∷ IsString s ⇒ [s]
+jsonMimeType = map fromString ["application/json"]
+
+contentType
+    ∷ B8.ByteString
+        -- ^ value of an HTTP @Content-Type@ header
+    → ConfigFileFormat
+contentType headerValue
+    | CI.foldCase "yaml" `B8.isInfixOf` CI.foldCase headerValue = Yaml
+    | CI.foldCase "json" `B8.isInfixOf` CI.foldCase headerValue = Json
+    | otherwise = Other
 
 loadRemote
     ∷ (ConfigFileParser μ, FromJSON (α → α))
@@ -369,25 +400,32 @@ loadRemote
     → μ (α → α)
 loadRemote conf path = do
     validateHttpOrHttpsUrl "config-file" (T.unpack url)
-    dat ← (Just <$> doHttp) `catchAnyDeep` \e →
+    result ← (Just <$> doHttp) `catchAnyDeep` \e →
         case path of
             ConfigFileOptional _ → do
                 liftIO ∘ T.hPutStrLn stderr $ "WARNING: failed to download remote configuration file " ⊕ url ⊕ ": " ⊕ sshow e
                 return Nothing
             ConfigFileRequired _ → throwError $ "failed to download remote configuration file " ⊕ url ⊕ ": " ⊕ sshow e
 
-    case dat of
+    case result of
         Nothing → return id
-        Just d → case Yaml.decodeEither' d of
-            Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ sshow e
+        Just (format, d) → case (parser format) d of
+            Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ e
             Right r → return r
   where
+    parser Json = fmapL T.pack ∘ eitherDecodeStrict'
+    parser _ = fmapL sshow ∘ Yaml.decodeEither'
+
     url = getConfigFile path
     policy = _cfcHttpsPolicy conf
-    doHttp = LB.toStrict ∘ HTTP.responseBody <$> liftIO × do
+    doHttp = liftIO $ do
         request ← (HTTP.parseUrl $ T.unpack url)
-            <&> over requestHeaders ((:) (HTTP.hAccept,"application/x-yaml, text/yaml"))
-        httpWithValidationPolicy request policy
+            <&> over requestHeaders ((:) acceptHeader)
+        resp ← httpWithValidationPolicy request policy
+        let format = maybe Other contentType ∘ L.lookup HTTP.hContentType $ HTTP.responseHeaders resp
+        return (format, LB.toStrict (HTTP.responseBody resp))
+
+    acceptHeader = (HTTP.hAccept, B8.intercalate "," (yamlMimeType ⊕ jsonMimeType))
 
 requestHeaders ∷ Lens' HTTP.Request HTTP.RequestHeaders
 requestHeaders = lens HTTP.requestHeaders $ \s a → s { HTTP.requestHeaders = a }
