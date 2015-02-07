@@ -3,7 +3,7 @@
 Overview
 ========
 
-This package provides a collection of utils on top of the packages
+This package provides a collection of utilities on top of the packages
 [optparse-applicative](http://hackage.haskell.org/package/optparse-applicative),
 [aeson](http://hackage.haskell.org/package/aeson), and
 [yaml](http://hackage.haskell.org/package/yaml) for configuring libraries and
@@ -34,7 +34,7 @@ the boilerplate is hidden behind a clean and simple DSL.
 Installation
 ============
 
-Assuming that you have a recent version verison of `GHC` and `Cabal`
+Assuming that you have a recent version version of `GHC` and `Cabal`
 installed in your system this package can be install from [Hackage](http://hackage.haskell.org/)
 via
 
@@ -81,7 +81,7 @@ provided:
 Optionally, a function for validating the configuration value may be
 provided.
 
-The package provides operators and functions that make the implmentation of
+The package provides operators and functions that make the implementation of
 these requisites easy for the common case that the configuration is encoded
 mainly through nested records.
 
@@ -89,9 +89,9 @@ In addition to the user defined command line options the following
 options are recognized by the application:
 
 *   `--config-file, -c`
-    parses the given file as a --possibly partial-- configuration in YAML
-    format. The file location can be provided either as a local filesystem path
-    or as a remote HTTP or HTTPS URL. In addition a list of static
+    parses the given file as a --possibly partial-- configuration in YAML or
+    JSON format. The file location can be provided either as a local file
+    system path or as a remote HTTP or HTTPS URL. In addition a list of static
     configuration file locations can be defined in the code.
 
     If this option is provided more than a single time the configuration
@@ -109,7 +109,7 @@ options are recognized by the application:
     prints a help message and exits.
 
 As long as the package wasn't build with `-f-remote-configs` the following
-two options are availabe. They affect how configuration files
+two options are available. They affect how configuration files
 are loaded from remote URLs.
 
 *   `--config-https-insecure=true|false`
@@ -158,7 +158,7 @@ data Auth = Auth
     }
 ~~~
 
-We have to define lenses for the configuration types. Here we do it explicitely.
+We have to define lenses for the configuration types. Here we do it explicitly.
 Alternatively one could have used TemplateHaskell along with `makeLenses` from
 the module `Control.Lens` from the [lens](http://hackage.haskell.org/package/lens)
 package.
@@ -191,7 +191,7 @@ Now we define an [aeson](https://hackage.haskell.org/package/aeson) `FromJSON`
 instance that yields a function that updates a given `Auth` value with the
 values from the parsed JSON value. The `<*<` operator is functional composition
 lifted for applicative functors and `%` is a version of `$` with a different
-precedence that helps to reduce the use of paranthesis in applicative style
+precedence that helps to reduce the use of parenthesis in applicative style
 code.
 
 ~~~{.haskell}
@@ -233,7 +233,7 @@ You may consult the documentation of the
 [optparse-applicative](http://hackage.haskell.org/package/optparse-applicative)
 package for further information on how to define command line options.
 
-The following definitons for the `HttpURL` are similar to definitions for
+The following definitions for the `HttpURL` are similar to definitions for
 the `Auth` type above. In addition it is demonstrated how to deal with nested
 configuration types. Mainly the usage of `..:` is replaced by `%.:` and
 `.::` is replaced by `%::`.
@@ -313,10 +313,10 @@ Using Sum Types as Configuration Types
 
 Sum types can not be used as configuration types in the same way as product types.
 The reason is that the nondeterminism in the choice of a term for the type is
-not restricted to the choosen constructor arguments but in addition there
+not restricted to the chosen constructor arguments but in addition there
 is non-determinism in the choice of the constructor, too.
 
-An update function for a product type can be defined pointwise as a mapping from
+An update function for a product type can be defined point-wise as a mapping from
 constructor parameters to values. An update for a sum type must take the
 constructor context into account. Moreover, when applied to a given default
 value the function may not be applicable at all if the default value uses a
@@ -338,7 +338,7 @@ Package and Build Information
 
 The module `Configuration.Utils.Setup` an example `Setup.hs` script that hooks
 into the cabal build process at the end of the configuration phase and generates
-a module with package information for each component of the cabal pacakge.
+a module with package information for each component of the cabal package.
 
 The modules are created in the *autogen* build directory where also the *Path_*
 module is created by cabal's simple build setup. This is usually the directory
@@ -421,7 +421,7 @@ line options:
     indirect dependencies along with their licenses and copyrights.
 
 *   `--license`
-    prints the text of the lincense of the application and exits.
+    prints the text of the license of the application and exits.
 
 Here is the example output of `--long-info` for the example
 `examples/Trivial.hs` from this package:
@@ -518,7 +518,7 @@ are planned.
 *   Simplify specification of Configuration data types by
     integrating the aeson instances and the option parser.
 
-*   Come up with a storry for sum types. We may use the following approach: The
+*   Come up with a story for sum types. We may use the following approach: The
     definition of the default should include alternate values for each
     constructor. Effectively, this means to map the sum type onto a product type
     by interpreting the summands as factors. For mapping back from the product
@@ -537,7 +537,7 @@ are planned.
 
 *   Nicer error messages if parsing fails.
 
-*   Suport JSON encoded configuration files.
+*   Support JSON encoded configuration files.
 
 *   Support mode where JSON/YAML parsing fails when unexpected
     properties are encountered.
