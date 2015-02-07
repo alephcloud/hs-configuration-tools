@@ -124,8 +124,8 @@ module Configuration.Utils
 ) where
 
 import Configuration.Utils.CommandLine
-import Configuration.Utils.ConfigFile hiding (parseConfigFiles)
-import qualified Configuration.Utils.ConfigFile as CF (parseConfigFiles)
+import Configuration.Utils.ConfigFile
+import qualified Configuration.Utils.Internal.ConfigFileReader as CF
 import Configuration.Utils.Internal
 import Configuration.Utils.Maybe
 import Configuration.Utils.Monoid

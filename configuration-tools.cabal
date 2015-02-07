@@ -71,6 +71,7 @@ Library
         Configuration.Utils.ConfigFile
         Configuration.Utils.Http
         Configuration.Utils.Internal
+        Configuration.Utils.Internal.ConfigFileReader
         Configuration.Utils.Maybe
         Configuration.Utils.Monoid
         Configuration.Utils.Operators
