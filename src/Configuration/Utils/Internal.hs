@@ -27,6 +27,7 @@ module Configuration.Utils.Internal
 
 -- * Misc Utils
 , (&)
+, (<&>)
 , sshow
 , exceptT
 , errorT
@@ -47,7 +48,7 @@ import qualified Data.Text as T
 
 import Prelude.Unicode
 
-infixl 1 &
+infixl 1 &, <&>
 
 -- -------------------------------------------------------------------------- --
 -- Lenses
@@ -104,6 +105,10 @@ iso f g = dimap f (fmap g)
 (&) ∷ α → (α → β) → β
 (&) = flip ($)
 {-# INLINE (&) #-}
+
+(<&>) ∷ Functor φ ⇒ φ α → (α → β) → φ β
+(<&>) = flip fmap
+{-# INLINE (<&>) #-}
 
 sshow
     ∷ (Show α, IsString τ)

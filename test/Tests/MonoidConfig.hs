@@ -102,7 +102,6 @@ routingTableTests pkgInfo =
         Just v' → HM.insert k v' m
       where
         mv = HM.lookup k m
-        (<&>) = flip fmap
 
 -- -------------------------------------------------------------------------- --
 -- Text with right append
