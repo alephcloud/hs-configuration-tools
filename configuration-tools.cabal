@@ -33,7 +33,7 @@ License:             MIT
 License-file:        LICENSE
 Author:              Lars Kuhtz <lars@alephcloud.com>
 Maintainer:          Lars Kuhtz <lars@alephcloud.com>
-Copyright:           Copyright (c) 2014 AlephCloud, Inc.
+Copyright:           Copyright (c) 2014-2015 AlephCloud, Inc.
 Category:            Configuration, Console
 Build-type:          Custom
 
