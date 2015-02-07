@@ -21,6 +21,7 @@ import TestTools
 
 import Configuration.Utils
 import Configuration.Utils.Internal
+import Configuration.Utils.Internal.ConfigFileReader
 import Configuration.Utils.Validation
 
 import qualified Data.HashMap.Strict as HM
@@ -167,12 +168,12 @@ textAppendTestsFilesR pkgInfo =
   where
     ca = StringConfigR "a"
     cb = StringConfigR "b"
-    run c (x ∷ Int) b a = withConfigFile c $ \file →
+    run c (x ∷ Int) b a = withConfigFile Yaml c $ \file →
         runTest pkgInfo (mi [file]) ("stringR-file1-" ⊕ sshow x) b a
 
     run2 c0 c1 (x ∷ Int) b a =
-        withConfigFile c0 $ \file0 →
-        withConfigFile c1 $ \file1 →
+        withConfigFile Json c0 $ \file0 →
+        withConfigFile Yaml c1 $ \file1 →
         runTest pkgInfo (mi [file0,file1]) ("stringR-file2-" ⊕ sshow x) b a
 
     mi files = set piConfigurationFiles (map ConfigFileRequired files) $
@@ -242,12 +243,12 @@ textAppendTestsFilesL pkgInfo =
   where
     ca = StringConfigL "a"
     cb = StringConfigL "b"
-    run c (x ∷ Int) b a = withConfigFile c $ \file →
+    run c (x ∷ Int) b a = withConfigFile Json c $ \file →
         runTest pkgInfo (mi [file]) ("stringL-file1-" ⊕ sshow x) b a
 
     run2 c0 c1 (x ∷ Int) b a =
-        withConfigFile c0 $ \file0 →
-        withConfigFile c1 $ \file1 →
+        withConfigFile Yaml c0 $ \file0 →
+        withConfigFile Json c1 $ \file1 →
         runTest pkgInfo (mi [file0,file1]) ("stringL-file2-" ⊕ sshow x) b a
 
     mi files = set piConfigurationFiles (map ConfigFileRequired files) $

@@ -25,10 +25,7 @@ import Tests.MonoidConfig
 
 import Configuration.Utils
 import Configuration.Utils.Internal
-
-#ifdef REMOTE_CONFIGS
 import Configuration.Utils.Internal.ConfigFileReader
-#endif
 
 import Control.Monad
 
@@ -47,46 +44,68 @@ import PkgInfo_url_example_test
 -- main
 
 main ∷ IO ()
-main =
-    withConfigFile config0 $ \tmpPath0 →
-    withConfigFile config1Part $ \tmpPath1 → do
+main = do
 
     -- run tests
-    remoteResults ← remoteTests
     localResults ← sequence
         × tests0
-        ⊕ testsConfigFile [tmpPath0, tmpPath1]
-        ⊕ tests2Files1 [tmpPath0, tmpPath1]
-        ⊕ tests2Files2 "local-" (tmpPath0) (tmpPath1)
-        ⊕ tests2Files3 "local-" (tmpPath0) (tmpPath1)
         ⊕ monoidUpdateTests pkgInfo
         ⊕ boolOptionTests pkgInfo
-        ⊕ testPrintHelp [tmpPath0, tmpPath1]
+    localFileResults ← localFileTests
+    remoteResults ← remoteTests
+    helpResults ← helpTests
 
     -- report results
     let (successes, failures) = L.partition id
-            × remoteResults
-            ⊕ localResults
+            × localResults
+            ⊕ remoteResults
+            ⊕ localFileResults
+            ⊕ helpResults
 
     T.putStrLn $ "success: " ⊕ sshow (length successes)
     T.putStrLn $ "failures: " ⊕ sshow (length failures)
     unless (length failures ≡ 0) $ do
-        debug $ do
-            T.readFile (T.unpack tmpPath0) >>= T.putStrLn
-            T.readFile (T.unpack tmpPath1) >>= T.putStrLn
         error "test suite failed"
+
+-- -------------------------------------------------------------------------- --
+-- Test categories
+
+helpTests ∷ IO [Bool]
+helpTests =
+    withConfigFile Yaml config0 $ \tmpPath0 →
+    withConfigFile Json config1Part $ \tmpPath1 → sequence
+        × testPrintHelp [tmpPath0, tmpPath1]
+
+localFileTests ∷ IO [Bool]
+localFileTests = concat <$> mapM run
+    [ (Yaml, Yaml, "yaml-yaml-")
+    , (Json, Json, "json-json-")
+    , (Yaml, Json, "yaml-json-")
+    , (Json, Yaml, "json-yaml-")
+    ]
+  where
+    run (format1, format2, label) =
+        withConfigFile format1 config0 $ \tmpPath0 →
+        withConfigFile format2 config1Part $ \tmpPath1 → sequence
+            × testsConfigFile ("configFile-" ⊕ label) [tmpPath0, tmpPath1]
+            ⊕ tests2Files1 ("local-" ⊕ label) [tmpPath0, tmpPath1]
+            ⊕ tests2Files2 ("local-" ⊕ label) (tmpPath0) (tmpPath1)
+            ⊕ tests2Files3 ("local-" ⊕ label) (tmpPath0) (tmpPath1)
 
 remoteTests ∷ IO [Bool]
 #ifdef REMOTE_CONFIGS
-remoteTests = concat <$> mapM run [Just Yaml, Just Json, Nothing]
+remoteTests = concat <$> mapM run
+    [ (Just Yaml, "yaml")
+    , (Just Json, "json")
+    ]
   where
     typedConfigs = [("config0", ConfigType config0), ("config1", ConfigType config1Part)]
     textConfigs = [("invalid", "invalid: invalid")]
 
-    run format = withConfigFileServer typedConfigs textConfigs format $ do
+    run (format, label) = withConfigFileServer typedConfigs textConfigs format $
         sequence
-            × tests2Files2 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
-            ⊕ tests2Files3 "remote-" (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            × tests2Files2 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            ⊕ tests2Files3 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
             ⊕ testsTlsUrl
 #else
@@ -106,10 +125,10 @@ testPrintHelp files =
   where
     configFiles = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) files
 
-testsConfigFile ∷ [T.Text] → [IO Bool]
-testsConfigFile files =
-    [ runTest pkgInfo (mainInfoConfigFile configFiles0) "config-file-1" True [trueAssertion []]
-    , runTest pkgInfo (mainInfoConfigFile configFiles1) "config-file-2" False [trueAssertion []]
+testsConfigFile ∷ T.Text → [T.Text] → [IO Bool]
+testsConfigFile prefix files =
+    [ runTest pkgInfo (mainInfoConfigFile configFiles0) (prefix ⊕ "-1") True [trueAssertion []]
+    , runTest pkgInfo (mainInfoConfigFile configFiles1) (prefix ⊕ "-2") False [trueAssertion []]
     ]
   where
     configFiles0 = zipWith ($) (ConfigFileRequired : repeat ConfigFileOptional) (files ⊕ ["./invalid"])
@@ -152,10 +171,10 @@ testsTlsUrl =
 
 -- | Tests with two configuration files
 --
-tests2Files1 ∷ [T.Text] → [IO Bool]
-tests2Files1 files =
-    twoFileCasesC0C1 "2files-1-" files (trueAssertion [])
-    ⊕ twoFileCasesC1C0 "2files-1-" selif (trueAssertion [])
+tests2Files1 ∷ T.Text → [T.Text] → [IO Bool]
+tests2Files1 prefix files =
+    twoFileCasesC0C1 (prefix ⊕ "2files-1-") files (trueAssertion [])
+    ⊕ twoFileCasesC1C0 (prefix ⊕ "2files-1-") selif (trueAssertion [])
   where
     selif = reverse files
 
@@ -163,7 +182,7 @@ tests2Files1 files =
 --
 tests2Files2
     ∷ T.Text
-        -- ^ test label prefix
+        -- ^ test label suffix
     → T.Text
         -- ^ file for config0
     → T.Text
@@ -180,7 +199,7 @@ tests2Files2 suffix file0 file1 =
 --
 tests2Files3
     ∷ T.Text
-        -- ^ test label prefix
+        -- ^ test label suffix
     → T.Text
         -- ^ file for config0
     → T.Text

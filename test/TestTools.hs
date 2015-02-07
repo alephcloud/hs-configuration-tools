@@ -46,11 +46,13 @@ module TestTools
 
 import Configuration.Utils
 import Configuration.Utils.Internal
+import Configuration.Utils.Internal.ConfigFileReader
 
 import Control.Exception
 import Control.Monad
 
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy as LB
 import Data.IORef
 import Data.Monoid.Unicode
 import qualified Data.Text as T
@@ -65,9 +67,7 @@ import System.Environment
 import System.IO
 
 #ifdef REMOTE_CONFIGS
-import Configuration.Utils.Internal.ConfigFileReader
 import Control.Concurrent
-import qualified Data.ByteString.Lazy as LB
 import qualified Data.List as L
 import Data.Maybe
 import qualified Data.Text.Encoding as T
@@ -180,21 +180,27 @@ runTest pkgInfo mInfo label succeed assertions = do
 
 withConfigFile
     ∷ ToJSON γ
-    ⇒ γ
+    ⇒ ConfigFileFormat
+    → γ
     → (T.Text → IO α)
     → IO α
-withConfigFile config inner =
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath tmpHandle → do
-        B8.hPutStrLn tmpHandle ∘ Yaml.encode $ config
+withConfigFile format config inner =
+    withTempFile "." ("tmp_TestExample." ⊕ suffix format) $ \tmpPath tmpHandle → do
+        B8.hPutStrLn tmpHandle ∘ formatter format $ config
         hClose tmpHandle
         inner $ T.pack tmpPath
+  where
+    suffix Json = "json"
+    suffix _ = "yaml"
+    formatter Json = LB.toStrict ∘ encode
+    formatter _ = Yaml.encode
 
 withConfigFileText
     ∷ T.Text
     → (T.Text → IO α)
     → IO α
 withConfigFileText configText inner =
-    withTempFile "." "tmp_TestExample.yml" $ \tmpPath tmpHandle → do
+    withTempFile "." "tmp_TestExample.txt" $ \tmpPath tmpHandle → do
         T.hPutStrLn tmpHandle configText
         hClose tmpHandle
         inner $ T.pack tmpPath
