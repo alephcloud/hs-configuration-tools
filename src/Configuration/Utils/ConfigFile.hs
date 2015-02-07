@@ -98,6 +98,7 @@ import qualified Data.List as L
 import qualified Data.Text.IO as T
 
 import qualified Network.HTTP.Client as HTTP
+import qualified Network.HTTP.Types.Header as HTTP
 
 import Prelude.Unicode
 
@@ -383,7 +384,14 @@ loadRemote conf path = do
   where
     url = getConfigFile path
     policy = _cfcHttpsPolicy conf
-    doHttp = LB.toStrict ∘ HTTP.responseBody <$> liftIO × simpleHttpWithValidationPolicy url policy
+    doHttp = LB.toStrict ∘ HTTP.responseBody <$> liftIO × do
+        request ← (HTTP.parseUrl $ T.unpack url)
+            <&> over requestHeaders ((:) (HTTP.hAccept,"application/x-yaml, text/yaml"))
+        httpWithValidationPolicy request policy
+
+requestHeaders ∷ Lens' HTTP.Request HTTP.RequestHeaders
+requestHeaders = lens HTTP.requestHeaders $ \s a → s { HTTP.requestHeaders = a }
+
 #endif
 
 -- -------------------------------------------------------------------------- --
