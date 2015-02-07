@@ -87,7 +87,7 @@ import qualified Data.Yaml as Yaml
 import Prelude hiding (concatMap, mapM_, any)
 
 #ifdef REMOTE_CONFIGS
-import Configuration.Utils.HttpsCertPolicy
+import Configuration.Utils.Internal.HttpsCertPolicy
 import Configuration.Utils.Operators
 
 import Control.Exception.Enclosed

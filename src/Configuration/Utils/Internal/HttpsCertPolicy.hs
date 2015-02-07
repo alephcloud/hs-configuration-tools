@@ -5,7 +5,7 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
 -- |
--- Module: Configuration.Utils.HttpsCertPolicy
+-- Module: Configuration.Utils.Internal.HttpsCertPolicy
 -- Description: HTTPS certificate validation policy
 -- Copyright: Copyright © 2015 PivotCloud, Inc.
 -- License: MIT
@@ -15,7 +15,7 @@
 -- This module provides means for defining and using HTTPS
 -- certificate validation polices for HTTPS requests.
 --
-module Configuration.Utils.HttpsCertPolicy
+module Configuration.Utils.Internal.HttpsCertPolicy
 (
 -- * HTTPS Certificate Validation Policy
   HttpsCertPolicy(..)

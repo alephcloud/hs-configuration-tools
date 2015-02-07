@@ -78,7 +78,7 @@ Library
         Configuration.Utils.Validation
     if flag(remote-configs)
         exposed-modules:
-            Configuration.Utils.HttpsCertPolicy
+            Configuration.Utils.Internal.HttpsCertPolicy
 
     build-depends:
         Cabal >= 1.20,
