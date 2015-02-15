@@ -131,6 +131,8 @@ import Prelude hiding (readFile, writeFile)
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitSuccess))
 
+-- If you compile this Script directly (via ghc --make) with Cabal < 1.20 you may
+-- set the value of MIN_VERSION_Caba(x,y,z) to 0.
 #ifndef MIN_VERSION_Cabal
 #define MIN_VERSION_Cabal(x,y,z) 1
 #endif
