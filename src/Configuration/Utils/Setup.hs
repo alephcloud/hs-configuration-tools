@@ -2,6 +2,7 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
@@ -129,6 +130,10 @@ import Prelude hiding (readFile, writeFile)
 
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitSuccess))
+
+#ifndef MIN_VERSION_Cabal
+#define MIN_VERSION_Cabal(x,y,z) 1
+#endif
 
 -- | Include this function when your setup doesn't contain any
 -- extra functionality.
@@ -331,8 +336,12 @@ updatePkgInfoModule cName pkgDesc bInfo = do
     fileName = pkgInfoFileName cName bInfo
 
 licenseFilesText :: PackageDescription -> IO B.ByteString
+#if MIN_VERSION_Cabal(1,20,0)
 licenseFilesText PackageDescription{ licenseFiles = fileNames } =
     B.intercalate "\n------------------------------------------------------------\n" <$> mapM fileText fileNames
+#else
+licenseFilesText PackageDescription{ licenseFile = fileName } = fileText fileName
+#endif
   where
     fileText file = doesFileExist file >>= \x -> if x
         then B.readFile file
