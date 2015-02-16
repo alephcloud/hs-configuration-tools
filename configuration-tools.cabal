@@ -37,7 +37,7 @@ Copyright:           Copyright (c) 2014-2015 AlephCloud, Inc.
 Category:            Configuration, Console
 Build-type:          Custom
 
-cabal-version:  >= 1.20
+cabal-version:  >= 1.18
 
 extra-doc-files:
     README.md,
@@ -82,7 +82,7 @@ Library
             Configuration.Utils.Internal.HttpsCertPolicy
 
     build-depends:
-        Cabal >= 1.20,
+        Cabal >= 1.18,
         aeson >= 0.7.0.6,
         ansi-wl-pprint >= 0.6,
         attoparsec >= 0.11.3.4,
@@ -140,7 +140,7 @@ Test-Suite url-example-test
         base >= 4.6 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10,
-        Cabal >= 1.20,
+        Cabal >= 1.18,
         configuration-tools,
         errors >= 1.4.3,
         mtl >= 2.2,
