@@ -2,7 +2,9 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
 
@@ -129,6 +131,16 @@ import Prelude hiding (readFile, writeFile)
 
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing)
 import System.Exit (ExitCode(ExitSuccess))
+
+#ifndef MIN_VERSION_Cabal
+#define NO_CABAL_MACROS 1
+#define MIN_VERSION_Cabal(a,b,c) 0
+#endif
+
+#ifdef NO_CABAL_MACROS
+import Data.Maybe
+import Data.Typeable
+#endif
 
 -- | Include this function when your setup doesn't contain any
 -- extra functionality.
@@ -331,12 +343,37 @@ updatePkgInfoModule cName pkgDesc bInfo = do
     fileName = pkgInfoFileName cName bInfo
 
 licenseFilesText :: PackageDescription -> IO B.ByteString
-licenseFilesText PackageDescription{ licenseFiles = fileNames } =
-    B.intercalate "\n------------------------------------------------------------\n" <$> mapM fileText fileNames
+licenseFilesText pkgDesc =
+    B.intercalate "\n------------------------------------------------------------\n" <$> mapM fileText
+#ifdef NO_CABAL_MACROS
+        (getLicenseFiles pkgDesc)
+#elif MIN_VERSION_Cabal(1,20,0)
+        (licenseFiles pkgDesc)
+#else
+        [licenseFile pkgDesc]
+#endif
   where
     fileText file = doesFileExist file >>= \x -> if x
         then B.readFile file
         else return ""
+
+#ifdef NO_CABAL_MACROS
+-- The name and the type of the @licenseFile :: String@ field of 'PackageDescription' changed
+-- in Cabal version 1.20 to @licenseFiles :: [String]@. Both versions are used with GHC-7.8.
+-- When compiling @Setup.hs@ the @MIN_VERSION_...@ macros are not available. This function is an
+-- ugly hack to do conditional compilation without CPP.
+--
+-- It will break if the number of record fields changes. If that's the case we will probably
+-- have to either
+--
+-- * Use typeable to pattern match on the number of constructor arguments for 'PackageDescription',
+-- * use TH hacks ala @$( if versionBranch cabalVersion < [...] ... )@, and/or
+-- * make guesses about the cabal version based on the @__GLASGOW_HASKELL__@ macro.
+--
+getLicenseFiles :: PackageDescription -> [FilePath]
+getLicenseFiles (PackageDescription _ _ l _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) =
+    fromMaybe (error "unsupport Cabal library version") $ cast l <|> (return <$> cast l)
+#endif
 
 hgInfo :: IO (String, String, String)
 hgInfo = do
