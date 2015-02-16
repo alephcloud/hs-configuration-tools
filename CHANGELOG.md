@@ -1,3 +1,10 @@
+0.2.11
+======
+
+*   Added support for Cabal-1.18. This is supposed to make the build more
+    robust and simplify integration with existing build infrastructure
+    and other packages.
+
 0.2.10
 ======
 
