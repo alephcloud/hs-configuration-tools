@@ -36,7 +36,6 @@ import Configuration.Utils.Monoid
 import Configuration.Utils.Operators
 import Configuration.Utils.Validation
 
-import Control.Monad.Except hiding (mapM_)
 import Control.Monad.Writer hiding (mapM_)
 
 import qualified Data.ByteString.Char8 as B8

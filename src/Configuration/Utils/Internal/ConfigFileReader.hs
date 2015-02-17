@@ -42,7 +42,9 @@ import Configuration.Utils.Validation
 
 import Control.Applicative
 import Control.DeepSeq (NFData)
-import Control.Monad.Except hiding (mapM_)
+import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.Error.Class
 
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.CaseInsensitive as CI
