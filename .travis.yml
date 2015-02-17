@@ -61,6 +61,46 @@ matrix:
         - env: REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
           ghc: 7.6
 
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+          ghc: 7.8
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
+          ghc: 7.8
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=0.4
+          ghc: 7.8
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
+          ghc: 7.8
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+          ghc: 7.8
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
+          ghc: 7.8
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=0.4
+          ghc: 7.8
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=10
+          ghc: 7.8
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=0.4
+          ghc: 7.8
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=10
+          ghc: 7.8
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+          ghc: 7.6
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
+          ghc: 7.6
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=0.4
+          ghc: 7.6
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=10
+          ghc: 7.6
+
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=0.4
+          ghc: 7.6
+        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=10
+          ghc: 7.6
+
 before_install:
     # - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
     # - travis_retry sudo apt-get update
