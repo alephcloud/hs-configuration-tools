@@ -1,3 +1,10 @@
+0.2.12
+======
+
+*   Added support for transformers-0.3.0.0. This changes allows usage
+    of configuration-tools along with packages that depend on ghc, which
+    in turn depends on transformers-0.3.0.0.
+
 0.2.11
 ======
 
