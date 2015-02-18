@@ -125,6 +125,7 @@ Library
         else
             build-depends:
                 mtl >= 2.1,
+                mtl-compat >= 0.2,
                 transformers >= 0.3 && < 0.4,
                 transformers-compat >= 0.4
     else
@@ -184,6 +185,7 @@ Test-Suite url-example-test
         else
             build-depends:
                 mtl >= 2.1,
+                mtl-compat >= 0.2,
                 transformers-compat >= 0.4
     else
         build-depends:
