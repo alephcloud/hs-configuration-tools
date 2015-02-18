@@ -46,6 +46,7 @@ extra-doc-files:
 
 extra-source-files:
     constraints
+    constraints.old-transformers
 
 source-repository head
     type: git
