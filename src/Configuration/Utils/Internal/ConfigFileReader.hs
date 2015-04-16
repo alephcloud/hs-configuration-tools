@@ -47,7 +47,6 @@ import Control.Monad.IO.Class
 import Control.Monad.Error.Class
 
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.CaseInsensitive as CI
 import Data.Monoid.Unicode
 import qualified Data.Text as T
 import Data.Typeable
@@ -65,6 +64,7 @@ import Control.Exception.Enclosed
 import Control.Monad.Trans.Control
 
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.CaseInsensitive as CI
 import qualified Data.List as L
 import Data.String
 import qualified Data.Text.IO as T
