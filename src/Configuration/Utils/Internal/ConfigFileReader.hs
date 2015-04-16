@@ -47,7 +47,6 @@ import Control.Monad.IO.Class
 import Control.Monad.Error.Class
 
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.CaseInsensitive as CI
 import Data.Monoid.Unicode
 import qualified Data.Text as T
 import Data.Typeable
@@ -65,6 +64,7 @@ import Control.Exception.Enclosed
 import Control.Monad.Trans.Control
 
 import qualified Data.ByteString.Lazy as LB
+import qualified Data.CaseInsensitive as CI
 import qualified Data.List as L
 import Data.String
 import qualified Data.Text.IO as T
@@ -121,10 +121,10 @@ readConfigFile _conf file =
 
 fileType ∷ T.Text → ConfigFileFormat
 fileType f
-    | CI.foldCase ".yaml" `T.isSuffixOf` CI.foldCase f = Yaml
-    | CI.foldCase ".yml" `T.isSuffixOf` CI.foldCase f = Yaml
-    | CI.foldCase ".json" `T.isSuffixOf` CI.foldCase f = Json
-    | CI.foldCase ".js" `T.isSuffixOf` CI.foldCase f = Json
+    | ".yaml" `T.isSuffixOf` T.toLower f = Yaml
+    | ".yml" `T.isSuffixOf` T.toLower f = Yaml
+    | ".json" `T.isSuffixOf` T.toLower f = Json
+    | ".js" `T.isSuffixOf` T.toLower f = Json
     | otherwise = Other
 
 loadLocal
