@@ -121,10 +121,10 @@ readConfigFile _conf file =
 
 fileType ∷ T.Text → ConfigFileFormat
 fileType f
-    | CI.foldCase ".yaml" `T.isSuffixOf` CI.foldCase f = Yaml
-    | CI.foldCase ".yml" `T.isSuffixOf` CI.foldCase f = Yaml
-    | CI.foldCase ".json" `T.isSuffixOf` CI.foldCase f = Json
-    | CI.foldCase ".js" `T.isSuffixOf` CI.foldCase f = Json
+    | ".yaml" `T.isSuffixOf` T.toLower f = Yaml
+    | ".yml" `T.isSuffixOf` T.toLower f = Yaml
+    | ".json" `T.isSuffixOf` T.toLower f = Json
+    | ".js" `T.isSuffixOf` T.toLower f = Json
     | otherwise = Other
 
 loadLocal
