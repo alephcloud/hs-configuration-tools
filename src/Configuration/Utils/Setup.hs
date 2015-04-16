@@ -372,7 +372,7 @@ licenseFilesText pkgDesc =
 --
 getLicenseFiles :: PackageDescription -> [FilePath]
 getLicenseFiles (PackageDescription _ _ l _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) =
-    fromMaybe (error "unsupport Cabal library version") $ cast l <|> (return <$> cast l)
+    fromMaybe (error "unsupported Cabal library version") $ cast l <|> (return <$> cast l)
 #endif
 
 hgInfo :: IO (String, String, String)
