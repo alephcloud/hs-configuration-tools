@@ -129,7 +129,8 @@ import Data.Monoid
 
 import Prelude hiding (readFile, writeFile)
 
-import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing)
+import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing, getCurrentDirectory, canonicalizePath)
+import System.FilePath (isDrive, (</>), takeDirectory)
 import System.Exit (ExitCode(ExitSuccess))
 
 #ifndef MIN_VERSION_Cabal
@@ -204,12 +205,18 @@ trim = f . f
   where f = reverse . dropWhile isSpace
 
 getVCS :: IO (Maybe RepoType)
-getVCS =
-    doesDirectoryExist ".hg" >>= \x0 -> if x0
+getVCS = getCurrentDirectory >>= getVcsOfDir
+
+getVcsOfDir :: FilePath -> IO (Maybe RepoType)
+getVcsOfDir d = do
+    canonicDir <- canonicalizePath d
+    doesDirectoryExist (canonicDir </> ".hg") >>= \x0 -> if x0
     then return (Just Mercurial)
-    else doesDirectoryExist ".git" >>= \x1 -> return $ if x1
-        then Just Git
-        else Nothing
+    else doesDirectoryExist (canonicDir </> ".git") >>= \x1 -> if x1
+        then return $ Just Git
+        else if isDrive canonicDir
+            then return Nothing
+            else getVcsOfDir (takeDirectory canonicDir)
 
 flagNameStr :: FlagName -> String
 flagNameStr (FlagName s) = s
@@ -372,7 +379,7 @@ licenseFilesText pkgDesc =
 --
 getLicenseFiles :: PackageDescription -> [FilePath]
 getLicenseFiles (PackageDescription _ _ l _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) =
-    fromMaybe (error "unsupport Cabal library version") $ cast l <|> (return <$> cast l)
+    fromMaybe (error "unsupported Cabal library version") $ cast l <|> (return <$> cast l)
 #endif
 
 hgInfo :: IO (String, String, String)
