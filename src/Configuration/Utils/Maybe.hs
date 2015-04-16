@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase #-}
@@ -6,6 +7,10 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+
+#ifndef MIN_VERSION_base
+#define MIN_VERSION_base(x,y,z) 1
+#endif
 
 -- |
 -- Module: Configuration.Utils.Maybe
@@ -28,7 +33,9 @@ module Configuration.Utils.Maybe
 
 ) where
 
+#if ! MIN_VERSION_base(4,8,0)
 import Control.Applicative
+#endif
 import Data.Aeson
 
 -- -------------------------------------------------------------------------- --
