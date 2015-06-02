@@ -62,7 +62,7 @@ infixl 1 &, <&>
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Lens σ τ α β = Functor φ ⇒ (α → φ β) → σ → φ τ
+type Lens σ τ α β = ∀ φ . Functor φ ⇒ (α → φ β) → σ → φ τ
 
 -- | This is the same type as the type from the lens library with the same name.
 --
@@ -92,7 +92,7 @@ view l = asks (getConst #. l Const)
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Iso σ τ α β = (Profunctor π, Functor φ) ⇒ π α (φ β) → π σ (φ τ)
+type Iso σ τ α β = ∀ π φ . (Profunctor π, Functor φ) ⇒ π α (φ β) → π σ (φ τ)
 type Iso' σ α = Iso σ σ α α
 
 iso ∷ (σ → α) → (β → τ) → Iso σ τ α β
