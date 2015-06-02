@@ -1,3 +1,20 @@
+0.2.13
+======
+
+*   Eliminate most compiler warnings when compiling with GHC-7.10.
+
+*   Bump lower bound on the version of `optparse-applicative` to `0.11.0.2`.
+    This avoids issues when building with `transformers-compat`.
+
+*   Reduce compilation time with `text<1.2.0.5` by avoiding usage of `toCaseFold`
+    from the `case-insensitive` package.
+
+*   Dropped dependency on the error package.
+
+*   [Issue 43](https://github.com/alephcloud/hs-configuration-tools/issues/43):
+    Support detection of the version control system when the package directory
+    and thus the cabal file is in sub-directory of the repository.
+
 0.2.12
 ======
 
