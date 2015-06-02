@@ -548,7 +548,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
         -- this parser produces the results
         <*> pAppConfiguration _piOptionParser
 
-    -- the 'O.helper' option from optparse-applicative is hidden be default
+    -- the 'O.helper' option from optparse-applicative is hidden by default
     -- which seems a bit weired. This option doesn't hide the access to help.
     nonHiddenHelper = abortOption ShowHelpText
         × long "help"
