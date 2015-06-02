@@ -1,4 +1,5 @@
 -- ------------------------------------------------------ --
+-- Copyright © 2015 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014-2015 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
@@ -31,9 +32,9 @@ Homepage:            https://github.com/alephcloud/hs-configuration-tools
 Bug-reports:         https://github.com/alephcloud/hs-configuration-tools/issues
 License:             MIT
 License-file:        LICENSE
-Author:              Lars Kuhtz <lars@alephcloud.com>
-Maintainer:          Lars Kuhtz <lars@alephcloud.com>
-Copyright:           Copyright (c) 2014-2015 AlephCloud, Inc.
+Author:              Lars Kuhtz <lakuhtz@gmail.com>
+Maintainer:          Lars Kuhtz <lakuhtz@gmail.com>
+Copyright:           Copyright (c) 2015 Lars Kuhtz <lakuhtz@gmail.com>, 2014-2015 AlephCloud, Inc.
 Category:            Configuration, Console
 Build-type:          Custom
 
