@@ -1,83 +1,92 @@
 sudo: false
-language: haskell
-ghc:
-    - 7.6
-    - 7.8
+language: c
 env:
-    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
+    # ------------ #
+    # GHC-7.6 #
 
-    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
+    ## No remote configs
+    - CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=10
+    # - CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
+    # - CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
+    ## Remote configs
+    - CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1000 TRANSFORMERS_B=10
+    - CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
 
-matrix:
-    exclude:
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.6
+    # - CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+    - CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
 
-        - env: REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.6
+    # ------------ #
+    # GHC-7.8 #
 
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
-          ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.8
+    ## No remote configs
+    - CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
 
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
-          ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
-          ghc: 7.8
+    # - CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
 
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
-          ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=10
-          ghc: 7.8
+    - CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
+    # - CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
 
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
-          ghc: 7.6
+    ## Remote configs
+    - CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+    - CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
 
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=10
-          ghc: 7.6
+    - CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+    - CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
+
+    - CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+    - CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
+
+    # ------------ #
+    # GHC-7.10 #
+
+    ## No remote configs
+    - CABALVER=1.22 GHCVER=7.10.1 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
+
+    ## Remote configs
+    - CABALVER=1.22 GHCVER=7.10.1 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
+
+addons:
+    apt:
+        sources:
+            - hvr-ghc
+        packages:
+            - cabal-install-1.18
+            - cabal-install-1.20
+            - cabal-install-1.22
+            - ghc-7.6.3
+            - ghc-7.8.4
+            - ghc-7.10.1
 
 before_install:
-    # - travis_retry sudo add-apt-repository -y ppa:hvr/ghc
-    # - travis_retry sudo apt-get update
-    # - travis_retry sudo apt-get install cabal-install-$CABALVER
-    # - export PATH=/opt/cabal/$CABALVER/bin:$PATH
-    - travis_retry cabal update
-    - mkdir $HOME/bin
-    - travis_retry cabal install cabal-install --bindir=$HOME/bin --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B"
-    - export PATH=$HOME/bin:$PATH
+    - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+    - export EXACT_CABALVER=$(cabal --version | sed -n '2s/.*version \(.*\) of.*/\1/p')
+    - echo EXACT_CABALVER=$EXACT_CABALVER
 
 install:
     - cabal --version
+    - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
     - travis_retry cabal update
-    - cabal install --only-dependencies --enable-tests --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B" $REMOTE_CONFIGS
+    - cabal install --only-dependencies --enable-tests --enable-benchmarks --constraint="Cabal==$EXACT_CABALVER" --constraint="transformers<$TRANSFORMERS_B"
 
 script:
-    - cabal clean
-    - cabal configure --enable-tests --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B" $REMOTE_CONFIGS
+    - cabal configure --enable-tests --enable-benchmarks -v --constraint="Cabal==$EXACT_CABALVER" --constraint="transformers<$TRANSFORMERS_B"
     - cabal build
     - cabal test
+    - cabal check
     - cabal sdist
+
+    # check that the generated source-distribution can be built & installed
+    - SRC_TGZ=$(cabal info . | awk '{print $2;exit}').tar.gz &&
+      (cd dist && cabal install --force-reinstalls "$SRC_TGZ" --constraint="Cabal==$EXACT_CABALVER" --constraint="transformers<$TRANSFORMERS_B")
 

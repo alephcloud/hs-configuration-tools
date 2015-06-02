@@ -169,7 +169,8 @@ Test-Suite url-example-test
             transformers-compat >= 0.4
     else
         build-depends:
-            mtl >= 2.2
+            mtl >= 2.2,
+            transformers >= 0.4
 
     if flag(remote-configs)
         build-depends:
