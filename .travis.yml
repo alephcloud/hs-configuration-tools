@@ -4,111 +4,59 @@ ghc:
     - 7.6
     - 7.8
 env:
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
+    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
+    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=10
+    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
+    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=10
+    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
+    - REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
+    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
+    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.22 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.22 TRANSFORMERS_B=10
+    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
+    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
 
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1000 TRANSFORMERS_B=10
-
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
-
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=10
-
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=10
-
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
-
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.22 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.22 TRANSFORMERS_B=10
-
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1000 TRANSFORMERS_B=10
-
-    # opt-parse applicative > 0.10 && 0.11.0.2
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11.0.2 CABAL_B=1000 TRANSFORMERS_B=0.4
-    - REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11.0.2 CABAL_B=1000 TRANSFORMERS_B=10
+    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
+    - REMOTE_CONFIGS=-f+remote-configs CABAL_B=1000 TRANSFORMERS_B=10
 
 matrix:
     exclude:
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
           ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.6
-
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
           ghc: 7.6
 
-        - env: REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
           ghc: 7.6
-        - env: REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.6
-
-        - env: REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f+remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f+remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
           ghc: 7.6
 
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=0.4
           ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.20 TRANSFORMERS_B=10
           ghc: 7.8
 
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
           ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=1000 CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.8
-
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
-          ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
           ghc: 7.8
 
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
           ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=10
-          ghc: 7.8
-
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=0.4
-          ghc: 7.8
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=10
           ghc: 7.8
 
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=0.4
           ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.20 TRANSFORMERS_B=10
-          ghc: 7.6
-
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1.22 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1.22 TRANSFORMERS_B=10
           ghc: 7.6
 
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=0.4
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=0.4
           ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11 CABAL_B=1000 TRANSFORMERS_B=10
-          ghc: 7.6
-
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11.0.2 CABAL_B=1000 TRANSFORMERS_B=0.4
-          ghc: 7.6
-        - env: REMOTE_CONFIGS=-f-remote-configs OPTPARSE_APPLICATIVE_B=0.11.0.2 CABAL_B=1000 TRANSFORMERS_B=10
+        - env: REMOTE_CONFIGS=-f-remote-configs CABAL_B=1000 TRANSFORMERS_B=10
           ghc: 7.6
 
 before_install:
@@ -124,11 +72,11 @@ before_install:
 install:
     - cabal --version
     - travis_retry cabal update
-    - cabal install --only-dependencies --enable-tests --constraint="optparse-applicative<$OPTPARSE_APPLICATIVE_B" --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B" $REMOTE_CONFIGS
+    - cabal install --only-dependencies --enable-tests --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B" $REMOTE_CONFIGS
 
 script:
     - cabal clean
-    - cabal configure --enable-tests --constraint="optparse-applicative<$OPTPARSE_APPLICATIVE_B" --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B" $REMOTE_CONFIGS
+    - cabal configure --enable-tests --constraint="Cabal<$CABAL_B" --constraint="transformers<$TRANSFORMERS_B" $REMOTE_CONFIGS
     - cabal build
     - cabal test
     - cabal sdist
