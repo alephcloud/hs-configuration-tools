@@ -3,9 +3,9 @@
 -- Copyright © 2014-2015 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
-Name:                configuration-tools
-Version:             0.2.13
-Synopsis:            Tools for specifying and parsing configurations
+Name: configuration-tools
+Version: 0.2.13
+Synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
     .
@@ -28,15 +28,17 @@ description:
     and in the API documentation of the modules "Configuration.Utils" and
     "Configuration.Utils.Setup".
 
-Homepage:            https://github.com/alephcloud/hs-configuration-tools
-Bug-reports:         https://github.com/alephcloud/hs-configuration-tools/issues
-License:             MIT
-License-file:        LICENSE
-Author:              Lars Kuhtz <lakuhtz@gmail.com>
-Maintainer:          Lars Kuhtz <lakuhtz@gmail.com>
-Copyright:           Copyright (c) 2015 Lars Kuhtz <lakuhtz@gmail.com>, 2014-2015 AlephCloud, Inc.
-Category:            Configuration, Console
-Build-type:          Custom
+Homepage: https://github.com/alephcloud/hs-configuration-tools
+Bug-reports: https://github.com/alephcloud/hs-configuration-tools/issues
+License: MIT
+License-file: LICENSE
+Author: Lars Kuhtz <lakuhtz@gmail.com>
+Maintainer: Lars Kuhtz <lakuhtz@gmail.com>
+Copyright:
+    (c) 2015 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2014-2015 AlephCloud, Inc.
+Category: Configuration, Console
+Build-type: Custom
 
 cabal-version:  >= 1.18
 
