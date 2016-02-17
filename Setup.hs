@@ -130,7 +130,8 @@ import Data.Monoid
 
 import Prelude hiding (readFile, writeFile)
 
-import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing)
+import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing, getCurrentDirectory, canonicalizePath)
+import System.FilePath (isDrive, (</>), takeDirectory)
 import System.Exit (ExitCode(ExitSuccess))
 
 #ifndef MIN_VERSION_Cabal
@@ -205,12 +206,18 @@ trim = f . f
   where f = reverse . dropWhile isSpace
 
 getVCS :: IO (Maybe RepoType)
-getVCS =
-    doesDirectoryExist ".hg" >>= \x0 -> if x0
+getVCS = getCurrentDirectory >>= getVcsOfDir
+
+getVcsOfDir :: FilePath -> IO (Maybe RepoType)
+getVcsOfDir d = do
+    canonicDir <- canonicalizePath d
+    doesDirectoryExist (canonicDir </> ".hg") >>= \x0 -> if x0
     then return (Just Mercurial)
-    else doesDirectoryExist ".git" >>= \x1 -> return $ if x1
-        then Just Git
-        else Nothing
+    else doesDirectoryExist (canonicDir </> ".git") >>= \x1 -> if x1
+        then return $ Just Git
+        else if isDrive canonicDir
+            then return Nothing
+            else getVcsOfDir (takeDirectory canonicDir)
 
 flagNameStr :: FlagName -> String
 flagNameStr (FlagName s) = s
@@ -364,7 +371,17 @@ licenseFilesText pkgDesc =
 -- [String]@. Both versions are used with GHC-7.8. In Cabal version 1.24 the
 -- number of constructor fields changed for PackageDescription. When compiling
 -- @Setup.hs@ the @MIN_VERSION_...@ macros are not available. This function is
--- an ugly hack to do conditional compilation without CPP.
+-- an ugly hack to do conditional compilation without CPP. It depends on the
+-- @RecordWildCards@ and @Typeable@ extensions and abuses shaddowing of
+-- existing symbols.
+--
+-- Alternative methods would include:
+--
+-- *   Use typeable to pattern match on the number of constructor arguments for
+--     'PackageDescription',
+-- *   use TH hacks ala @$( if versionBranch cabalVersion < [...] ... )@, and/or
+-- *   make guesses about the cabal version based on the @__GLASGOW_HASKELL__@
+--     macro.
 
 -- Return license files of from the @PackageDescription@.
 --
