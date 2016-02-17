@@ -2,6 +2,7 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -365,21 +366,40 @@ licenseFilesText pkgDesc =
         else return ""
 
 #ifdef NO_CABAL_MACROS
--- The name and the type of the @licenseFile :: String@ field of 'PackageDescription' changed
--- in Cabal version 1.20 to @licenseFiles :: [String]@. Both versions are used with GHC-7.8.
--- When compiling @Setup.hs@ the @MIN_VERSION_...@ macros are not available. This function is an
--- ugly hack to do conditional compilation without CPP.
+-- The name and the type of the @licenseFile :: String@ field of
+-- 'PackageDescription' changed in Cabal version 1.20 to @licenseFiles ::
+-- [String]@. Both versions are used with GHC-7.8. When compiling @Setup.hs@
+-- the @MIN_VERSION_...@ macros are not available. These functions are an ugly
+-- hack to do conditional compilation without CPP. It depends on the
+-- @RecordWildCards@ and @Typeable@ extensions and abuses shaddowing of
+-- existing symbols.
 --
--- It will break if the number of record fields changes. If that's the case we will probably
--- have to either
+-- Alternative methods would include:
 --
 -- * Use typeable to pattern match on the number of constructor arguments for 'PackageDescription',
 -- * use TH hacks ala @$( if versionBranch cabalVersion < [...] ... )@, and/or
 -- * make guesses about the cabal version based on the @__GLASGOW_HASKELL__@ macro.
+
+-- The only purpose of this function is to ensure that licenseFile is defined
+-- in case PackageDescription doesn't have a @licenseFile@ field.
+--
+licenseFile :: PackageDescription -> [FilePath]
+licenseFile _ = error "unexpected Cabal library version"
+
+-- If @PackageDescription@ doesn't define @licenseFiles@ this definition will
+-- be used. In that case @PackageDescription@ is assumed to define
+-- @licenseFile@.
+--
+licenseFiles :: PackageDescription -> [FilePath]
+licenseFiles PackageDescription{..} =
+    fromMaybe (error "unsupported Cabal library version") $ return <$> cast licenseFile
+
+-- Return license files of from the @PackageDescription@. Recent versions of
+-- @PackageDescription@ define a @licenseFile@ field. For older versions the
+-- function @licenseFiles@ that is defined above would be used.
 --
 getLicenseFiles :: PackageDescription -> [FilePath]
-getLicenseFiles (PackageDescription _ _ l _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _) =
-    fromMaybe (error "unsupported Cabal library version") $ cast l <|> (return <$> cast l)
+getLicenseFiles PackageDescription{..} = licenseFiles
 #endif
 
 hgInfo :: IO (String, String, String)
