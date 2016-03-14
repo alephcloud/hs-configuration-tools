@@ -273,7 +273,7 @@ pkgInfoModule cName pkgDesc bInfo = do
             , "    licenseText = " <> (pack . show) licenseString
             , ""
             , "    copyright :: IsString a => a"
-            , "    copyright = \"" <> (pack . copyright) pkgDesc <> "\""
+            , "    copyright = " <> (pack . show . copyright) pkgDesc
             , ""
             , "    author :: IsString a => a"
             , "    author = \"" <> (pack . author) pkgDesc <> "\""
