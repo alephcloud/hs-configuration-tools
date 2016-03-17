@@ -50,6 +50,7 @@ extra-doc-files:
 extra-source-files:
     constraints
     constraints.old-transformers
+    constraints-ghc-8.0.1
 
 source-repository head
     type: git
