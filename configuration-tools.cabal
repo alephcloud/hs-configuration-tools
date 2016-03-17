@@ -1,5 +1,5 @@
 -- ------------------------------------------------------ --
--- Copyright © 2015 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2015-2016 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014-2015 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
@@ -35,7 +35,7 @@ License-file: LICENSE
 Author: Lars Kuhtz <lakuhtz@gmail.com>
 Maintainer: Lars Kuhtz <lakuhtz@gmail.com>
 Copyright:
-    (c) 2015 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2015-2016 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
 Category: Configuration, Console
 Build-type: Custom
