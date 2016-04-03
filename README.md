@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/alephcloud/hs-configuration-tools.svg?branch=master)](https://travis-ci.org/alephcloud/hs-configuration-tools)
+[![Hackage](https://img.shields.io/hackage/v/configuration-tools.svg)](https://hackage.haskell.org/package/configuration-tools)
 
 Overview
 ========
@@ -11,12 +12,13 @@ applications in a composable way.
 
 The main features are
 
-1.   configuration management through integration of command line option
-     parsing and configuration files,
-2.   a `Setup.hs` file that generates a `PkgInfo` module for each component
-     of a package that provide information about the package and the build, and
-3.   a set of types for configuration of HTTP services and clients along
-     with aeson instances and command line option parsers.
+1.  compositional configuration management with integration of command line
+    option parsing and configuration files, validation of configurations,
+    and loading of configurations from remote locations,
+2.  a `Setup.hs` file that generates a `PkgInfo` module for each component
+    of a package that provide information about the package and the build, and
+3.  a set of types for configuration of HTTP services and clients along
+    with aeson instances and command line option parsers.
 
 The ultimate goal for this package is a general framework for
 compositional configuration management for software components.
@@ -58,6 +60,11 @@ cabal configure --enable-tests
 cabal build
 cabal test
 ```
+
+If you have issues building this package, first ensure that the installed
+version of the `Cabal` library matches the version that is used by
+your `cabal` binary. You may compare the results of `cabal info Cabal` and
+`cabal --version`.
 
 Configuration Management
 ========================
