@@ -118,14 +118,16 @@ instance ToJSON HttpServiceTLSConfiguration where
 -- FIXME: print a warning and exit when one of these options is
 -- provided even though TLS is turned off.
 --
-pHttpServiceTLSConfiguration ∷ String → MParser HttpServiceTLSConfiguration
-pHttpServiceTLSConfiguration prefix = id
+pHttpServiceTLSConfiguration ∷ Maybe String → String → MParser HttpServiceTLSConfiguration
+pHttpServiceTLSConfiguration optionGroup prefix = id
     <$< hstcCertFile .:: strOption
         × long (prefix ⊕ "cert-file")
         ⊕ help "File with PEM encoded TLS Certificate"
+        ⊕ maybe mempty group optionGroup
     <*< hstcKeyFile .:: strOption
         × long (prefix ⊕ "key-file")
         ⊕ help "File with PEM encoded TLS key"
+        ⊕ maybe mempty group optionGroup
 
 -- -------------------------------------------------------------------------- --
 -- Http Service Configuration
@@ -195,18 +197,21 @@ instance ToJSON HttpServiceConfiguration where
         , "use-tls" .= _hscUseTLS
         ]
 
-pHttpServiceConfiguration ∷ String → MParser HttpServiceConfiguration
-pHttpServiceConfiguration prefix = id
+pHttpServiceConfiguration ∷ Maybe String → String → MParser HttpServiceConfiguration
+pHttpServiceConfiguration optionGroup prefix = id
     <$< hscHost ∘ bs .:: strOption
         × long (prefix ⊕ "host")
         ⊕ help "Hostname of the service"
+        ⊕ maybe mempty group optionGroup
     <*< hscPort .:: option auto
         × long (prefix ⊕ "port")
         ⊕ help "Port of the service"
+        ⊕ maybe mempty group optionGroup
     <*< hscInterface ∘ bs .:: option auto
         × long (prefix ⊕ "interface")
         ⊕ help "Interface of the service"
-    <*< (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration prefix))
+        ⊕ maybe mempty group optionGroup
+    <*< (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration optionGroup prefix))
   where
     bs ∷ Iso' B8.ByteString String
     bs = iso B8.unpack B8.pack
@@ -258,17 +263,20 @@ instance ToJSON HttpClientConfiguration where
         , "use-tls" .= _hccUseTLS
         ]
 
-pHttpClientConfiguration ∷ String → MParser HttpClientConfiguration
-pHttpClientConfiguration serviceName = id
+pHttpClientConfiguration ∷ Maybe String → String → MParser HttpClientConfiguration
+pHttpClientConfiguration optionGroup serviceName = id
     <$< hccHost ∘ bs .:: strOption
         × long (serviceName ⊕ "-host")
         ⊕ help ("Hostname of " ⊕ serviceName)
+        ⊕ maybe mempty group optionGroup
     <*< hccPort .:: option auto
         × long (serviceName ⊕ "-port")
         ⊕ help ("Port of " ⊕ serviceName)
+        ⊕ maybe mempty group optionGroup
     <*< hccUseTLS .:: switch
         × long (serviceName ⊕ "-use-tls")
         ⊕ help ("Connect to " ⊕ serviceName ⊕ " via TLS")
+        ⊕ maybe mempty group optionGroup
   where
     bs ∷ Iso' B8.ByteString String
     bs = iso B8.unpack B8.pack

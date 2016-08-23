@@ -144,9 +144,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import qualified Data.Yaml as Yaml
 
-import qualified Options.Applicative.Types as O
-
 import qualified Options.Applicative as O
+import qualified Options.Applicative.Types as O
 
 import Prelude hiding (concatMap, mapM_, any)
 import Prelude.Unicode
@@ -361,7 +360,7 @@ pAppConfiguration
     → O.Parser (AppConfiguration (a → a))
 pAppConfiguration mainParser = AppConfiguration
     <$> pPrintConfig
-    <*> (pConfigFilesConfig <*> pure defaultConfigFilesConfig)
+    <*> (pConfigFilesConfig configGroupName <*> pure defaultConfigFilesConfig)
     <*> many pConfigFile
     <*> mainParser
   where
@@ -369,11 +368,15 @@ pAppConfiguration mainParser = AppConfiguration
         × O.long "print-config"
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
+        ⊕ maybe mempty O.group configGroupName
 
     pConfigFile = ConfigFileRequired ∘ T.pack <$> O.strOption
         × O.long "config-file"
         ⊕ O.metavar "FILE"
         ⊕ O.help "Configuration file in YAML or JSON format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
+        ⊕ maybe mempty O.group configGroupName
+
+    configGroupName = Just "Configuration Options:"
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration without Package Info
@@ -428,19 +431,25 @@ pPkgInfo (sinfo, detailedInfo, version, license) =
         $ O.long "info"
         ⊕ O.help "Print program info message and exit"
         ⊕ O.value id
+        ⊕ maybe mempty O.group infoGroupName
     detailedInfoO = infoOption detailedInfo
         $ O.long "long-info"
         ⊕ O.help "Print detailed program info message and exit"
         ⊕ O.value id
+        ⊕ maybe mempty O.group infoGroupName
     versionO = infoOption version
         $ O.long "version"
         ⊕ O.short 'v'
         ⊕ O.help "Print version string and exit"
         ⊕ O.value id
+        ⊕ maybe mempty O.group infoGroupName
     licenseO = infoOption license
         $ O.long "license"
         ⊕ O.help "Print license of the program and exit"
         ⊕ O.value id
+        ⊕ maybe mempty O.group infoGroupName
+
+    infoGroupName = Just "Program Information Options:"
 
 -- | Information about the cabal package. The format is:
 --
@@ -552,6 +561,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
         ⊕ short 'h'
         ⊕ short '?'
         ⊕ help "Show this help message"
+        ⊕ O.group "Help Options:"
 
     defaultFooter = P.vsep
         [ par "Configurations are loaded in order from the following sources:"

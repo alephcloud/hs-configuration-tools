@@ -257,9 +257,9 @@ defaultConfigFilesConfig = ConfigFilesConfig
     { _cfcHttpsPolicy = defaultHttpsCertPolicy
     }
 
-pConfigFilesConfig ∷ MParser ConfigFilesConfig
-pConfigFilesConfig = id
-    <$< cfcHttpsPolicy %:: pHttpsCertPolicy "config-"
+pConfigFilesConfig ∷ Maybe String → MParser ConfigFilesConfig
+pConfigFilesConfig optionGroup = id
+    <$< cfcHttpsPolicy %:: pHttpsCertPolicy optionGroup "config-"
 
 #else
 
@@ -268,8 +268,8 @@ data ConfigFilesConfig = ConfigFilesConfig {}
 defaultConfigFilesConfig ∷ ConfigFilesConfig
 defaultConfigFilesConfig = ConfigFilesConfig {}
 
-pConfigFilesConfig ∷ MParser ConfigFilesConfig
-pConfigFilesConfig = pure id
+pConfigFilesConfig ∷ Maybe String → MParser ConfigFilesConfig
+pConfigFilesConfig _ = pure id
 #endif
 
 -- -------------------------------------------------------------------------- --

@@ -100,19 +100,23 @@ defaultHttpsCertPolicy = HttpsCertPolicy
     }
 
 pHttpsCertPolicy
-    ∷ T.Text
+    ∷ Maybe String
+        -- ^ Option group name
+    → T.Text
         -- ^ prefix for the command line options
     → MParser HttpsCertPolicy
-pHttpsCertPolicy prefix = id
+pHttpsCertPolicy optionGroup prefix = id
     <$< certPolicyInsecure .:: boolOption_
         × O.long (T.unpack prefix ⊕ "https-insecure")
         ⊕ O.help "Bypass certificate validation for all HTTPS connections to all services. ONLY USE THIS WHEN YOU UNDERSTAND WHAT YOU DO."
+        ⊕ maybe mempty O.group optionGroup
     <*< certPolicyHostFingerprints %:: pLeftMonoidalUpdate × pRule
   where
     pRule = O.option (O.eitherReader readFingerprint)
         × O.long (T.unpack prefix ⊕ "https-allow-cert")
         ⊕ O.help "Unconditionally trust the certificate for connecting to the service. ONLY USE THIS WHEN YOU ARE SURE THAT THE CERTIFICATE CAN BE TRUSTED."
         ⊕ O.metavar "HOSTNAME:PORT:FINGERPRINT"
+        ⊕ maybe mempty O.group optionGroup
     readFingerprint = evalStateT $ do
         hostname ∷ String ← next
         x $ validateNonEmpty "hostname" hostname
