@@ -199,7 +199,7 @@ boolOption_
 boolOption_ mods = flag' True mods <|> flag' False nomods
   where
     O.Mod f d o = mods
-    O.FlagFields names _ = f $ O.FlagFields [] False
+    O.FlagFields names _ _ = f $ O.FlagFields [] False Nothing
 
     longName (O.OptShort _) = Nothing
     longName (O.OptLong l) = Just l
@@ -225,7 +225,7 @@ enableDisableFlag
 enableDisableFlag mods = flag' True enmods <|> flag' False dismods
   where
     O.Mod f d o = mods
-    O.FlagFields names _ = f $ O.FlagFields [] False
+    O.FlagFields names _ _ = f $ O.FlagFields [] False Nothing
 
     longName (O.OptShort _) = Nothing
     longName (O.OptLong l) = Just l
