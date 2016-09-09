@@ -1,8 +1,13 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
+
+#ifndef MIN_VERSION_http_client
+#define MIN_VERSION_http_client(x,y,z) 1
+#endif
 
 -- |
 -- Module: Configuration.Utils.Internal.HttpsCertPolicy
@@ -36,6 +41,7 @@ import Configuration.Utils.Monoid
 import Configuration.Utils.Operators
 import Configuration.Utils.Validation
 
+import Control.Exception (catches, Handler(..))
 import Control.Monad.Writer hiding (mapM_)
 
 import qualified Data.ByteString.Char8 as B8
@@ -148,13 +154,20 @@ httpWithValidationPolicy
 httpWithValidationPolicy request policy = do
     certVar ← newIORef Nothing
     settings ← getSettings policy certVar
-    HTTP.withManager settings (HTTP.httpLbs request) `catch` \httpEx → case httpEx of
-        HTTP.TlsException tlsEx → case fromException tlsEx of
-            Nothing → throwIO httpEx
-            Just e → do
-                cert ← readIORef certVar
-                handleTlsException request cert e
-        _ → throwIO httpEx
+    HTTP.withManager settings (HTTP.httpLbs request) `catches`
+        [ Handler $ \(e ∷ TLS.TLSException) → do
+            cert ← readIORef certVar
+            handleTlsException request cert e
+#if ! MIN_VERSION_http_client(0,5,0)
+        , Handler $ \httpEx → case httpEx of
+            HTTP.TlsException tlsEx → case fromException tlsEx of
+                Nothing → throwIO httpEx
+                Just e → do
+                    cert ← readIORef certVar
+                    handleTlsException request cert e
+            _ → throwIO httpEx
+#endif
+        ]
 
 -- -------------------------------------------------------------------------- --
 -- Verbose TLS exceptions
