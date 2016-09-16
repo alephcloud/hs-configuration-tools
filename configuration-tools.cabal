@@ -4,7 +4,7 @@
 -- ------------------------------------------------------ --
 
 Name: configuration-tools
-Version: 0.2.14
+Version: 0.2.15
 Synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -49,8 +49,6 @@ extra-doc-files:
 
 extra-source-files:
     constraints
-    constraints.old-transformers
-    constraints-ghc-8.0.1
 
 source-repository head
     type: git
@@ -60,7 +58,7 @@ source-repository head
 source-repository this
     type: git
     location: https://github.com/alephcloud/hs-configuration-tools.git
-    tag: 0.2.14
+    tag: 0.2.15
 
 flag remote-configs
     Description: enable loading of configuration files from HTTP URLs
