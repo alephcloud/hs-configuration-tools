@@ -110,6 +110,11 @@ module Main
 , mkPkgInfoModules
 ) where
 
+#ifndef MIN_VERSION_Cabal
+#define NO_CABAL_MACROS 1
+#define MIN_VERSION_Cabal(a,b,c) 0
+#endif
+
 import Distribution.PackageDescription
 import Distribution.Simple
 import Distribution.Simple.Setup
@@ -118,6 +123,12 @@ import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.BuildPaths
 import Distribution.Simple.PackageIndex
 import Distribution.Text
+
+#if MIN_VERSION_Cabal(2,0,0)
+import Distribution.Types.LocalBuildInfo
+import Distribution.Types.UnqualComponentName
+#endif
+
 import System.Process
 
 import Control.Applicative
@@ -134,11 +145,6 @@ import Prelude hiding (readFile, writeFile)
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing, getCurrentDirectory, canonicalizePath)
 import System.FilePath (isDrive, (</>), takeDirectory)
 import System.Exit (ExitCode(ExitSuccess))
-
-#ifndef MIN_VERSION_Cabal
-#define NO_CABAL_MACROS 1
-#define MIN_VERSION_Cabal(a,b,c) 0
-#endif
 
 #ifdef NO_CABAL_MACROS
 import Data.Maybe
@@ -188,9 +194,13 @@ mkPkgInfoModulesPostConf hook args flags pkgDesc bInfo = do
     mkModules = mapM_ (f . \(a,_,_) -> a) $ componentsConfigs bInfo
     f cname = case cname of
         CLibName -> updatePkgInfoModule Nothing pkgDesc bInfo
-        CExeName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
-        CTestName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
-        CBenchName s -> updatePkgInfoModule (Just s) pkgDesc bInfo
+        CExeName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
+        CTestName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
+        CBenchName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
+
+#if !MIN_VERSION_Cabal(2,0,0)
+    unUnqualComponentName = id
+#endif
 
 pkgInfoModuleName :: Maybe String -> String
 pkgInfoModuleName Nothing = "PkgInfo"
@@ -220,8 +230,10 @@ getVcsOfDir d = do
             then return Nothing
             else getVcsOfDir (takeDirectory canonicDir)
 
-flagNameStr :: FlagName -> String
-flagNameStr (FlagName s) = s
+#if !MIN_VERSION_Cabal(2,0,0)
+unFlagName :: FlagName -> String
+unFlagName (FlagName s) = s
+#endif
 
 pkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
 pkgInfoModule cName pkgDesc bInfo = do
@@ -232,7 +244,7 @@ pkgInfoModule cName pkgDesc bInfo = do
 
     let vcsBranch = if branch == "default" || branch == "master" then "" else branch
         vcsVersion = intercalate "-" . filter (/= "") $ [tag, revision, vcsBranch]
-        flags = map (flagNameStr . fst) . filter snd . configConfigurationsFlags . configFlags $ bInfo
+        flags = map (unFlagName . fst) . filter snd . configConfigurationsFlags . configFlags $ bInfo
 
     licenseString <- licenseFilesText pkgDesc
 
