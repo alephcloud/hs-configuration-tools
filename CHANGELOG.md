@@ -2,6 +2,7 @@
 =====
 
 *   Remove built in short options `-p`, `-c`, and `-i`
+*   Support CHG-8.2 and Cabal-2.0
 
 0.2.15
 ======
