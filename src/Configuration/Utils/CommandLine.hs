@@ -176,7 +176,7 @@ boolReader x = case CI.mk x of
 boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
-boolOption mods = O.option (O.eitherReader boolReader)
+boolOption mods = O.option (O.eitherReader (boolReader ∷ String → Either String Bool))
     × O.metavar "true|false"
     ⊕ O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
     ⊕ mods
