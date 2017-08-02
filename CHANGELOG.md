@@ -1,3 +1,8 @@
+0.3.0
+=====
+
+*   Remove built in short options `-p`, `-c`, and `-i`
+
 0.2.15
 ======
 

@@ -367,13 +367,11 @@ pAppConfiguration mainParser = AppConfiguration
   where
     pPrintConfig = O.switch
         × O.long "print-config"
-        ⊕ O.short 'p'
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
 
     pConfigFile = ConfigFileRequired ∘ T.pack <$> O.strOption
         × O.long "config-file"
-        ⊕ O.short 'c'
         ⊕ O.metavar "FILE"
         ⊕ O.help "Configuration file in YAML or JSON format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
 
@@ -428,7 +426,6 @@ pPkgInfo (sinfo, detailedInfo, version, license) =
   where
     infoO = infoOption sinfo
         $ O.long "info"
-        ⊕ O.short 'i'
         ⊕ O.help "Print program info message and exit"
         ⊕ O.value id
     detailedInfoO = infoOption detailedInfo
