@@ -4,111 +4,64 @@ language: c
 matrix:
     include:
         # ------------ #
-        # GHC-7.6 #
+        # GHC-7.8.4, cabal-install-1.18 #
 
-        ## No remote configs
-        - env: CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.18,ghc-7.6.3], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3], sources: [hvr-ghc]}}
-
-        # - env: CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
-        #   addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.20, ghc-7.6.3], sources: [hvr-ghc]}}
-
-        # - env: CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
-        #   addons: {apt: {packages: [cabal-install-1.22, ghc-7.6.3], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.22, ghc-7.6.3], sources: [hvr-ghc]}}
-
-        ## Remote configs
-        - env: CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.18 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.18, ghc-7.6.3], sources: [hvr-ghc]}}
-
-        - env: CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.20, ghc-7.6.3], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.20 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.20, ghc-7.6.3], sources: [hvr-ghc]}}
-
-        # - env: CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
-        #   addons: {apt: {packages: [cabal-install-1.22, ghc-7.6.3], sources: [hvr-ghc]}}
-        - env: CABALVER=1.22 GHCVER=7.6.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
-          addons: {apt: {packages: [cabal-install-1.22, ghc-7.6.3], sources: [hvr-ghc]}}
+        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
+        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
 
         # ------------ #
-        # GHC-7.8 #
+        # GHC-7.8.4, cabal-install-1.20 #
 
-        ## No remote configs
-        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        # - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
-        #   addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        - env: CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.22, ghc-7.8.4], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
-        #   addons: {apt: {packages: [cabal-install-1.22, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        ## Remote configs
-        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
-          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
+        - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs
           addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-        - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
+        - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
           addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        - env: CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=0.4
-          addons: {apt: {packages: [cabal-install-1.22, ghc-7.8.4], sources: [hvr-ghc]}}
-        - env: CABALVER=1.22 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
-          addons: {apt: {packages: [cabal-install-1.22, ghc-7.8.4], sources: [hvr-ghc]}}
 
         # ------------ #
         # GHC-7.10 #
 
-        ## No remote configs
-        - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
+        - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f-remote-configs
           addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3], sources: [hvr-ghc]}}
-
-        ## Remote configs
-        - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
+        - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f+remote-configs
           addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3], sources: [hvr-ghc]}}
 
         # ------------ #
         # GHC-8.0.1 #
 
-        ## No remote configs
-        - env: CABALVER=1.24 GHCVER=8.0.1 REMOTE_CONFIGS=-f-remote-configs TRANSFORMERS_B=10
+        - env: CABALVER=1.24 GHCVER=8.0.1 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1], sources: [hvr-ghc]}}
+        - env: CABALVER=1.24 GHCVER=8.0.1 REMOTE_CONFIGS=-f+remote-configs
           addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1], sources: [hvr-ghc]}}
 
-        ## Remote configs
-        - env: CABALVER=1.24 GHCVER=8.0.1 REMOTE_CONFIGS=-f+remote-configs TRANSFORMERS_B=10
-          addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1], sources: [hvr-ghc]}}
+        # ------------ #
+        # GHC-8.2.1, cabal-install 1.24 #
+
+        - env: CABALVER=1.24 GHCVER=8.2.1 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.1], sources: [hvr-ghc]}}
+        - env: CABALVER=1.24 GHCVER=8.2.1 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.1], sources: [hvr-ghc]}}
+
+        # ------------ #
+        # GHC-8.2.1, cabal-install-2.0 #
+
+        - env: CABALVER=2.0 GHCVER=8.2.1 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.1], sources: [hvr-ghc]}}
+        - env: CABALVER=2.0 GHCVER=8.2.1 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.1], sources: [hvr-ghc]}}
 
 before_install:
     - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 
 install:
     - cabal --version
-    - export EXACT_CABALVER=$(cabal --version | sed -n '2s/.*version \(.*\) of.*/\1/p')
-    - echo "EXACT_CABALVER=$EXACT_CABALVER"
     - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
     - travis_retry cabal update
-    - cabal install Cabal-$EXACT_CABALVER
-    - cabal install --only-dependencies --enable-tests --enable-benchmarks --constraint="transformers<$TRANSFORMERS_B" --constraint="Cabal==$EXACT_CABALVER"
+    - cabal install --only-dependencies --enable-tests --enable-benchmarks
 
 script:
-    - cabal configure --enable-tests --enable-benchmarks -v --constraint="transformers<$TRANSFORMERS_B" --constraint="Cabal==$EXACT_CABALVER"
+    - cabal configure --enable-tests --enable-benchmarks -v
     - cabal build
     - cabal test
     - cabal check
@@ -116,5 +69,5 @@ script:
 
     # check that the generated source-distribution can be built & installed
     - SRC_TGZ=$(cabal info . | awk '{print $2;exit}').tar.gz &&
-      (cd dist && cabal install --force-reinstalls "$SRC_TGZ" --constraint="transformers<$TRANSFORMERS_B" --constraint="Cabal==$EXACT_CABALVER")
+      (cd dist && cabal install --force-reinstalls "$SRC_TGZ")
 
