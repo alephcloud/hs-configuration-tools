@@ -1,10 +1,10 @@
 -- ------------------------------------------------------ --
--- Copyright © 2015-2016 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2015-2017 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014-2015 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
 Name: configuration-tools
-Version: 0.2.15
+Version: 0.3.0
 Synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -35,7 +35,7 @@ License-file: LICENSE
 Author: Lars Kuhtz <lakuhtz@gmail.com>
 Maintainer: Lars Kuhtz <lakuhtz@gmail.com>
 Copyright:
-    (c) 2015-2016 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2015-2017 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
 Category: Configuration, Console
 Build-type: Custom
@@ -58,7 +58,7 @@ source-repository head
 source-repository this
     type: git
     location: https://github.com/alephcloud/hs-configuration-tools.git
-    tag: 0.2.15
+    tag: 0.3.0
 
 flag remote-configs
     Description: enable loading of configuration files from HTTP URLs
