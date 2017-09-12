@@ -151,6 +151,10 @@ infix 6 ..:
 -- of a given 'Object' and updates a setter with the parsed
 -- function.
 --
+-- This function is useful when a 'FromJSON' instance isn't available.
+-- When a 'FromJSON' instance exists, the '%.:' provides a more
+-- ideomatic alternative.
+--
 -- > data HttpURL = HttpURL
 -- >     { _auth ∷ !Auth
 -- >     , _domain ∷ !String
