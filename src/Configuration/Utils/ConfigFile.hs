@@ -170,8 +170,8 @@ infix 6 ..:
 -- >
 -- > instance FromJSON (HttpURL → HttpURL) where
 -- >     parseJSON = withObject "HttpURL" $ \o → id
--- >         <$< auth %.: "auth" × o
--- >         <*< domain ..: "domain" × o
+-- >         <$< updateProperty auth "auth" parseJSON o
+-- >         <*< setProperty domain "domain" parseJSON o
 --
 updateProperty
     ∷ Lens' α β
@@ -184,7 +184,7 @@ updateProperty s k p o = case H.lookup k o of
     Just v → over s <$> p v
 {-# INLINE updateProperty #-}
 
--- | A variant of 'updateProperty' that used the 'FromJSON' instance
+-- | A variant of 'updateProperty' that uses the 'FromJSON' instance
 -- for the update function. It mimics the aeson operator '.:'.
 -- It creates a parser that modifies a setter with a parsed function.
 --
