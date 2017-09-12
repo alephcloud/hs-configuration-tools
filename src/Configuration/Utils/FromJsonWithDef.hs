@@ -107,10 +107,10 @@ decodeWithDef' base s = do
 -- of the default value, the default value wouldn't be used and any missing
 -- value would result in a failure.
 --
-class FromJsonWithDef α where
-    parseJsonWithDef ∷ Maybe α → Value → Parser α
+class FromJsonWithDef a where
+    parseJsonWithDef ∷ Maybe a → Value → Parser a
 
-    default parseJsonWithDef ∷ FromJSON α ⇒ Maybe α → Value → Parser α
+    default parseJsonWithDef ∷ FromJSON a ⇒ Maybe a → Value → Parser a
     parseJsonWithDef _ = parseJSON
 
 instance FromJsonWithDef ()
@@ -129,17 +129,17 @@ instance FromJSON NominalDiffTime ⇒ FromJsonWithDef NominalDiffTime
 instance FromJsonWithDef String
 instance FromJsonWithDef T.Text
 
-instance (FromJSON α, FromJsonWithDef α) ⇒ FromJsonWithDef (Maybe α) where
+instance (FromJSON a, FromJsonWithDef a) ⇒ FromJsonWithDef (Maybe a) where
     parseJsonWithDef (Just a) = parseJSON >=> \case
         Nothing → pure Nothing
         Just a_ → Just <$> parseJsonWithDef a a_
     parseJsonWithDef Nothing = parseJSON
 
 instance
-    ( FromJSON α, FromJsonWithDef α
-    , FromJSON β, FromJsonWithDef β
+    ( FromJSON a, FromJsonWithDef a
+    , FromJSON b, FromJsonWithDef b
     )
-    ⇒ FromJsonWithDef (α, β)
+    ⇒ FromJsonWithDef (a, b)
   where
     parseJsonWithDef (Just (a,b)) = parseJSON >=> \(a_ ::Value, b_ ::Value) → (,)
         <$> parseJsonWithDef (Just a) a_
@@ -147,11 +147,11 @@ instance
     parseJsonWithDef Nothing = parseJSON
 
 instance
-    ( FromJSON α, FromJsonWithDef α
-    , FromJSON β, FromJsonWithDef β
-    , FromJSON γ, FromJsonWithDef γ
+    ( FromJSON a, FromJsonWithDef a
+    , FromJSON b, FromJsonWithDef b
+    , FromJSON c, FromJsonWithDef c
     )
-    ⇒ FromJsonWithDef (α, β, γ)
+    ⇒ FromJsonWithDef (a, b, c)
   where
     parseJsonWithDef (Just (a,b,c)) = parseJSON >=> \(a_,b_,c_) → (,,)
         <$> parseJsonWithDef (Just a) a_
@@ -160,10 +160,10 @@ instance
     parseJsonWithDef Nothing = parseJSON
 
 instance
-    ( FromJSON α, FromJsonWithDef α
-    , FromJSON β, FromJsonWithDef β
+    ( FromJSON a, FromJsonWithDef a
+    , FromJSON b, FromJsonWithDef b
     )
-    ⇒ FromJsonWithDef (Either α β)
+    ⇒ FromJsonWithDef (Either a b)
   where
     parseJsonWithDef (Just (Right a)) = parseJSON >=> \case
         Right a_ → Right <$> parseJsonWithDef (Just a) a_
@@ -178,7 +178,7 @@ instance
 -- the parse list is shorter than the default list, the missing trailing values
 -- in the parse result a filled in from the default values.
 --
-instance (FromJSON α, FromJsonWithDef α) ⇒ FromJsonWithDef [α] where
+instance (FromJSON a, FromJsonWithDef a) ⇒ FromJsonWithDef [a] where
     parseJsonWithDef (Just l) = parseJSON >=> \l_ → g <$> zipWithM
             f
             (map Just l ⊕ repeat Nothing)
@@ -210,7 +210,7 @@ instance (FromJSON α, FromJsonWithDef α) ⇒ FromJsonWithDef [α] where
 --
 -- In vim type: @Ctrl-k .:@
 --
-(∴) ∷ (FromJsonWithDef α) ⇒ Object → T.Text → Maybe α → Parser α
+(∴) ∷ (FromJsonWithDef a) ⇒ Object → T.Text → Maybe a → Parser a
 (∴) o js d = case H.lookup js o of
     Nothing → maybe err return d
     Just v → parseJsonWithDef d v
@@ -230,7 +230,7 @@ instance (FromJSON α, FromJsonWithDef α) ⇒ FromJsonWithDef [α] where
 --
 -- > iabbrev <buffer> >< ×
 --
-(×) ∷ (α → β) → α → β
+(×) ∷ (a → b) → a → b
 (×) = ($)
 infixr 5 ×
 {-# INLINE (×) #-}

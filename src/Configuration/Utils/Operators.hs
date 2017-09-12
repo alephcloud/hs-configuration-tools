@@ -40,7 +40,7 @@ import Control.Applicative
 -- suitable for usage within applicative style code without the need to add
 -- parenthesis.
 --
-(%) ∷ (α → β) → α → β
+(%) ∷ (a → b) → a → b
 (%) = ($)
 infixr 5 %
 {-# INLINE (%) #-}
@@ -58,14 +58,14 @@ infixr 5 %
 --
 -- > iabbrev <buffer> >< ×
 --
-(×) ∷ (α → β) → α → β
+(×) ∷ (a → b) → a → b
 (×) = ($)
 infixr 5 ×
 {-# INLINE (×) #-}
 
 -- | Functional composition for applicative functors.
 --
-(<*<) ∷ Applicative φ ⇒ φ (β → γ) → φ (α → β) → φ (α → γ)
+(<*<) ∷ Applicative f ⇒ f (b → c) → f (a → b) → f (a → c)
 (<*<) a b = pure (.) <*> a <*> b
 infixr 4 <*<
 {-# INLINE (<*<) #-}
@@ -73,7 +73,7 @@ infixr 4 <*<
 -- | Functional composition for applicative functors with its arguments
 -- flipped.
 --
-(>*>) ∷ Applicative φ ⇒ φ (α → β) → φ (β → γ) → φ (α → γ)
+(>*>) ∷ Applicative f ⇒ f (a → b) → f (b → c) → f (a → c)
 (>*>) = flip (<*<)
 infixr 4 >*>
 {-# INLINE (>*>) #-}
@@ -81,7 +81,7 @@ infixr 4 >*>
 -- | Applicative functional composition between a pure function
 -- and an applicative function.
 --
-(<$<) ∷ Functor φ ⇒ (β → γ) → φ (α → β) → φ (α → γ)
+(<$<) ∷ Functor f ⇒ (b → c) → f (a → b) → f (a → c)
 (<$<) a b = (a .) <$> b
 infixr 4 <$<
 {-# INLINE (<$<) #-}
@@ -89,7 +89,7 @@ infixr 4 <$<
 -- | Applicative functional composition between a pure function
 -- and an applicative function with its arguments flipped.
 --
-(>$>) ∷ Functor φ ⇒ φ (α → β) → (β → γ) → φ (α → γ)
+(>$>) ∷ Functor f ⇒ f (a → b) → (b → c) → f (a → c)
 (>$>) = flip (<$<)
 infixr 4 >$>
 {-# INLINE (>$>) #-}
@@ -99,7 +99,7 @@ infixr 4 >$>
 -- This is a rather popular operator. Due to conflicts (for instance with the
 -- lens package) it may have to be imported qualified.
 --
-(<.>) ∷ Applicative φ ⇒ φ (β → γ) → φ (α → β) → φ (α → γ)
+(<.>) ∷ Applicative f ⇒ f (b → c) → f (a → b) → f (a → c)
 (<.>) = (<*<)
 infixr 4 <.>
 {-# INLINE (<.>) #-}
@@ -114,7 +114,7 @@ infixr 4 <.>
 --
 -- > iabbrev <buffer> ../ ⊙
 --
-(⊙) ∷ Applicative φ ⇒ φ (β → γ) → φ (α → β) → φ (α → γ)
+(⊙) ∷ Applicative f ⇒ f (b → c) → f (a → b) → f (a → c)
 (⊙) = (<.>)
 infixr 4 ⊙
 {-# INLINE (⊙) #-}

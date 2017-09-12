@@ -95,7 +95,7 @@ import System.Directory
 -- | A validation function. The type in the 'MonadWriter' is excpected to
 -- be a 'Foldable' structure for collecting warnings.
 --
-type ConfigValidation α λ = ∀ μ . (MonadIO μ, Functor μ, Applicative μ, MonadError T.Text μ, MonadWriter (λ T.Text) μ) ⇒ α → μ ()
+type ConfigValidation a f = forall m . (MonadIO m, Functor m, Applicative m, MonadError T.Text m, MonadWriter (f T.Text) m) ⇒ a → m ()
 
 -- -------------------------------------------------------------------------- --
 -- Networking
@@ -216,60 +216,60 @@ validatePort configName p =
 -- Monoids, Foldables, and Co
 
 validateNonEmpty
-    ∷ (MonadError T.Text m, Eq α, Monoid α)
+    ∷ (MonadError T.Text m, Eq a, Monoid a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
     → m ()
 validateNonEmpty configName x =
     when (x ≡ mempty) ∘ throwError $
         "value for " ⊕ configName ⊕ " must not be empty"
 
 validateLength
-    ∷ (MonadError T.Text m, F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable f)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ exact length of the validated value
-    → φ α
+    → f a
     → m ()
 validateLength configName len x =
     unless (length (F.toList x) ≡ len) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be of length exactly " ⊕ sshow len
 
 validateMaxLength
-    ∷ (MonadError T.Text m, F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable f)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ maximum length of the validated value
-    → φ α
+    → f a
     → m ()
 validateMaxLength configName u x =
     unless (length (F.toList x) ≤ u) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be of length at most " ⊕ sshow u
 
 validateMinLength
-    ∷ (MonadError T.Text m, F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable f)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ minimum length of the validated value
-    → φ α
+    → f a
     → m ()
 validateMinLength configName l x =
     unless (length (F.toList x) ≥ l) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be of length at least " ⊕ sshow l
 
 validateMinMaxLength
-    ∷ (MonadError T.Text m, F.Foldable φ)
+    ∷ (MonadError T.Text m, F.Foldable f)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
     → Int
         -- ^ minimum length of the validated value
     → Int
         -- ^ maximum length of the validated value
-    → φ α
+    → f a
     → m ()
 validateMinMaxLength configName l u x =
     unless (len ≥ l && len ≤ u) ∘ throwError $
@@ -411,50 +411,50 @@ validateBool configName expected x = unless (x ≡ expected) ∘ throwError $
 -- Numeric Values
 
 validateNonNegative
-    ∷ (MonadError T.Text m, Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord a, Num a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
     → m ()
 validateNonNegative configName x =
     when (x < 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must not be negative"
 
 validatePositive
-    ∷ (MonadError T.Text m, Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord a, Num a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
     → m ()
 validatePositive configName x =
     when (x ≤ 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be positive"
 
 validateNonPositive
-    ∷ (MonadError T.Text m, Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord a, Num a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
     → m ()
 validateNonPositive configName x =
     when (x > 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must not be positive"
 
 validateNegative
-    ∷ (MonadError T.Text m, Ord α, Num α)
+    ∷ (MonadError T.Text m, Ord a, Num a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
     → m ()
 validateNegative configName x =
     when (x ≥ 0) ∘ throwError $
         "value for " ⊕ configName ⊕ " must be negative"
 
 validateNonNull
-    ∷ (MonadError T.Text m, Eq α, Num α)
+    ∷ (MonadError T.Text m, Eq a, Num a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
     → m ()
 validateNonNull configName x = when (x ≡ 0) ∘ throwError $
     "value for " ⊕ configName ⊕ " must not be zero"
@@ -463,56 +463,56 @@ validateNonNull configName x = when (x ≡ 0) ∘ throwError $
 -- Orders
 
 validateLess
-    ∷ (MonadError T.Text m, Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord a, Show a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
         -- ^ a strict upper bound for the configuration value
-    → α
+    → a
     → m ()
 validateLess configName upper x = unless (x < upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be strictly less than " ⊕ sshow upper ⊕ ", but was " ⊕ sshow x
 
 validateLessEq
-    ∷ (MonadError T.Text m, Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord a, Show a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
         -- ^ a upper bound for the configuration value
-    → α
+    → a
     → m ()
 validateLessEq configName upper x = unless (x ≤ upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be less or equal than " ⊕ sshow upper ⊕ ", but was " ⊕ sshow x
 
 validateGreater
-    ∷ (MonadError T.Text m, Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord a, Show a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
         -- ^ a strict lower bound for the configuration value
-    → α
+    → a
     → m ()
 validateGreater configName lower x = unless (x > lower) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be strictly greater than " ⊕ sshow lower ⊕ ", but was " ⊕ sshow x
 
 validateGreaterEq
-    ∷ (MonadError T.Text m, Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord a, Show a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → α
+    → a
         -- ^ a lower bound for the configuration value
-    → α
+    → a
     → m ()
 validateGreaterEq configName lower x = unless (x ≥ lower) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be greater or equal than " ⊕ sshow lower ⊕ ", but was " ⊕ sshow x
 
 validateRange
-    ∷ (MonadError T.Text m, Ord α, Show α)
+    ∷ (MonadError T.Text m, Ord a, Show a)
     ⇒ T.Text
         -- ^ configuration property name that is used in the error message
-    → (α, α)
+    → (a, a)
         -- ^ the valid range for the configuration value
-    → α
+    → a
     → m ()
 validateRange configName (lower,upper) x = unless (x ≥ lower ∧ x ≤ upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be within the range of (" ⊕ sshow lower ⊕ ", " ⊕ sshow upper ⊕ "), but was " ⊕ sshow x

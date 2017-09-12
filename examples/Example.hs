@@ -58,10 +58,10 @@ data Auth = Auth
 -- (alternatively we could have used TemplateHaskell along with
 -- 'makeLenses' from "Control.Lens" from the lens package.)
 
-user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+user ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 user f s = (\u → s { _user = u }) <$> f (_user s)
 
-pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+pwd ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
 
 defaultAuth ∷ Auth
@@ -102,13 +102,13 @@ data HttpURL = HttpURL
     , _path ∷ !String
     }
 
-auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+auth ∷ Functor f ⇒ (Auth → f Auth) → HttpURL → f HttpURL
 auth f s = (\u → s { _auth = u }) <$> f (_auth s)
 
-domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+domain ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 domain f s = (\u → s { _domain = u }) <$> f (_domain s)
 
-path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+path ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 path f s = (\u → s { _path = u }) <$> f (_path s)
 
 defaultHttpURL ∷ HttpURL

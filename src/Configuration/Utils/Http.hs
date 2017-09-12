@@ -86,7 +86,7 @@ defaultHttpServiceTLSConfiguration = HttpServiceTLSConfiguration
     }
 
 validateHttpServiceTLSConfiguration
-    ∷ ConfigValidation HttpServiceTLSConfiguration λ
+    ∷ ConfigValidation HttpServiceTLSConfiguration f
 validateHttpServiceTLSConfiguration conf = do
     validateFileReadable "cert-file" $ _hstcCertFile conf
     validateFileReadable "key-file" $ _hstcKeyFile conf
@@ -237,7 +237,7 @@ defaultHttpClientConfiguration = HttpClientConfiguration
     , _hccUseTLS = False
     }
 
-validateHttpClientConfiguration ∷ ConfigValidation HttpClientConfiguration λ
+validateHttpClientConfiguration ∷ ConfigValidation HttpClientConfiguration f
 validateHttpClientConfiguration conf = do
     validatePort "port" $ _hccPort conf
     validateNonEmpty "host" $ _hccHost conf

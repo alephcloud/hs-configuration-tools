@@ -45,8 +45,8 @@ import Prelude.Unicode
 -- circumstances you'll never use this type directly but only
 -- its 'FromJSON' instance. See the 'leftMonoidalUpdate' for an example.
 --
-newtype LeftMonoidalUpdate α = LeftMonoidalUpdate
-    { _getLeftMonoidalUpdate ∷ α
+newtype LeftMonoidalUpdate a = LeftMonoidalUpdate
+    { _getLeftMonoidalUpdate ∷ a
     }
     deriving (Monoid)
 
@@ -60,16 +60,16 @@ newtype LeftMonoidalUpdate α = LeftMonoidalUpdate
 -- >     parseJSON = withObject "RoutingTable" $ \o → id
 -- >         <$< routingTableMap . from leftMonoidalUpdate %.: "route_map" % o
 --
-leftMonoidalUpdate ∷ Iso (LeftMonoidalUpdate α) (LeftMonoidalUpdate β) α β
+leftMonoidalUpdate ∷ Iso (LeftMonoidalUpdate a) (LeftMonoidalUpdate b) a b
 leftMonoidalUpdate = iso _getLeftMonoidalUpdate LeftMonoidalUpdate
 
 -- | This is the same as @from leftMonoidalUpdate@ but doesn't depend on
 -- the lens Library.
 --
-fromLeftMonoidalUpdate ∷ Iso α β (LeftMonoidalUpdate α) (LeftMonoidalUpdate β)
+fromLeftMonoidalUpdate ∷ Iso a b (LeftMonoidalUpdate a) (LeftMonoidalUpdate b)
 fromLeftMonoidalUpdate = iso LeftMonoidalUpdate _getLeftMonoidalUpdate
 
-instance (FromJSON α, Monoid α) ⇒ FromJSON (LeftMonoidalUpdate α → LeftMonoidalUpdate α) where
+instance (FromJSON a, Monoid a) ⇒ FromJSON (LeftMonoidalUpdate a → LeftMonoidalUpdate a) where
     parseJSON = fmap (mappend ∘ LeftMonoidalUpdate) ∘ parseJSON
 
 -- | Update a value by appending on the left.
@@ -95,36 +95,36 @@ instance (FromJSON α, Monoid α) ⇒ FromJSON (LeftMonoidalUpdate α → LeftMo
 -- >
 -- >     fmapL f = either (Left . f) Right
 --
-pLeftMonoidalUpdate ∷ Monoid α ⇒ O.Parser α → MParser α
+pLeftMonoidalUpdate ∷ Monoid a ⇒ O.Parser a → MParser a
 pLeftMonoidalUpdate pElement = mappend ∘ mconcat ∘ reverse <$> many pElement
 
 -- | Update a value by appending on the right. Under normal
 -- circumstances you'll never use this type directly but only
 -- its 'FromJSON' instance. See the 'leftMonoidalUpdate' for an example.
 --
-newtype RightMonoidalUpdate α = RightMonoidalUpdate
-    { _getRightMonoidalUpdate ∷ α
+newtype RightMonoidalUpdate a = RightMonoidalUpdate
+    { _getRightMonoidalUpdate ∷ a
     }
     deriving (Monoid)
 
 -- | Update a value by appending on the right. See 'leftMonoidalUpdate' for
 -- an usage example.
 --
-rightMonoidalUpdate ∷ Iso (RightMonoidalUpdate α) (RightMonoidalUpdate β) α β
+rightMonoidalUpdate ∷ Iso (RightMonoidalUpdate a) (RightMonoidalUpdate b) a b
 rightMonoidalUpdate = iso _getRightMonoidalUpdate RightMonoidalUpdate
 
 -- | This is the same as @from rightMonoidalUpdate@ but doesn't depend on
 -- the lens Library.
 --
-fromRightMonoidalUpdate ∷ Iso α β (RightMonoidalUpdate α) (RightMonoidalUpdate β)
+fromRightMonoidalUpdate ∷ Iso a b (RightMonoidalUpdate a) (RightMonoidalUpdate b)
 fromRightMonoidalUpdate = iso RightMonoidalUpdate _getRightMonoidalUpdate
 
-instance (FromJSON α, Monoid α) ⇒ FromJSON (RightMonoidalUpdate α → RightMonoidalUpdate α) where
+instance (FromJSON a, Monoid a) ⇒ FromJSON (RightMonoidalUpdate a → RightMonoidalUpdate a) where
     parseJSON = fmap (flip mappend ∘ RightMonoidalUpdate) ∘ parseJSON
 
 -- | Update a value by appending on the right. See 'pLeftMonoidalUpdate'
 -- for an usage example.
 --
-pRightMonoidalUpdate ∷ Monoid α ⇒ O.Parser α → MParser α
+pRightMonoidalUpdate ∷ Monoid a ⇒ O.Parser a → MParser a
 pRightMonoidalUpdate pElement = flip mappend ∘ mconcat <$> many pElement
 
