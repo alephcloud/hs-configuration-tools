@@ -1,3 +1,7 @@
+Next version
+============
+*   Replaced the use of non-ascii identifiers in the public API
+
 0.3.0
 =====
 

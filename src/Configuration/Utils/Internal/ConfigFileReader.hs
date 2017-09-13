@@ -79,39 +79,39 @@ import System.IO
 -- Tools for parsing configuration files
 
 #ifdef REMOTE_CONFIGS
-type ConfigFileParser μ =
-    ( Functor μ
-    , Applicative μ
-    , MonadIO μ
-    , MonadBaseControl IO μ
-    , MonadError T.Text μ
+type ConfigFileParser m =
+    ( Functor m
+    , Applicative m
+    , MonadIO m
+    , MonadBaseControl IO m
+    , MonadError T.Text m
     )
 #else
-type ConfigFileParser μ =
-    ( Functor μ
-    , Applicative μ
-    , MonadIO μ
-    , MonadError T.Text μ
+type ConfigFileParser m =
+    ( Functor m
+    , Applicative m
+    , MonadIO m
+    , MonadError T.Text m
     )
 #endif
 
 parseConfigFiles
-    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ∷ (ConfigFileParser m, FromJSON (a → a))
     ⇒ ConfigFilesConfig
-    → α
+    → a
         -- ^ default configuration value
     → [ConfigFile]
         -- ^ list of configuration file paths
-    → μ α
+    → m a
 parseConfigFiles conf = foldM $ \val file →
     readConfigFile conf file <*> pure val
 
 readConfigFile
-    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ∷ (ConfigFileParser m, FromJSON (a → a))
     ⇒ ConfigFilesConfig
     → ConfigFile
         -- ^ file path
-    → μ (α → α)
+    → m (a → a)
 readConfigFile _conf file =
 #ifdef REMOTE_CONFIGS
     if isRemote file then loadRemote _conf file else loadLocal file
@@ -128,10 +128,10 @@ fileType f
     | otherwise = Other
 
 loadLocal
-    ∷ (Functor μ, MonadIO μ, MonadError T.Text μ, FromJSON (α → α))
+    ∷ (Functor m, MonadIO m, MonadError T.Text m, FromJSON (a → a))
     ⇒ ConfigFile
         -- ^ file path
-    → μ (α → α)
+    → m (a → a)
 loadLocal path = do
     validateFilePath "config-file" (T.unpack file)
     exists ← (True <$ validateFile "config-file" (T.unpack file)) `catchError` \e → case path of
@@ -182,11 +182,11 @@ contentType headerValue
     | otherwise = Other
 
 loadRemote
-    ∷ (ConfigFileParser μ, FromJSON (α → α))
+    ∷ (ConfigFileParser m, FromJSON (a → a))
     ⇒ ConfigFilesConfig
     → ConfigFile
         -- ^ URL
-    → μ (α → α)
+    → m (a → a)
 loadRemote conf path = do
     validateHttpOrHttpsUrl "config-file" (T.unpack url)
     result ← (Just <$> doHttp) `catchAnyDeep` \e →

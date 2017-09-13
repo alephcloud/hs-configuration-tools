@@ -62,28 +62,28 @@ infixl 1 &, <&>
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Lens σ τ α β = ∀ φ . Functor φ ⇒ (α → φ β) → σ → φ τ
+type Lens s t a b = ∀ f . Functor f ⇒ (a → f b) → s → f t
 
 -- | This is the same type as the type from the lens library with the same name.
 --
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Lens' σ α = Lens σ σ α α
+type Lens' s a = Lens s s a a
 
-lens ∷ (σ → α) → (σ → β → τ) → Lens σ τ α β
+lens ∷ (s → a) → (s → b → t) → Lens s t a b
 lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
 {-# INLINE lens #-}
 
-over ∷ ((α → Identity β) → σ → Identity τ) → (α → β) → σ → τ
+over ∷ ((a → Identity b) → s → Identity t) → (a → b) → s → t
 over s f = runIdentity . s (Identity . f)
 {-# INLINE over #-}
 
-set ∷ ((α → Identity β) → σ → Identity τ) → β → σ → τ
+set ∷ ((a → Identity b) → s → Identity t) → b → s → t
 set s a = runIdentity . s (const $ Identity a)
 {-# INLINE set #-}
 
-view ∷ MonadReader σ μ ⇒ ((α → Const α α) → σ → Const α σ) → μ α
+view ∷ MonadReader r m ⇒ ((a → Const a a) → r → Const a r) → m a
 view l = asks (getConst #. l Const)
 {-# INLINE view #-}
 
@@ -92,48 +92,48 @@ view l = asks (getConst #. l Const)
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Iso σ τ α β = ∀ π φ . (Profunctor π, Functor φ) ⇒ π α (φ β) → π σ (φ τ)
-type Iso' σ α = Iso σ σ α α
+type Iso s t a b = ∀ p f . (Profunctor p, Functor f) ⇒ p a (f b) → p s (f t)
+type Iso' s a = Iso s s a a
 
-iso ∷ (σ → α) → (β → τ) → Iso σ τ α β
+iso ∷ (s → a) → (b → t) → Iso s t a b
 iso f g = dimap f (fmap g)
 {-# INLINE iso #-}
 
 -- -------------------------------------------------------------------------- --
 -- Misc Utils
 
-(&) ∷ α → (α → β) → β
+(&) ∷ a → (a → b) → b
 (&) = flip ($)
 {-# INLINE (&) #-}
 
-(<&>) ∷ Functor φ ⇒ φ α → (α → β) → φ β
+(<&>) ∷ Functor f ⇒ f a → (a → b) → f b
 (<&>) = flip fmap
 {-# INLINE (<&>) #-}
 
 sshow
-    ∷ (Show α, IsString τ)
-    ⇒ α
-    → τ
+    ∷ (Show a, IsString s)
+    ⇒ a
+    → s
 sshow = fromString ∘ show
 {-# INLINE sshow #-}
 
 exceptT
-    ∷ Monad μ
-    ⇒ (ε → μ β)
-    → (α → μ β)
-    → ExceptT ε μ α
-    → μ β
+    ∷ Monad m
+    ⇒ (e → m b)
+    → (a → m b)
+    → ExceptT e m a
+    → m b
 exceptT a b = runExceptT >=> either a b
 {-# INLINE exceptT #-}
 
 errorT
-    ∷ Monad μ
-    ⇒ ExceptT T.Text μ α
-    → μ α
+    ∷ Monad m
+    ⇒ ExceptT T.Text m a
+    → m a
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
 {-# INLINE errorT #-}
 
-fmapL ∷ (α → β) → Either α γ → Either β γ
+fmapL ∷ (a → b) → Either a c → Either b c
 fmapL f = either (Left ∘ f) Right
 {-# INLINE fmapL #-}
 

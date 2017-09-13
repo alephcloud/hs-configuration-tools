@@ -90,10 +90,10 @@ import Configuration.Utils.Operators
 -- >     , _pwd ∷ !String
 -- >     }
 -- >
--- > userId ∷ Functor φ ⇒ (Int → φ Int) → Auth → φ Auth
+-- > userId ∷ Functor f ⇒ (Int → f Int) → Auth → f Auth
 -- > userId f s = (\u → s { _userId = u }) <$> f (_userId s)
 -- >
--- > pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > pwd ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 -- > pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
 -- >
 -- > -- or with lenses and TemplateHaskell just:
@@ -110,11 +110,11 @@ import Configuration.Utils.Operators
 -- >             e → fail $ "unrecognized user " ⊕ e
 --
 setProperty
-    ∷ Lens' α β -- ^ a lens into the target that is updated by the parser
+    ∷ Lens' a b -- ^ a lens into the target that is updated by the parser
     → T.Text -- ^ the JSON property name
-    → (Value → Parser β) -- ^ the JSON 'Value' parser that is used to parse the value of the property
+    → (Value → Parser b) -- ^ the JSON 'Value' parser that is used to parse the value of the property
     → Object -- ^ the parsed JSON 'Value' 'Object'
-    → Parser (α → α)
+    → Parser (a → a)
 setProperty s k p o = case H.lookup k o of
     Nothing → pure id
     Just v → set s <$> p v
@@ -128,10 +128,10 @@ setProperty s k p o = case H.lookup k o of
 -- >     , _pwd ∷ !String
 -- >     }
 -- >
--- > user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > user ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 -- > user f s = (\u → s { _user = u }) <$> f (_user s)
 -- >
--- > pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > pwd ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 -- > pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
 -- >
 -- > -- or with lenses and TemplateHaskell just:
@@ -142,7 +142,7 @@ setProperty s k p o = case H.lookup k o of
 -- >         <$< user ..: "user" × o
 -- >         <*< pwd ..: "pwd" × o
 --
-(..:) ∷ FromJSON β ⇒ Lens' α β → T.Text → Object → Parser (α → α)
+(..:) ∷ FromJSON b ⇒ Lens' a b → T.Text → Object → Parser (a → a)
 (..:) s k = setProperty s k parseJSON
 infix 6 ..:
 {-# INLINE (..:) #-}
@@ -160,13 +160,13 @@ infix 6 ..:
 -- >     , _domain ∷ !String
 -- >     }
 -- >
--- > auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- > auth ∷ Functor f ⇒ (Auth → f Auth) → HttpURL → f HttpURL
 -- > auth f s = (\u → s { _auth = u }) <$> f (_auth s)
 -- >
--- > domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > domain ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 -- > domain f s = (\u → s { _domain = u }) <$> f (_domain s)
 -- >
--- > path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > path ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 -- > path f s = (\u → s { _path = u }) <$> f (_path s)
 -- >
 -- > -- or with lenses and TemplateHaskell just:
@@ -178,11 +178,11 @@ infix 6 ..:
 -- >         <*< setProperty domain "domain" parseJSON o
 --
 updateProperty
-    ∷ Lens' α β
+    ∷ Lens' a b
     → T.Text
-    → (Value → Parser (β → β))
+    → (Value → Parser (b → b))
     → Object
-    → Parser (α → α)
+    → Parser (a → a)
 updateProperty s k p o = case H.lookup k o of
     Nothing → pure id
     Just v → over s <$> p v
@@ -197,13 +197,13 @@ updateProperty s k p o = case H.lookup k o of
 -- >     , _domain ∷ !String
 -- >     }
 -- >
--- > auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- > auth ∷ Functor f ⇒ (Auth → f Auth) → HttpURL → f HttpURL
 -- > auth f s = (\u → s { _auth = u }) <$> f (_auth s)
 -- >
--- > domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > domain ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 -- > domain f s = (\u → s { _domain = u }) <$> f (_domain s)
 -- >
--- > path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > path ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 -- > path f s = (\u → s { _path = u }) <$> f (_path s)
 -- >
 -- > -- or with lenses and TemplateHaskell just:
@@ -214,7 +214,7 @@ updateProperty s k p o = case H.lookup k o of
 -- >         <$< auth %.: "auth" × o
 -- >         <*< domain ..: "domain" × o
 --
-(%.:) ∷ FromJSON (β → β) ⇒ Lens' α β → T.Text → Object → Parser (α → α)
+(%.:) ∷ FromJSON (b → b) ⇒ Lens' a b → T.Text → Object → Parser (a → a)
 (%.:) s k = updateProperty s k parseJSON
 infix 6 %.:
 {-# INLINE (%.:) #-}
@@ -224,11 +224,11 @@ infix 6 %.:
 -- Otherwise this operator does the same as '(..:)'.
 --
 (!..:)
-    ∷ FromJSON β
-    ⇒ Lens' α β
+    ∷ FromJSON b
+    ⇒ Lens' a b
     → T.Text
     → Object
-    → Parser (α → α)
+    → Parser (a → a)
 (!..:) l property o = set l <$> (o .: property)
 {-# INLINE (!..:) #-}
 

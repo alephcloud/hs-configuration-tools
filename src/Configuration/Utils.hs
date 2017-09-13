@@ -166,24 +166,24 @@ import Control.Monad.Trans.Control
 -- this type is to avoid @ImpredicativeTypes@ when storing the function
 -- in the 'ProgramInfoValidate' record.
 --
-newtype ConfigValidationFunction α λ = ConfigValidationFunction
-    { runConfigValidation ∷ ConfigValidation α λ
+newtype ConfigValidationFunction a f = ConfigValidationFunction
+    { runConfigValidation ∷ ConfigValidation a f
     }
 
-type ProgramInfo α = ProgramInfoValidate α []
+type ProgramInfo a = ProgramInfoValidate a []
 
-data ProgramInfoValidate α λ = ProgramInfo
+data ProgramInfoValidate a f = ProgramInfo
     { _piDescription ∷ !String
       -- ^ Program Description
     , _piHelpHeader ∷ !(Maybe String)
       -- ^ Help header
     , _piHelpFooter ∷ !(Maybe String)
       -- ^ Help footer
-    , _piOptionParser ∷ !(MParser α)
+    , _piOptionParser ∷ !(MParser a)
       -- ^ options parser for configuration
-    , _piDefaultConfiguration ∷ !α
+    , _piDefaultConfiguration ∷ !a
       -- ^ default configuration
-    , _piValidateConfiguration ∷ !(ConfigValidationFunction α λ)
+    , _piValidateConfiguration ∷ !(ConfigValidationFunction a f)
       -- ^ a validation function. The 'Right' result is interpreted as a 'Foldable'
       -- structure of warnings.
     , _piConfigurationFiles ∷ ![ConfigFile]
@@ -193,31 +193,31 @@ data ProgramInfoValidate α λ = ProgramInfo
 
 -- | Program Description
 --
-piDescription ∷ Lens' (ProgramInfoValidate α λ) String
+piDescription ∷ Lens' (ProgramInfoValidate a f) String
 piDescription = lens _piDescription $ \s a → s { _piDescription = a }
 {-# INLINE piDescription #-}
 
 -- | Help header
 --
-piHelpHeader ∷ Lens' (ProgramInfoValidate α λ) (Maybe String)
+piHelpHeader ∷ Lens' (ProgramInfoValidate a f) (Maybe String)
 piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a }
 {-# INLINE piHelpHeader #-}
 
 -- | Help footer
 --
-piHelpFooter ∷ Lens' (ProgramInfoValidate α λ) (Maybe String)
+piHelpFooter ∷ Lens' (ProgramInfoValidate a f) (Maybe String)
 piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a }
 {-# INLINE piHelpFooter #-}
 
 -- | Options parser for configuration
 --
-piOptionParser ∷ Lens' (ProgramInfoValidate α λ) (MParser α)
+piOptionParser ∷ Lens' (ProgramInfoValidate a f) (MParser a)
 piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a }
 {-# INLINE piOptionParser #-}
 
 -- | Default configuration
 --
-piDefaultConfiguration ∷ Lens' (ProgramInfoValidate α λ) α
+piDefaultConfiguration ∷ Lens' (ProgramInfoValidate a f) a
 piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a }
 {-# INLINE piDefaultConfiguration #-}
 
@@ -225,14 +225,14 @@ piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultC
 --
 -- The 'Right' result is interpreted as a 'Foldable' structure of warnings.
 --
-piValidateConfiguration ∷ Lens' (ProgramInfoValidate α λ) (ConfigValidationFunction α λ)
+piValidateConfiguration ∷ Lens' (ProgramInfoValidate a f) (ConfigValidationFunction a f)
 piValidateConfiguration = lens _piValidateConfiguration $ \s a → s { _piValidateConfiguration = a }
 {-# INLINE piValidateConfiguration #-}
 
 -- | Configuration files that are loaded in order before any command line
 -- argument is evaluated.
 --
-piConfigurationFiles ∷ Lens' (ProgramInfoValidate α λ) [ConfigFile]
+piConfigurationFiles ∷ Lens' (ProgramInfoValidate a f) [ConfigFile]
 piConfigurationFiles = lens _piConfigurationFiles $ \s a → s { _piConfigurationFiles = a }
 {-# INLINE piConfigurationFiles #-}
 
@@ -242,10 +242,10 @@ piConfigurationFiles = lens _piConfigurationFiles $ \s a → s { _piConfiguratio
 --
 piOptionParserAndDefaultConfiguration
     ∷ Lens
-        (ProgramInfoValidate α λ)
-        (ProgramInfoValidate β γ)
-        (MParser α, α, ConfigValidationFunction α λ)
-        (MParser β, β, ConfigValidationFunction β γ)
+        (ProgramInfoValidate a b)
+        (ProgramInfoValidate c d)
+        (MParser a, a, ConfigValidationFunction a b)
+        (MParser c, c, ConfigValidationFunction c d)
 piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
     { _piDescription = _piDescription s
     , _piHelpHeader = _piHelpHeader s
@@ -267,11 +267,11 @@ piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
 programInfo
     ∷ String
         -- ^ program description
-    → MParser α
+    → MParser a
         -- ^ parser for updating the default configuration
-    → α
+    → a
         -- ^ default configuration
-    → ProgramInfo α
+    → ProgramInfo a
 programInfo desc parser defaultConfig =
     programInfoValidate desc parser defaultConfig $ const (return ())
 
@@ -281,10 +281,10 @@ programInfo desc parser defaultConfig =
 --
 programInfoValidate
     ∷ String
-    → MParser α
-    → α
-    → ConfigValidation α λ
-    → ProgramInfoValidate α λ
+    → MParser a
+    → a
+    → ConfigValidation a f
+    → ProgramInfoValidate a f
 programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
     { _piDescription = desc
     , _piHelpHeader = Nothing
@@ -310,37 +310,37 @@ programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
 -- NOTE that /meta/ configuration settings can only be provided via command
 -- line options but not through configuration files.
 --
-data AppConfiguration α = AppConfiguration
+data AppConfiguration a = AppConfiguration
     { _printConfig ∷ !Bool
     , _configFilesConfig ∷ !ConfigFilesConfig
     , _configFiles ∷ ![ConfigFile]
-    , _mainConfig ∷ !α
+    , _mainConfig ∷ !a
     }
 
 -- | A flag that indicates that the application should output the effective
 -- configuration and exit.
 --
-printConfig ∷ Lens' (AppConfiguration α) Bool
+printConfig ∷ Lens' (AppConfiguration a) Bool
 printConfig = lens _printConfig $ \s a → s { _printConfig = a }
 
 -- | The 'ConfigFilesConfig' collects all parameters that determine how
 -- configuration files are loaded and parsed.
 --
-configFilesConfig ∷ Lens' (AppConfiguration α) ConfigFilesConfig
+configFilesConfig ∷ Lens' (AppConfiguration a) ConfigFilesConfig
 configFilesConfig = lens _configFilesConfig $ \s a → s { _configFilesConfig = a }
 
 -- | A list of configuration file locations. Configuration file locations are
 -- set either statically in the code or are provided dynamically on the command
 -- line via @--config-file@ options.
 --
-configFiles ∷ Lens' (AppConfiguration α) [ConfigFile]
+configFiles ∷ Lens' (AppConfiguration a) [ConfigFile]
 configFiles = lens _configFiles $ \s a → s { _configFiles = a }
 
 -- | The /user/ configuration. During parsing this is represented as an update
 -- function that yields a configuration value when applied to a default
 -- value.
 --
-mainConfig ∷ Lens (AppConfiguration α) (AppConfiguration β) α β
+mainConfig ∷ Lens (AppConfiguration a) (AppConfiguration b) a b
 mainConfig = lens _mainConfig $ \s a → s { _mainConfig = a }
 
 -- | This function parsers /all/ command line options:
@@ -357,8 +357,8 @@ mainConfig = lens _mainConfig $ \s a → s { _mainConfig = a }
 --    value when applied to an default value.
 --
 pAppConfiguration
-    ∷ O.Parser (α → α)
-    → O.Parser (AppConfiguration (α → α))
+    ∷ O.Parser (a → a)
+    → O.Parser (AppConfiguration (a → a))
 pAppConfiguration mainParser = AppConfiguration
     <$> pPrintConfig
     <*> (pConfigFilesConfig <*> pure defaultConfigFilesConfig)
@@ -407,11 +407,11 @@ pAppConfiguration mainParser = AppConfiguration
 --     to the service.
 --
 runWithConfiguration
-    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
-    ⇒ ProgramInfoValidate α λ
+    ∷ (FromJSON (a → a), ToJSON a, Foldable f, Monoid (f T.Text))
+    ⇒ ProgramInfoValidate a f
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
-    → (α → IO ())
+    → (a → IO ())
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
@@ -420,7 +420,7 @@ runWithConfiguration appInfo = runInternal appInfo Nothing
 -- -------------------------------------------------------------------------- --
 -- Main Configuration with Package Info
 
-pPkgInfo ∷ PkgInfo → MParser α
+pPkgInfo ∷ PkgInfo → MParser a
 pPkgInfo (sinfo, detailedInfo, version, license) =
     infoO <*> detailedInfoO <*> versionO <*> licenseO
   where
@@ -502,8 +502,8 @@ type PkgInfo =
 --     to the service.
 --
 runWithPkgInfoConfiguration
-    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
-    ⇒ ProgramInfoValidate α λ
+    ∷ (FromJSON (a → a), ToJSON a, Foldable f, Monoid (f T.Text))
+    ⇒ ProgramInfoValidate a f
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
     → PkgInfo
@@ -512,7 +512,7 @@ runWithPkgInfoConfiguration
         -- See the documentation of "Configuration.Utils.Setup" for a way
         -- how to generate this information automatically from the package
         -- description during the build process.
-    → (α → IO ())
+    → (a → IO ())
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
@@ -523,16 +523,16 @@ runWithPkgInfoConfiguration appInfo pkgInfo =
 -- Internal main function
 
 mainOptions
-    ∷ ∀ α λ . FromJSON (α → α)
-    ⇒ ProgramInfoValidate α λ
+    ∷ ∀ a f . FromJSON (a → a)
+    ⇒ ProgramInfoValidate a f
         -- ^ Program Info value which may include a validation function
 
-    → (∀ β . Maybe (MParser β))
+    → (∀ b . Maybe (MParser b))
         -- ^ Maybe a package info parser. This parser is run only for its
         -- side effects. It is supposed to /intercept/ the parsing process
         -- and execute any implied action (showing help messages).
 
-    → O.ParserInfo (AppConfiguration (α → α))
+    → O.ParserInfo (AppConfiguration (a → a))
 mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
     $ O.progDesc _piDescription
     ⊕ O.fullDesc
@@ -593,17 +593,17 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
 -- | Internal main function
 --
 runInternal
-    ∷ (FromJSON (α → α), ToJSON α, Foldable λ, Monoid (λ T.Text))
-    ⇒ ProgramInfoValidate α λ
+    ∷ (FromJSON (a → a), ToJSON a, Foldable f, Monoid (f T.Text))
+    ⇒ ProgramInfoValidate a f
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
-    → (∀ β . Maybe (MParser β))
+    → (∀ b . Maybe (MParser b))
         -- 'PkgInfo' value that contains information about the package.
         --
         -- See the documentation of "Configuration.Utils.Setup" for a way
         -- how to generate this information automatically from the package
         -- description during the build process.
-    → (α → IO ())
+    → (a → IO ())
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
@@ -641,19 +641,19 @@ parseConfiguration
         , MonadBaseControl IO m
 #endif
         , MonadError T.Text m
-        , FromJSON (α → α)
-        , ToJSON α
-        , Foldable λ
-        , Monoid (λ T.Text)
+        , FromJSON (a → a)
+        , ToJSON a
+        , Foldable f
+        , Monoid (f T.Text)
         )
     ⇒ T.Text
         -- ^ program name (used in error messages)
-    → ProgramInfoValidate α λ
+    → ProgramInfoValidate a f
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
     → [String]
         -- ^ command line arguments
-    → m α
+    → m a
 parseConfiguration appName appInfo args = do
 
     -- Parse command line arguments (add static config files to resulting app config)
@@ -685,9 +685,9 @@ parseConfiguration appName appInfo args = do
 -- printed to 'stderr'.
 --
 validateConfig
-    ∷ (Foldable λ, Monoid (λ T.Text))
-    ⇒ ProgramInfoValidate α λ
-    → α
+    ∷ (Foldable f, Monoid (f T.Text))
+    ⇒ ProgramInfoValidate a f
+    → a
     → IO ()
 validateConfig appInfo conf = do
     warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $

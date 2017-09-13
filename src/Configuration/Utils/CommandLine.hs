@@ -79,7 +79,7 @@ import Prelude.Unicode
 
 -- | Type of option parsers that yield a modification function.
 --
-type MParser α = O.Parser (α → α)
+type MParser a = O.Parser (a → a)
 
 -- | An operator for applying a setter to an option parser that yields a value.
 --
@@ -90,10 +90,10 @@ type MParser α = O.Parser (α → α)
 -- >     , _pwd ∷ !String
 -- >     }
 -- >
--- > user ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > user ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 -- > user f s = (\u → s { _user = u }) <$> f (_user s)
 -- >
--- > pwd ∷ Functor φ ⇒ (String → φ String) → Auth → φ Auth
+-- > pwd ∷ Functor f ⇒ (String → f String) → Auth → f Auth
 -- > pwd f s = (\p → s { _pwd = p }) <$> f (_pwd s)
 -- >
 -- > -- or with lenses and TemplateHaskell just:
@@ -109,7 +109,7 @@ type MParser α = O.Parser (α → α)
 -- >        × long "pwd"
 -- >        ⊕ help "password for user"
 --
-(.::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ β → φ (α → α)
+(.::) ∷ (Alternative f, Applicative f) ⇒ Lens' a b → f b → f (a → a)
 (.::) a opt = set a <$> opt <|> pure id
 infixr 5 .::
 {-# INLINE (.::) #-}
@@ -124,13 +124,13 @@ infixr 5 .::
 -- >     , _domain ∷ !String
 -- >     }
 -- >
--- > auth ∷ Functor φ ⇒ (Auth → φ Auth) → HttpURL → φ HttpURL
+-- > auth ∷ Functor f ⇒ (Auth → f Auth) → HttpURL → f HttpURL
 -- > auth f s = (\u → s { _auth = u }) <$> f (_auth s)
 -- >
--- > domain ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > domain ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 -- > domain f s = (\u → s { _domain = u }) <$> f (_domain s)
 -- >
--- > path ∷ Functor φ ⇒ (String → φ String) → HttpURL → φ HttpURL
+-- > path ∷ Functor f ⇒ (String → f String) → HttpURL → f HttpURL
 -- > path f s = (\u → s { _path = u }) <$> f (_path s)
 -- >
 -- > -- or with lenses and TemplateHaskell just:
@@ -144,7 +144,7 @@ infixr 5 .::
 -- >         ⊕ short 'd'
 -- >         ⊕ help "HTTP domain"
 --
-(%::) ∷ (Alternative φ, Applicative φ) ⇒ Lens' α β → φ (β → β) → φ (α → α)
+(%::) ∷ (Alternative f, Applicative f) ⇒ Lens' a b → f (b → b) → f (a → a)
 (%::) a opt = over a <$> opt <|> pure id
 infixr 5 %::
 {-# INLINE (%::) #-}

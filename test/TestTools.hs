@@ -102,12 +102,12 @@ debug a
 -- 2. lens for the configuration value
 -- 3. the expected value
 --
-data ConfAssertion β = ∀ α . Eq α ⇒ ConfAssertion [String] (Lens' β α) α
+data ConfAssertion b = ∀ a . Eq a ⇒ ConfAssertion [String] (Lens' b a) a
 
-trueLens ∷ Lens' β ()
+trueLens ∷ Lens' b ()
 trueLens = lens (const ()) const
 
-trueAssertion ∷ [String] → ConfAssertion β
+trueAssertion ∷ [String] → ConfAssertion b
 trueAssertion args = ConfAssertion args trueLens ()
 
 -- -------------------------------------------------------------------------- --
@@ -116,8 +116,8 @@ trueAssertion args = ConfAssertion args trueLens ()
 -- Check the given list of assertions for the given configuration value
 --
 check
-    ∷ α
-    → [ConfAssertion α]
+    ∷ a
+    → [ConfAssertion a]
     → IO Bool
 check conf assertions =
     foldM (\a (b,n) → (&& a) <$> go b n) True $ zip assertions [0 ∷ Int ..]
@@ -135,14 +135,14 @@ check conf assertions =
 -- for a given that of assertions.
 --
 runTest
-    ∷ (FromJSON (α → α), ToJSON α)
+    ∷ (FromJSON (a → a), ToJSON a)
     ⇒ PkgInfo
-    → ProgramInfoValidate α []
+    → ProgramInfoValidate a []
     → T.Text
         -- ^ label for the test case
     → Bool
         -- ^ expected outcome
-    → [ConfAssertion α]
+    → [ConfAssertion a]
         -- ^ test assertions
     → IO Bool
 runTest pkgInfo mInfo label succeed assertions = do
@@ -179,11 +179,11 @@ runTest pkgInfo mInfo label succeed assertions = do
 --
 
 withConfigFile
-    ∷ ToJSON γ
+    ∷ ToJSON b
     ⇒ ConfigFileFormat
-    → γ
-    → (T.Text → IO α)
-    → IO α
+    → b
+    → (T.Text → IO a)
+    → IO a
 withConfigFile format config inner =
     withTempFile "." ("tmp_TestExample." ⊕ suffix format) $ \tmpPath tmpHandle → do
         B8.hPutStrLn tmpHandle ∘ formatter format $ config
@@ -197,8 +197,8 @@ withConfigFile format config inner =
 
 withConfigFileText
     ∷ T.Text
-    → (T.Text → IO α)
-    → IO α
+    → (T.Text → IO a)
+    → IO a
 withConfigFileText configText inner =
     withTempFile "." "tmp_TestExample.txt" $ \tmpPath tmpHandle → do
         T.hPutStrLn tmpHandle configText
@@ -207,7 +207,7 @@ withConfigFileText configText inner =
 
 
 #ifdef REMOTE_CONFIGS
-data ConfigType = ∀ γ . ToJSON γ ⇒ ConfigType γ
+data ConfigType = ∀ a . ToJSON a ⇒ ConfigType a
 
 instance ToJSON ConfigType where
     toJSON (ConfigType a) = toJSON a
@@ -216,8 +216,8 @@ withConfigFileServer
     ∷ [(T.Text, ConfigType)]
     → [(T.Text, T.Text)]
     → Maybe ConfigFileFormat
-    → IO α
-    → IO α
+    → IO a
+    → IO a
 withConfigFileServer configs configTexts maybeFormat inner = do
     w0 ← forkIO $ WARP.run serverPort app
     w1 ←  forkIO $ WARP.runTLS tlsSettings (warpSettings serverTlsPort) app
