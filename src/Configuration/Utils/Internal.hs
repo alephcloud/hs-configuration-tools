@@ -62,7 +62,7 @@ infixl 1 &, <&>
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Lens s t a b = forall f . Functor f ⇒ (a → f b) → s → f t
+type Lens s t a b = ∀ f . Functor f ⇒ (a → f b) → s → f t
 
 -- | This is the same type as the type from the lens library with the same name.
 --
@@ -92,7 +92,7 @@ view l = asks (getConst #. l Const)
 -- In case it is already import from the lens package this should be hidden
 -- from the import.
 --
-type Iso s t a b = forall p f . (Profunctor p, Functor f) ⇒ p a (f b) → p s (f t)
+type Iso s t a b = ∀ p f . (Profunctor p, Functor f) ⇒ p a (f b) → p s (f t)
 type Iso' s a = Iso s s a a
 
 iso ∷ (s → a) → (b → t) → Iso s t a b

@@ -523,11 +523,11 @@ runWithPkgInfoConfiguration appInfo pkgInfo =
 -- Internal main function
 
 mainOptions
-    ∷ forall a f . FromJSON (a → a)
+    ∷ ∀ a f . FromJSON (a → a)
     ⇒ ProgramInfoValidate a f
         -- ^ Program Info value which may include a validation function
 
-    → (forall b . Maybe (MParser b))
+    → (∀ b . Maybe (MParser b))
         -- ^ Maybe a package info parser. This parser is run only for its
         -- side effects. It is supposed to /intercept/ the parsing process
         -- and execute any implied action (showing help messages).
@@ -597,7 +597,7 @@ runInternal
     ⇒ ProgramInfoValidate a f
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
-    → (forall b . Maybe (MParser b))
+    → (∀ b . Maybe (MParser b))
         -- 'PkgInfo' value that contains information about the package.
         --
         -- See the documentation of "Configuration.Utils.Setup" for a way

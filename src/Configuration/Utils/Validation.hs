@@ -95,7 +95,7 @@ import System.Directory
 -- | A validation function. The type in the 'MonadWriter' is excpected to
 -- be a 'Foldable' structure for collecting warnings.
 --
-type ConfigValidation a f = forall m . (MonadIO m, Functor m, Applicative m, MonadError T.Text m, MonadWriter (f T.Text) m) ⇒ a → m ()
+type ConfigValidation a f = ∀ m . (MonadIO m, Functor m, Applicative m, MonadError T.Text m, MonadWriter (f T.Text) m) ⇒ a → m ()
 
 -- -------------------------------------------------------------------------- --
 -- Networking

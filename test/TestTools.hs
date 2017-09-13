@@ -102,7 +102,7 @@ debug a
 -- 2. lens for the configuration value
 -- 3. the expected value
 --
-data ConfAssertion b = forall a . Eq a ⇒ ConfAssertion [String] (Lens' b a) a
+data ConfAssertion b = ∀ a . Eq a ⇒ ConfAssertion [String] (Lens' b a) a
 
 trueLens ∷ Lens' b ()
 trueLens = lens (const ()) const
@@ -207,7 +207,7 @@ withConfigFileText configText inner =
 
 
 #ifdef REMOTE_CONFIGS
-data ConfigType = forall a . ToJSON a ⇒ ConfigType a
+data ConfigType = ∀ a . ToJSON a ⇒ ConfigType a
 
 instance ToJSON ConfigType where
     toJSON (ConfigType a) = toJSON a
