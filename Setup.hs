@@ -129,6 +129,10 @@ import Distribution.Types.LocalBuildInfo
 import Distribution.Types.UnqualComponentName
 #endif
 
+#if MIN_VERSION_Cabal(2,2,0)
+import Distribution.Pretty
+#endif
+
 import System.Process
 
 import Control.Applicative
@@ -209,6 +213,8 @@ pkgInfoModuleName (Just cn) = "PkgInfo_" ++ map tr cn
     tr '-' = '_'
     tr c = c
 
+-- FIXME: autoModulesDir is deprecated and should be replaced by
+-- autogenComponentModulesDir.
 pkgInfoFileName :: Maybe String -> LocalBuildInfo -> FilePath
 pkgInfoFileName cn bInfo = autogenModulesDir bInfo ++ "/" ++ pkgInfoModuleName cn ++ ".hs"
 
@@ -235,6 +241,16 @@ unFlagName :: FlagName -> String
 unFlagName (FlagName s) = s
 #endif
 
+#if !MIN_VERSION_Cabal(2,2,0)
+unFlagAssignment :: FlagAssignment -> [(FlagName, Bool)]
+unFlagAssignment = id
+#endif
+
+#if !MIN_VERSION_Cabal(2,2,0)
+prettyShow :: Text a => a -> String
+prettyShow = display
+#endif
+
 pkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
 pkgInfoModule cName pkgDesc bInfo = do
     (tag, revision, branch) <- getVCS >>= \x -> case x of
@@ -244,7 +260,7 @@ pkgInfoModule cName pkgDesc bInfo = do
 
     let vcsBranch = if branch == "default" || branch == "master" then "" else branch
         vcsVersion = intercalate "-" . filter (/= "") $ [tag, revision, vcsBranch]
-        flags = map (unFlagName . fst) . filter snd . configConfigurationsFlags . configFlags $ bInfo
+        flags = map (unFlagName . fst) . filter snd . unFlagAssignment . configConfigurationsFlags . configFlags $ bInfo
 
     licenseString <- licenseFilesText pkgDesc
 
@@ -288,7 +304,7 @@ pkgInfoModule cName pkgDesc bInfo = do
             , "    arch = \"" <> (pack . display . hostPlatform) bInfo <> "\""
             , ""
             , "    license :: IsString a => a"
-            , "    license = \"" <> (pack . display . license) pkgDesc <> "\""
+            , "    license = \"" <> (pack . prettyShow . license) pkgDesc <> "\""
             , ""
             , "    licenseText :: IsString a => a"
             , "    licenseText = " <> (pack . show) licenseString
@@ -450,7 +466,11 @@ noVcsInfo = return ("", "", "")
 pkgIdWithLicense :: I.InstalledPackageInfo -> String
 pkgIdWithLicense a = (display . packageId) a
     ++ " ["
-    ++ (display . I.license) a
+#if MIN_VERSION_Cabal(2,2,0)
+    ++ (either prettyShow prettyShow . I.license) a
+#else
+    ++ (prettyShow . I.license) a
+#endif
     ++ (if cr /= "" then ", " ++ cr else "")
     ++ "]"
   where
