@@ -109,7 +109,8 @@ Library
         text >= 1.0,
         unordered-containers >= 0.2.4.0,
         yaml >= 0.8.8.3,
-        profunctors >= 4.0.4
+        profunctors >= 4.0.4,
+        semigroups >= 0.18
 
     if flag(old-transformers)
         build-depends:

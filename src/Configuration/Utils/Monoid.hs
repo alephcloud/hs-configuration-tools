@@ -35,6 +35,7 @@ import Configuration.Utils.Internal
 import Control.Monad.Writer hiding (mapM_)
 
 import Data.Aeson
+import Data.Semigroup
 
 import qualified Options.Applicative.Types as O
 
@@ -48,7 +49,7 @@ import Prelude.Unicode
 newtype LeftMonoidalUpdate a = LeftMonoidalUpdate
     { _getLeftMonoidalUpdate ∷ a
     }
-    deriving (Monoid)
+    deriving (Semigroup, Monoid)
 
 -- | Update a value by appending on the left.
 --
@@ -105,7 +106,7 @@ pLeftMonoidalUpdate pElement = mappend ∘ mconcat ∘ reverse <$> many pElement
 newtype RightMonoidalUpdate a = RightMonoidalUpdate
     { _getRightMonoidalUpdate ∷ a
     }
-    deriving (Monoid)
+    deriving (Semigroup, Monoid)
 
 -- | Update a value by appending on the right. See 'leftMonoidalUpdate' for
 -- an usage example.
