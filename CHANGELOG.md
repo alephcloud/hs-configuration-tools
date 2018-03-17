@@ -1,12 +1,14 @@
-Next version
-============
+0.3.1 (2018-03-16)
+==================
+
+*   Support GHC-8.4.1 and Cabal-2.2
 *   Replaced the use of non-ascii identifiers in the public API
 
 0.3.0
 =====
 
 *   Remove built in short options `-p`, `-c`, and `-i`
-*   Support CHG-8.2 and Cabal-2.0
+*   Support GHC-8.2 and Cabal-2.0
 
 0.2.15
 ======
