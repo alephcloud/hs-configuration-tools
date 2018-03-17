@@ -8,24 +8,24 @@ matrix:
 
         - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs
           addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
+        # - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
+        #   addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
 
         # ------------ #
         # GHC-7.8.4, cabal-install-1.20 #
 
         - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs
           addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-        - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
+        # - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
+        #   addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
 
         # ------------ #
         # GHC-7.10 #
 
         - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f-remote-configs
           addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3], sources: [hvr-ghc]}}
-        - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3], sources: [hvr-ghc]}}
+        # - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f+remote-configs
+        #   addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3], sources: [hvr-ghc]}}
 
         # ------------ #
         # GHC-8.0.1 #
@@ -36,20 +36,28 @@ matrix:
           addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1], sources: [hvr-ghc]}}
 
         # ------------ #
-        # GHC-8.2.1, cabal-install 1.24 #
+        # GHC-8.2.2, cabal-install 1.24 #
 
-        - env: CABALVER=1.24 GHCVER=8.2.1 REMOTE_CONFIGS=-f-remote-configs
-          addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.1], sources: [hvr-ghc]}}
-        - env: CABALVER=1.24 GHCVER=8.2.1 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.1], sources: [hvr-ghc]}}
+        - env: CABALVER=1.24 GHCVER=8.2.2 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.2], sources: [hvr-ghc]}}
+        - env: CABALVER=1.24 GHCVER=8.2.2 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.2.2], sources: [hvr-ghc]}}
 
         # ------------ #
-        # GHC-8.2.1, cabal-install-2.0 #
+        # GHC-8.2.2, cabal-install-2.0 #
 
-        - env: CABALVER=2.0 GHCVER=8.2.1 REMOTE_CONFIGS=-f-remote-configs
-          addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.1], sources: [hvr-ghc]}}
-        - env: CABALVER=2.0 GHCVER=8.2.1 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.1], sources: [hvr-ghc]}}
+        - env: CABALVER=2.0 GHCVER=8.2.2 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.2], sources: [hvr-ghc]}}
+        - env: CABALVER=2.0 GHCVER=8.2.2 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.2], sources: [hvr-ghc]}}
+
+        # ------------ #
+        # GHC-8.4.1, cabal-install-2.0 #
+
+        - env: CABALVER=2.0 GHCVER=8.4.1 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-2.0, ghc-8.4.1], sources: [hvr-ghc]}}
+        - env: CABALVER=2.0 GHCVER=8.4.1 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-2.0, ghc-8.4.1], sources: [hvr-ghc]}}
 
 before_install:
     - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
@@ -58,10 +66,10 @@ install:
     - cabal --version
     - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
     - travis_retry cabal update
-    - cabal install --only-dependencies --enable-tests --enable-benchmarks
+    - cabal install --only-dependencies --enable-tests --enable-benchmarks $REMOTE_CONFIGS --max-backjumps=10000
 
 script:
-    - cabal configure --enable-tests --enable-benchmarks -v
+    - cabal configure --enable-tests --enable-benchmarks -v $REMOTE_CONFIGS
     - cabal build
     - cabal test
     - cabal check
