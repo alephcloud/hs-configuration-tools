@@ -45,10 +45,6 @@ cabal-version:  >= 1.18
 extra-doc-files:
     README.md,
     CHANGELOG.md
-    INSTALL_ON_WINDOWS.md
-
-extra-source-files:
-    constraints
 
 source-repository head
     type: git
