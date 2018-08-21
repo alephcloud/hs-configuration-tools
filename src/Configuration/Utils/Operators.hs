@@ -1,12 +1,6 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
-
-#ifndef MIN_VERSION_base
-#define MIN_VERSION_base(x,y,z) 1
-#endif
 
 -- |
 -- Module: Configuration.Utils.Operators
@@ -28,10 +22,6 @@ module Configuration.Utils.Operators
 , (<.>)
 , (⊙)
 ) where
-
-#if ! MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
 
 -- -------------------------------------------------------------------------- --
 -- Useful Operators

@@ -1,9 +1,8 @@
 -- ------------------------------------------------------ --
--- Copyright © 2015-2016 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -111,7 +110,6 @@ module Main
 ) where
 
 #ifndef MIN_VERSION_Cabal
-#define NO_CABAL_MACROS 1
 #define MIN_VERSION_Cabal(a,b,c) 0
 #endif
 
@@ -149,11 +147,6 @@ import Prelude hiding (readFile, writeFile)
 import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing, getCurrentDirectory, canonicalizePath)
 import System.FilePath (isDrive, (</>), takeDirectory)
 import System.Exit (ExitCode(ExitSuccess))
-
-#ifdef NO_CABAL_MACROS
-import Data.Maybe
-import Data.Typeable
-#endif
 
 -- | Include this function when your setup doesn't contain any
 -- extra functionality.
@@ -382,65 +375,11 @@ updatePkgInfoModule cName pkgDesc bInfo = do
 licenseFilesText :: PackageDescription -> IO B.ByteString
 licenseFilesText pkgDesc =
     B.intercalate "\n------------------------------------------------------------\n" <$> mapM fileText
-#ifdef NO_CABAL_MACROS
-        (getLicenseFiles pkgDesc)
-#elif MIN_VERSION_Cabal(1,20,0)
         (licenseFiles pkgDesc)
-#else
-        [licenseFile pkgDesc]
-#endif
   where
     fileText file = doesFileExist file >>= \x -> if x
         then B.readFile file
         else return ""
-
-#ifdef NO_CABAL_MACROS
--- The name and the type of the @licenseFile :: String@ field of
--- 'PackageDescription' changed in Cabal version 1.20 to @licenseFiles ::
--- [String]@. Both versions are used with GHC-7.8. In Cabal version 1.24 the
--- number of constructor fields changed for PackageDescription. When compiling
--- @Setup.hs@ the @MIN_VERSION_...@ macros are not available. This function is
--- an ugly hack to do conditional compilation without CPP. It depends on the
--- @RecordWildCards@ and @Typeable@ extensions and abuses shaddowing of
--- existing symbols.
---
--- Alternative methods would include:
---
--- *   Use typeable to pattern match on the number of constructor arguments for
---     'PackageDescription',
--- *   use TH hacks ala @$( if versionBranch cabalVersion < [...] ... )@, and/or
--- *   make guesses about the cabal version based on the @__GLASGOW_HASKELL__@
---     macro.
-
--- Return license files of from the @PackageDescription@.
---
-getLicenseFiles :: PackageDescription -> [FilePath]
-getLicenseFiles pkgDesc = f pkgDesc
-  where
-    -- Recent versions of @PackageDescription@ define a @licenseFiles@ field.
-    -- For older versions the function @licenseFiles@ that is defined below is
-    -- used.
-    --
-    f PackageDescription{..} = licenseFiles
-
-    -- If @PackageDescription@ doesn't define @licenseFiles@ this definition
-    -- will be used. In that case @PackageDescription@ is assumed to define
-    -- @licenseFile@.
-    --
-    licenseFiles :: [FilePath]
-    licenseFiles = fromMaybe (error "unsupported Cabal library version") $
-        return <$> cast (g pkgDesc)
-
-    g PackageDescription{..} = licenseFile
-
-    -- The only purpose of this function is to ensure that licenseFile is
-    -- defined in case PackageDescription doesn't have a @licenseFile@ field.
-    -- This function won't be called with any supported version of the Cabal
-    -- library.
-    --
-    licenseFile :: [FilePath]
-    licenseFile = error "unexpected Cabal library version"
-#endif
 
 hgInfo :: IO (String, String, String)
 hgInfo = do

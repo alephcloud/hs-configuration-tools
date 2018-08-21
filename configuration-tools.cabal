@@ -39,12 +39,20 @@ Copyright:
     (c) 2014-2015 AlephCloud, Inc.
 Category: Configuration, Console
 Build-type: Custom
-
-cabal-version:  >= 1.18
+cabal-version: 1.24
 
 extra-doc-files:
     README.md,
     CHANGELOG.md
+
+custom-setup
+    setup-depends:
+        Cabal >= 1.24,
+        base >= 4.8 && < 5.0,
+        bytestring >= 0.10.0.2,
+        directory >= 1.2.1.0,
+        filepath >= 1.3.0.1,
+        process >= 1.2.0.0
 
 source-repository head
     type: git
@@ -60,11 +68,6 @@ flag remote-configs
     Description: enable loading of configuration files from HTTP URLs
     Default: True
     Manual: True
-
-flag old-transformers
-    Description: use old transformers
-    Default: False
-    Manual: False
 
 Library
     hs-source-dirs: src
@@ -87,11 +90,11 @@ Library
             Configuration.Utils.Internal.HttpsCertPolicy
 
     build-depends:
-        Cabal >= 1.18,
+        Cabal >= 1.24,
         aeson >= 0.7.0.6,
         ansi-wl-pprint >= 0.6,
         attoparsec >= 0.11.3.4,
-        base >= 4.6 && < 5.0,
+        base >= 4.8 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10.0.2,
         case-insensitive >= 1.2,
@@ -99,25 +102,16 @@ Library
         directory >= 1.2.1.0,
         dlist >= 0.7.1,
         filepath >= 1.3.0.1,
+        mtl >= 2.2,
         network-uri >= 2.6.0.1,
         optparse-applicative >= 0.11.0.2,
         process >= 1.2.0.0,
-        text >= 1.0,
-        unordered-containers >= 0.2.4.0,
-        yaml >= 0.8.8.3,
         profunctors >= 4.0.4,
-        semigroups >= 0.18
-
-    if flag(old-transformers)
-        build-depends:
-            mtl >= 2.1,
-            mtl-compat >= 0.2,
-            transformers >= 0.3 && < 0.4,
-            transformers-compat >= 0.4
-    else
-        build-depends:
-            mtl >= 2.2,
-            transformers >= 0.4
+        semigroups >= 0.18,
+        text >= 1.0,
+        transformers >= 0.4,
+        unordered-containers >= 0.2.4.0,
+        yaml >= 0.8.8.3
 
     if flag(remote-configs)
         build-depends:
@@ -152,24 +146,16 @@ Test-Suite url-example-test
         Tests.MonoidConfig
 
     build-depends:
-        base >= 4.6 && < 5.0,
+        Cabal >= 1.24,
+        base >= 4.8 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10,
-        Cabal >= 1.18,
         configuration-tools,
+        mtl >= 2.2,
         text >= 1.0,
+        transformers >= 0.4,
         unordered-containers >= 0.2.4.0,
         yaml >= 0.8.8.3
-
-    if flag(old-transformers)
-        build-depends:
-            mtl >= 2.1,
-            mtl-compat >= 0.2,
-            transformers-compat >= 0.4
-    else
-        build-depends:
-            mtl >= 2.2,
-            transformers >= 0.4
 
     if flag(remote-configs)
         build-depends:
@@ -191,7 +177,7 @@ Test-Suite trivial
     hs-source-dirs: examples
 
     build-depends:
-        base >= 4.6 && < 5.0,
+        base >= 4.8 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         configuration-tools
 

@@ -4,22 +4,6 @@ language: c
 matrix:
     include:
         # ------------ #
-        # GHC-7.8.4, cabal-install-1.18 #
-
-        - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs
-          addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.18 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
-        #   addons: {apt: {packages: [cabal-install-1.18, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        # ------------ #
-        # GHC-7.8.4, cabal-install-1.20 #
-
-        - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f-remote-configs
-          addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-        # - env: CABALVER=1.20 GHCVER=7.8.4 REMOTE_CONFIGS=-f+remote-configs
-        #   addons: {apt: {packages: [cabal-install-1.20, ghc-7.8.4], sources: [hvr-ghc]}}
-
-        # ------------ #
         # GHC-7.10 #
 
         - env: CABALVER=1.22 GHCVER=7.10.3 REMOTE_CONFIGS=-f-remote-configs
@@ -28,12 +12,12 @@ matrix:
         #   addons: {apt: {packages: [cabal-install-1.22, ghc-7.10.3], sources: [hvr-ghc]}}
 
         # ------------ #
-        # GHC-8.0.1 #
+        # GHC-8.0.2 #
 
-        - env: CABALVER=1.24 GHCVER=8.0.1 REMOTE_CONFIGS=-f-remote-configs
-          addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1], sources: [hvr-ghc]}}
-        - env: CABALVER=1.24 GHCVER=8.0.1 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.1], sources: [hvr-ghc]}}
+        - env: CABALVER=1.24 GHCVER=8.0.2 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.2], sources: [hvr-ghc]}}
+        - env: CABALVER=1.24 GHCVER=8.0.2 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-1.24, ghc-8.0.2], sources: [hvr-ghc]}}
 
         # ------------ #
         # GHC-8.2.2, cabal-install 1.24 #
@@ -52,12 +36,12 @@ matrix:
           addons: {apt: {packages: [cabal-install-2.0, ghc-8.2.2], sources: [hvr-ghc]}}
 
         # ------------ #
-        # GHC-8.4.1, cabal-install-2.0 #
+        # GHC-8.4.3, cabal-install-2.2 #
 
-        - env: CABALVER=2.0 GHCVER=8.4.1 REMOTE_CONFIGS=-f-remote-configs
-          addons: {apt: {packages: [cabal-install-2.0, ghc-8.4.1], sources: [hvr-ghc]}}
-        - env: CABALVER=2.0 GHCVER=8.4.1 REMOTE_CONFIGS=-f+remote-configs
-          addons: {apt: {packages: [cabal-install-2.0, ghc-8.4.1], sources: [hvr-ghc]}}
+        - env: CABALVER=2.2 GHCVER=8.4.3 REMOTE_CONFIGS=-f-remote-configs
+          addons: {apt: {packages: [cabal-install-2.2, ghc-8.4.3], sources: [hvr-ghc]}}
+        - env: CABALVER=2.2 GHCVER=8.4.3 REMOTE_CONFIGS=-f+remote-configs
+          addons: {apt: {packages: [cabal-install-2.2, ghc-8.4.3], sources: [hvr-ghc]}}
 
 before_install:
     - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
