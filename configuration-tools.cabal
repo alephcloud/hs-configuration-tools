@@ -40,6 +40,11 @@ Copyright:
 Category: Configuration, Console
 Build-type: Custom
 cabal-version: 1.24
+tested-with:
+      GHC==8.4.3
+    , GHC==8.2.2
+    , GHC==8.0.2
+    , GHC==7.10.3
 
 extra-doc-files:
     README.md,
