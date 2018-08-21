@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -38,7 +37,11 @@ import Example hiding (main)
 
 import Prelude.Unicode
 
+#if MIN_VERSION_Cabal(2,0,0)
+import PkgInfo
+#else
 import PkgInfo_url_example_test
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- main

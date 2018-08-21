@@ -6,10 +6,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-#ifndef MIN_VERSION_base
-#define MIN_VERSION_base(x,y,z) 1
-#endif
-
 -- |
 -- Module: Configuration.Utils.Validation
 -- Copyright: Copyright © 2014 AlephCloud Systems, Inc.
@@ -71,18 +67,12 @@ module Configuration.Utils.Validation
 
 import Configuration.Utils.Internal
 
-#if ! MIN_VERSION_base(4,8,0)
-import Control.Applicative
-#endif
 import Control.Monad.Error.Class
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Writer.Class
 
 import qualified Data.Foldable as F
-#if ! MIN_VERSION_base(4,8,0)
-import Data.Monoid
-#endif
 import Data.Monoid.Unicode
 import qualified Data.Text as T
 
