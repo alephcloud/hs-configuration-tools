@@ -1,3 +1,17 @@
+0.4.0 (2018-08-21)
+==================
+
+*   Drop support for GHC < 7.10 and base < 4.8
+*   Drop support for Cabal < 1.24
+*   Drop support for transformers < 0.4
+*   Don't run CI tests for Cabal < 2
+
+*   With Cabal 2.0 or later package info modules are placed in per component
+    `autogen` directories. All package info modules are named just `PkgInfo`.
+    For backward compatibility modules with the old legacy names (`PkgInfo_*`)
+    are still generated but marked deprecated. With Cabal 1.24 only the legacy
+    behavior is available and a deprecation warning is raised.
+
 0.3.1 (2018-03-16)
 ==================
 
