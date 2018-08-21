@@ -13,19 +13,8 @@
 -- process at the end of the configuration phase and generates a module with
 -- package information for each component of the cabal package.
 --
--- The modules are created in the /autogen/ build directory where also the
--- @Path_@ module is created by cabal's simple build setup. This is usually the
--- directory @.\/dist\/build\/autogen@.
---
--- For a library component the module is named just @PkgInfo@. For all other
--- components the module is named @PkgInfo_COMPONENT_NAME@ where
--- @COMPONENT_NAME@ is the name of the component with @-@ characters replaced by
--- @_@.
---
--- For instance, if a cabal package contains a library and an executable that is
--- called /my-app/, the following modules are created: @PkgInfo@ and
--- @PkgInfo_my_app@.
---
+-- The modules are created in the /autogen/ build directories where also the
+-- @Path_@ modules are created by cabal's simple build setup.
 --
 -- = Usage as Setup Script
 --
@@ -123,6 +112,7 @@ import Distribution.Simple.PackageIndex
 import Distribution.Text
 
 #if MIN_VERSION_Cabal(2,0,0)
+import qualified Distribution.Compat.Graph as Graph
 import Distribution.Types.LocalBuildInfo
 import Distribution.Types.UnqualComponentName
 #endif
@@ -144,7 +134,13 @@ import Data.Monoid
 
 import Prelude hiding (readFile, writeFile)
 
-import System.Directory (doesFileExist, doesDirectoryExist, createDirectoryIfMissing, getCurrentDirectory, canonicalizePath)
+import System.Directory
+    ( doesFileExist
+    , doesDirectoryExist
+    , createDirectoryIfMissing
+    , getCurrentDirectory
+    , canonicalizePath
+    )
 import System.FilePath (isDrive, (</>), takeDirectory)
 import System.Exit (ExitCode(ExitSuccess))
 
@@ -161,14 +157,8 @@ main = defaultMainWithHooks (mkPkgInfoModules simpleUserHooks)
 -- If your setup doesn't contain any other function you can just import
 -- the 'main' function from this module.
 --
--- The modules are created in the /autogen/ build directory where also the
--- @Path_@ module is created by cabal's simple build setup. This is usually the
--- directory @.\/dist\/build\/autogen@.
---
--- For a library component the module is named just @PkgInfo@. For all other
--- components the module is named @PkgInfo_COMPONENT_NAME@ where
--- @COMPONENT_NAME@ is the name of the component with @-@ characters replaced by
--- @_@.
+-- The modules are created in the /autogen/ build directories where also the
+-- @Path_@ modules are created by cabal's simple build setup.
 --
 mkPkgInfoModules
     :: UserHooks
@@ -176,6 +166,77 @@ mkPkgInfoModules
 mkPkgInfoModules hooks = hooks
     { postConf = mkPkgInfoModulesPostConf (postConf hooks)
     }
+
+-- -------------------------------------------------------------------------- --
+-- Compat Implementations
+
+#if !MIN_VERSION_Cabal(2,0,0)
+unFlagName :: FlagName -> String
+unFlagName (FlagName s) = s
+#endif
+
+#if !MIN_VERSION_Cabal(2,2,0)
+unFlagAssignment :: FlagAssignment -> [(FlagName, Bool)]
+unFlagAssignment = id
+#endif
+
+#if !MIN_VERSION_Cabal(2,2,0)
+prettyShow :: Text a => a -> String
+prettyShow = display
+#endif
+
+#if !MIN_VERSION_Cabal(2,0,0)
+-- unUnqualComponentName :: UnqualComponentName -> String
+unUnqualComponentName :: String -> String
+unUnqualComponentName = id
+#endif
+
+prettyLicense :: I.InstalledPackageInfo -> String
+#if MIN_VERSION_Cabal(2,2,0)
+prettyLicense = either prettyShow prettyShow . I.license
+#else
+prettyLicense = prettyShow . I.license
+#endif
+
+-- -------------------------------------------------------------------------- --
+-- Cabal 2.0
+
+#if MIN_VERSION_Cabal(2,0,0)
+mkPkgInfoModulesPostConf
+    :: (Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ())
+    -> Args
+    -> ConfigFlags
+    -> PackageDescription
+    -> LocalBuildInfo
+    -> IO ()
+mkPkgInfoModulesPostConf hook args flags pkgDesc bInfo = do
+    mapM_ (updatePkgInfoModule pkgDesc bInfo) $ Graph.toList $ componentGraph bInfo
+    hook args flags pkgDesc bInfo
+
+updatePkgInfoModule :: PackageDescription -> LocalBuildInfo -> ComponentLocalBuildInfo -> IO ()
+updatePkgInfoModule pkgDesc bInfo clbInfo = do
+    createDirectoryIfMissing True dirName
+    moduleBytes <- pkgInfoModule moduleName cName pkgDesc bInfo
+    updateFile fileName moduleBytes
+
+    -- legacy module
+    legacyModuleBytes <- pkgInfoModule legacyModuleName cName pkgDesc bInfo
+    updateFile legacyFileName legacyModuleBytes
+
+  where
+    dirName = autogenComponentModulesDir bInfo clbInfo
+    cName = unUnqualComponentName <$> componentNameString (componentLocalName clbInfo)
+
+    moduleName = pkgInfoModuleName
+    fileName = dirName ++ "/" ++ moduleName ++ ".hs"
+
+    legacyModuleName = legacyPkgInfoModuleName cName
+    legacyFileName = dirName ++ "/" ++ legacyModuleName ++ ".hs"
+
+-- -------------------------------------------------------------------------- --
+-- Cabal 1.24
+
+#else
 
 mkPkgInfoModulesPostConf
     :: (Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ())
@@ -195,21 +256,40 @@ mkPkgInfoModulesPostConf hook args flags pkgDesc bInfo = do
         CTestName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
         CBenchName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
 
-#if !MIN_VERSION_Cabal(2,0,0)
-    unUnqualComponentName = id
+updatePkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO ()
+updatePkgInfoModule cName pkgDesc bInfo = do
+    createDirectoryIfMissing True dirName
+    moduleBytes <- pkgInfoModule moduleName cName pkgDesc bInfo
+    updateFile fileName moduleBytes
+  where
+    dirName = autogenModulesDir bInfo
+    moduleName = legacyPkgInfoModuleName cName
+    fileName = dirName ++ "/" ++ moduleName ++ ".hs"
 #endif
 
-pkgInfoModuleName :: Maybe String -> String
-pkgInfoModuleName Nothing = "PkgInfo"
-pkgInfoModuleName (Just cn) = "PkgInfo_" ++ map tr cn
+-- -------------------------------------------------------------------------- --
+-- Generate PkgInfo Module
+
+pkgInfoModuleName :: String
+pkgInfoModuleName = "PkgInfo"
+
+updateFile :: FilePath -> B.ByteString -> IO ()
+updateFile fileName content = do
+    doesFileExist fileName >>= \x -> if x
+    then do
+        oldRevisionFile <- B.readFile fileName
+        when (oldRevisionFile /= content) update
+    else
+        update
+  where
+    update = B.writeFile fileName content
+
+legacyPkgInfoModuleName :: Maybe String -> String
+legacyPkgInfoModuleName Nothing = "PkgInfo"
+legacyPkgInfoModuleName (Just cn) = "PkgInfo_" ++ map tr cn
   where
     tr '-' = '_'
     tr c = c
-
--- FIXME: autoModulesDir is deprecated and should be replaced by
--- autogenComponentModulesDir.
-pkgInfoFileName :: Maybe String -> LocalBuildInfo -> FilePath
-pkgInfoFileName cn bInfo = autogenModulesDir bInfo ++ "/" ++ pkgInfoModuleName cn ++ ".hs"
 
 trim :: String -> String
 trim = f . f
@@ -229,23 +309,8 @@ getVcsOfDir d = do
             then return Nothing
             else getVcsOfDir (takeDirectory canonicDir)
 
-#if !MIN_VERSION_Cabal(2,0,0)
-unFlagName :: FlagName -> String
-unFlagName (FlagName s) = s
-#endif
-
-#if !MIN_VERSION_Cabal(2,2,0)
-unFlagAssignment :: FlagAssignment -> [(FlagName, Bool)]
-unFlagAssignment = id
-#endif
-
-#if !MIN_VERSION_Cabal(2,2,0)
-prettyShow :: Text a => a -> String
-prettyShow = display
-#endif
-
-pkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
-pkgInfoModule cName pkgDesc bInfo = do
+pkgInfoModule :: String -> Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
+pkgInfoModule moduleName cName pkgDesc bInfo = do
     (tag, revision, branch) <- getVCS >>= \x -> case x of
         Just Mercurial -> hgInfo
         Just Git -> gitInfo
@@ -261,10 +326,11 @@ pkgInfoModule cName pkgDesc bInfo = do
             [ "{-# LANGUAGE OverloadedStrings #-}"
             , "{-# LANGUAGE RankNTypes #-}"
             , ""
-            , "module " <> (pack . pkgInfoModuleName) cName <> " where"
+            , "module " <> pack moduleName <> " " <> deprecatedMsg <> " where"
             , ""
             , "    import Data.String (IsString)"
             , "    import Data.Monoid"
+            , "    import Prelude hiding ((<>))"
             , ""
             , "    name :: IsString a => Maybe a"
             , "    name = " <> maybe "Nothing" (\x -> "Just \"" <> pack x <> "\"") cName
@@ -358,19 +424,9 @@ pkgInfoModule cName pkgDesc bInfo = do
     displayOptimisationLevel NormalOptimisation = "normal"
     displayOptimisationLevel MaximumOptimisation = "maximum"
 
-updatePkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO ()
-updatePkgInfoModule cName pkgDesc bInfo = do
-    createDirectoryIfMissing True $ autogenModulesDir bInfo
-    newFile <- pkgInfoModule cName pkgDesc bInfo
-    let update = B.writeFile fileName newFile
-    doesFileExist fileName >>= \x -> if x
-    then do
-        oldRevisionFile <- B.readFile fileName
-        when (oldRevisionFile /= newFile) update
-    else
-        update
-  where
-    fileName = pkgInfoFileName cName bInfo
+    deprecatedMsg = if moduleName /= pkgInfoModuleName
+        then "{-# DEPRECATED \"Update to Cabal 2.0 or later and use just PkgInfo as module name.\" #-}"
+        else ""
 
 licenseFilesText :: PackageDescription -> IO B.ByteString
 licenseFilesText pkgDesc =
@@ -405,11 +461,7 @@ noVcsInfo = return ("", "", "")
 pkgIdWithLicense :: I.InstalledPackageInfo -> String
 pkgIdWithLicense a = (display . packageId) a
     ++ " ["
-#if MIN_VERSION_Cabal(2,2,0)
-    ++ (either prettyShow prettyShow . I.license) a
-#else
-    ++ (prettyShow . I.license) a
-#endif
+    ++ prettyLicense a
     ++ (if cr /= "" then ", " ++ cr else "")
     ++ "]"
   where
