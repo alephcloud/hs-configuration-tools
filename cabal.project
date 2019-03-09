@@ -1,0 +1,9 @@
+packages: 
+    configuration-tools.cabal
+
+source-repository-package
+    type: git
+    location: https://github.com/larskuhtz/optparse-applicative.git
+    -- tag: feature/option-groups
+    tag: c845fa51ba6b8df319118475d22f189a270431ca
+
