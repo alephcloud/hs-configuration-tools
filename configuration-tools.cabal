@@ -1,11 +1,8 @@
--- ------------------------------------------------------ --
--- Copyright © 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>
--- Copyright © 2014-2015 AlephCloud Systems, Inc.
--- ------------------------------------------------------ --
+cabal-version: 2.2
 
-Name: configuration-tools
-Version: 0.4.0
-Synopsis: Tools for specifying and parsing configurations
+name: configuration-tools
+version: 0.4.1
+synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
     .
@@ -28,20 +25,20 @@ description:
     and in the API documentation of the modules "Configuration.Utils" and
     "Configuration.Utils.Setup".
 
-Homepage: https://github.com/alephcloud/hs-configuration-tools
-Bug-reports: https://github.com/alephcloud/hs-configuration-tools/issues
-License: MIT
-License-file: LICENSE
-Author: Lars Kuhtz <lakuhtz@gmail.com>
-Maintainer: Lars Kuhtz <lakuhtz@gmail.com>
-Copyright:
+homepage: https://github.com/alephcloud/hs-configuration-tools
+bug-reports: https://github.com/alephcloud/hs-configuration-tools/issues
+license: MIT
+license-file: LICENSE
+author: Lars Kuhtz <lakuhtz@gmail.com>
+maintainer: Lars Kuhtz <lakuhtz@gmail.com>
+copyright:
     (c) 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
-Category: Configuration, Console
-Build-type: Custom
-cabal-version: 1.24
+category: Configuration, Console
+build-type: Custom
 tested-with:
-      GHC==8.4.3
+      GHC==8.6.5
+    , GHC==8.4.3
     , GHC==8.2.2
     , GHC==8.0.2
     , GHC==7.10.3
@@ -64,19 +61,19 @@ source-repository head
     location: https://github.com/alephcloud/hs-configuration-tools.git
     branch: master
 
-source-repository this
-    type: git
-    location: https://github.com/alephcloud/hs-configuration-tools.git
-    tag: 0.4.0
-
 flag remote-configs
     Description: enable loading of configuration files from HTTP URLs
     Default: True
     Manual: True
 
-Library
-    hs-source-dirs: src
+common commons
     default-language: Haskell2010
+    build-depends: base >= 4.8 && < 5
+    ghc-options: -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
+
+library
+    import: commons
+    hs-source-dirs: src
 
     exposed-modules:
         Configuration.Utils
@@ -99,7 +96,6 @@ Library
         aeson >= 0.7.0.6,
         ansi-wl-pprint >= 0.6,
         attoparsec >= 0.11.3.4,
-        base >= 4.8 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10.0.2,
         case-insensitive >= 1.2,
@@ -136,11 +132,9 @@ Library
     if flag(remote-configs)
         cpp-options: -DREMOTE_CONFIGS
 
-    ghc-options: -Wall
-
-Test-Suite url-example-test
+test-suite url-example-test
+    import: commons
     type: exitcode-stdio-1.0
-    default-language: Haskell2010
     main-is: TestExample.hs
     hs-source-dirs: examples, test
 
@@ -152,7 +146,6 @@ Test-Suite url-example-test
 
     build-depends:
         Cabal >= 1.24,
-        base >= 4.8 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         bytestring >= 0.10,
         configuration-tools,
@@ -173,17 +166,12 @@ Test-Suite url-example-test
 
         cpp-options: -DREMOTE_CONFIGS
 
-    ghc-options: -Wall
-
-Test-Suite trivial
+test-suite trivial
+    import: commons
     type: exitcode-stdio-1.0
-    default-language: Haskell2010
     main-is: Trivial.hs
     hs-source-dirs: examples
 
     build-depends:
-        base >= 4.8 && < 5.0,
         base-unicode-symbols >= 0.2.2.4,
         configuration-tools
-
-    ghc-options: -Wall
