@@ -136,6 +136,7 @@ test-suite url-example-test
     type: exitcode-stdio-1.0
     main-is: TestExample.hs
     hs-source-dirs: examples, test
+    autogen-modules: PkgInfo
 
     other-modules:
         Example
@@ -169,6 +170,7 @@ test-suite trivial
     type: exitcode-stdio-1.0
     main-is: Trivial.hs
     hs-source-dirs: examples
+    autogen-modules: PkgInfo
 
     other-modules:
         PkgInfo
