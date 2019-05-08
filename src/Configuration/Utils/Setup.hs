@@ -4,6 +4,8 @@
 -- ------------------------------------------------------ --
 
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -102,13 +104,13 @@ module Configuration.Utils.Setup
 #define MIN_VERSION_Cabal(a,b,c) 0
 #endif
 
+import qualified Distribution.InstalledPackageInfo as I
 import Distribution.PackageDescription
 import Distribution.Simple
-import Distribution.Simple.Setup
-import qualified Distribution.InstalledPackageInfo as I
-import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.BuildPaths
+import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
+import Distribution.Simple.Setup
 import Distribution.Text
 
 #if MIN_VERSION_Cabal(2,0,0)
@@ -135,14 +137,10 @@ import Data.Monoid
 import Prelude hiding (readFile, writeFile)
 
 import System.Directory
-    ( doesFileExist
-    , doesDirectoryExist
-    , createDirectoryIfMissing
-    , getCurrentDirectory
-    , canonicalizePath
-    )
-import System.FilePath (isDrive, (</>), takeDirectory)
+    (canonicalizePath, createDirectoryIfMissing, doesDirectoryExist,
+    doesFileExist, getCurrentDirectory)
 import System.Exit (ExitCode(ExitSuccess))
+import System.FilePath (isDrive, takeDirectory, (</>))
 
 -- | Include this function when your setup doesn't contain any
 -- extra functionality.
@@ -275,12 +273,11 @@ pkgInfoModuleName = "PkgInfo"
 
 updateFile :: FilePath -> B.ByteString -> IO ()
 updateFile fileName content = do
-    doesFileExist fileName >>= \x -> if x
-    then do
-        oldRevisionFile <- B.readFile fileName
-        when (oldRevisionFile /= content) update
-    else
-        update
+    x <- doesFileExist fileName
+    if | not x -> update
+       | otherwise -> do
+           oldRevisionFile <- B.readFile fileName
+           when (oldRevisionFile /= content) update
   where
     update = B.writeFile fileName content
 
@@ -311,7 +308,7 @@ getVcsOfDir d = do
 
 pkgInfoModule :: String -> Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
 pkgInfoModule moduleName cName pkgDesc bInfo = do
-    (tag, revision, branch) <- getVCS >>= \x -> case x of
+    (tag, revision, branch) <- getVCS >>= \case
         Just Mercurial -> hgInfo
         Just Git -> gitInfo
         _ -> noVcsInfo
@@ -466,4 +463,3 @@ pkgIdWithLicense a = (display . packageId) a
     ++ "]"
   where
     cr = (unwords . words . I.copyright) a
-

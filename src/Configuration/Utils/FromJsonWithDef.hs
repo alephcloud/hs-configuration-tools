@@ -5,12 +5,10 @@
 {-# LANGUAGE UnicodeSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 
@@ -50,19 +48,14 @@ import Prelude.Unicode
 identifyJSON ∷ B.ByteString → Either String Value
 identifyJSON = A.eitherResult . A.parse json'
 
-checkUnexpected
-    ∷ String
-    → [T.Text]
-    → Object
-    → Parser ()
-checkUnexpected section props o = do
+checkUnexpected ∷ String → [T.Text] → Object → Parser ()
+checkUnexpected section props o =
     if H.null unexpected
         then return ()
         else fail $ "Unexpected properties in " ⊕ section ⊕ " : " ⊕ showUnexpected
-
     where
-    unexpected = o `H.difference` (H.fromList ∘ map (\x → (x,())) $ props)
-    showUnexpected = B8.unpack ∘ encode ∘ Object $ unexpected
+      unexpected = o `H.difference` (H.fromList ∘ map (,()) $ props)
+      showUnexpected = B8.unpack ∘ encode ∘ Object $ unexpected
 
 -- -------------------------------------------------------------------------- --
 -- Parse With Default Values

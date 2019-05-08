@@ -1,6 +1,5 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
@@ -145,7 +144,7 @@ simpleHttpWithValidationPolicy
     → HttpsCertPolicy
     → IO (HTTP.Response LB.ByteString)
 simpleHttpWithValidationPolicy url policy = do
-    request ← (HTTP.parseUrlThrow $ T.unpack url)
+    request ← HTTP.parseUrlThrow $ T.unpack url
     httpWithValidationPolicy request policy
 
 httpWithValidationPolicy

@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -68,7 +67,7 @@ import qualified Options.Applicative.Types as O
 import qualified Options.Applicative as O
 import qualified Options.Applicative.Builder.Internal as O
 
-import Prelude hiding (concatMap, mapM_, any)
+import Prelude hiding (any, concatMap, mapM_)
 
 import qualified Text.ParserCombinators.ReadP as P hiding (string)
 
@@ -265,6 +264,5 @@ eitherReadP
 eitherReadP label p s =
     case [ x | (x,"") ← P.readP_to_S p (T.unpack s) ] of
         [x] → Right x
-        []  → Left $ "eitherReadP: no parse for " ⊕ label ⊕ " of " ⊕ s
-        _  → Left $ "eitherReadP: ambigous parse for " ⊕ label ⊕ " of " ⊕ s
-
+        [] → Left $ "eitherReadP: no parse for " ⊕ label ⊕ " of " ⊕ s
+        _ → Left $ "eitherReadP: ambigous parse for " ⊕ label ⊕ " of " ⊕ s
