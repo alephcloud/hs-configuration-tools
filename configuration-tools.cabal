@@ -91,43 +91,42 @@ library
         exposed-modules:
             Configuration.Utils.Internal.HttpsCertPolicy
 
-    build-depends:
-        Cabal >= 1.24,
-        aeson >= 0.7.0.6,
-        ansi-wl-pprint >= 0.6,
-        attoparsec >= 0.11.3.4,
-        base-unicode-symbols >= 0.2.2.4,
-        bytestring >= 0.10.0.2,
-        case-insensitive >= 1.2,
-        deepseq >= 1.3,
-        directory >= 1.2.1.0,
-        dlist >= 0.7.1,
-        filepath >= 1.3.0.1,
-        mtl >= 2.2,
-        network-uri >= 2.6.0.1,
-        optparse-applicative >= 0.11.0.2,
-        process >= 1.2.0.0,
-        profunctors >= 4.0.4,
-        semigroups >= 0.18,
-        text >= 1.0,
-        transformers >= 0.4,
-        unordered-containers >= 0.2.4.0,
-        yaml >= 0.8.8.3
+    build-depends: Cabal >= 1.24
+                 , aeson >= 0.7.0.6
+                 , ansi-wl-pprint >= 0.6
+                 , attoparsec >= 0.11.3.4
+                 , base-unicode-symbols >= 0.2.2.4
+                 , bytestring >= 0.10.0.2
+                 , case-insensitive >= 1.2
+                 , deepseq >= 1.3
+                 , directory >= 1.2.1.0
+                 , dlist >= 0.7.1
+                 , filepath >= 1.3.0.1
+                 , mtl >= 2.2
+                 , network-uri >= 2.6.0.1
+                 , optparse-applicative >= 0.11.0.2
+                 , process >= 1.2.0.0
+                 , profunctors >= 4.0.4
+                 , semigroups >= 0.18
+                 , semigroupoids >= 5.0
+                 , text >= 1.0
+                 , transformers >= 0.4
+                 , unordered-containers >= 0.2.4.0
+                 , yaml >= 0.8.8.3
 
     if flag(remote-configs)
-        build-depends:
-            base64-bytestring >= 1.0,
-            connection >= 0.2,
-            data-default >= 0.5,
-            enclosed-exceptions >= 1.0,
-            http-client >= 0.4,
-            http-client-tls >= 0.2,
-            http-types >= 0.8,
-            monad-control >= 1.0,
-            tls >= 1.2,
-            x509 >= 1.5,
-            x509-system >= 1.5,
-            x509-validation >= 1.5.1
+        build-depends: base64-bytestring >= 1.0
+                     , connection >= 0.2
+                     , data-default >= 0.5
+                     , enclosed-exceptions >= 1.0
+                     , http-client >= 0.4
+                     , http-client-tls >= 0.2
+                     , http-types >= 0.8
+                     , monad-control >= 1.0
+                     , tls >= 1.2
+                     , x509 >= 1.5
+                     , x509-system >= 1.5
+                     , x509-validation >= 1.5.1
 
     if flag(remote-configs)
         cpp-options: -DREMOTE_CONFIGS
@@ -145,25 +144,23 @@ test-suite url-example-test
         Tests.BoolOption
         Tests.MonoidConfig
 
-    build-depends:
-        Cabal >= 1.24,
-        base-unicode-symbols >= 0.2.2.4,
-        bytestring >= 0.10,
-        configuration-tools,
-        mtl >= 2.2,
-        text >= 1.0,
-        transformers >= 0.4,
-        unordered-containers >= 0.2.4.0,
-        yaml >= 0.8.8.3
+    build-depends: Cabal >= 1.24
+                 , base-unicode-symbols >= 0.2.2.4
+                 , bytestring >= 0.10
+                 , configuration-tools
+                 , mtl >= 2.2
+                 , text >= 1.0
+                 , transformers >= 0.4
+                 , unordered-containers >= 0.2.4.0
+                 , yaml >= 0.8.8.3
 
     if flag(remote-configs)
-        build-depends:
-            enclosed-exceptions >= 1.0,
-            http-types >= 0.8,
-            monad-control >= 1.0,
-            wai >= 3.0,
-            warp >= 3.0,
-            warp-tls >= 3.0
+        build-depends: enclosed-exceptions >= 1.0
+                     , http-types >= 0.8
+                     , monad-control >= 1.0
+                     , wai >= 3.0
+                     , warp >= 3.0
+                     , warp-tls >= 3.0
 
         cpp-options: -DREMOTE_CONFIGS
 
@@ -176,6 +173,5 @@ test-suite trivial
     other-modules:
         PkgInfo
 
-    build-depends:
-        base-unicode-symbols >= 0.2.2.4,
-        configuration-tools
+    build-depends: base-unicode-symbols >= 0.2.2.4
+                 , configuration-tools
