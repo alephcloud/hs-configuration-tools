@@ -1,7 +1,7 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
@@ -41,40 +41,41 @@ import Configuration.Utils.Monoid
 import Configuration.Utils.Operators
 import Configuration.Utils.Validation
 
-import Control.Exception (catches, Handler(..))
-import Control.Monad.Writer hiding (mapM_)
+import Control.Arrow (second)
+import Control.Exception (Exception, Handler(..), catches, throwIO)
+import Control.Monad.State
+import Control.Monad.Writer
 
+import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.ByteString.Lazy as LB
+import Data.Default (def)
+import qualified Data.HashMap.Strict as HM
+import Data.IORef
+import qualified Data.List as L
 import Data.Maybe
 import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import Data.Typeable
+import qualified Data.X509 as TLS
+import qualified Data.X509.Validation as TLS
 
 import qualified Options.Applicative as O
 
-import Prelude hiding (concatMap, mapM_, any)
+import Prelude hiding (any, concatMap, mapM_)
 import Prelude.Unicode
 
-import Control.Arrow (second)
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.List as L
 import qualified Network.Connection as HTTP
 import qualified Network.HTTP.Client as HTTP
 import qualified Network.HTTP.Client.TLS as HTTP
-import qualified System.X509 as TLS (getSystemCertificateStore)
-import qualified Data.X509.Validation as TLS (ServiceID, Fingerprint(..), getFingerprint, ValidationCacheQueryCallback)
 import qualified Network.TLS as TLS hiding (HashSHA256)
-import Data.Default (def)
-import qualified Network.TLS.Extra as TLS (ciphersuite_all)
+import qualified Network.TLS.Extra as TLS
+
+import qualified System.X509 as TLS
+
 import Text.Read (readEither)
-import qualified Data.ByteString.Base64 as B64
-import Control.Monad.State hiding (mapM_)
-import qualified Data.HashMap.Strict as HM
-import Control.Exception (Exception, catch, throwIO, fromException)
-import Data.IORef
-import qualified Data.Text.Encoding as T
-import qualified Data.X509 as TLS (HashALG(HashSHA256), Certificate, SignedExact, CertificateChain(..))
 
 -- -------------------------------------------------------------------------- --
 -- HTTPS Certificate Validation Policy
@@ -144,7 +145,7 @@ simpleHttpWithValidationPolicy
     → HttpsCertPolicy
     → IO (HTTP.Response LB.ByteString)
 simpleHttpWithValidationPolicy url policy = do
-    request ← (HTTP.parseUrl $ T.unpack url)
+    request ← (HTTP.parseUrlThrow $ T.unpack url)
     httpWithValidationPolicy request policy
 
 httpWithValidationPolicy
@@ -154,7 +155,8 @@ httpWithValidationPolicy
 httpWithValidationPolicy request policy = do
     certVar ← newIORef Nothing
     settings ← getSettings policy certVar
-    HTTP.withManager settings (HTTP.httpLbs request) `catches`
+    mgr <- HTTP.newManager settings
+    HTTP.httpLbs request mgr `catches`
         [ Handler $ \(e ∷ TLS.TLSException) → do
             cert ← readIORef certVar
             handleTlsException request cert e
@@ -285,7 +287,7 @@ getSettings policy certVar = do
     -- and 'TLS.connectTo' are going to overwrite this anyways.
     --
     tlsSettings certstore = (TLS.defaultParamsClient "" "")
-        { TLS.clientSupported = def { TLS.supportedCiphers = TLS.ciphersuite_all }
+        { TLS.clientSupported = def { TLS.supportedCiphers = TLS.ciphersuite_default }
         , TLS.clientShared = def
             { TLS.sharedCAStore = certstore
             , TLS.sharedValidationCache = validationCache
@@ -325,4 +327,3 @@ getSettings policy certVar = do
                     ⊕ " but got fingerprint: " ⊕ printFingerprint fingerprint
       where
         printFingerprint (TLS.Fingerprint f) = fromString ∘ B8.unpack ∘ B64.encode $ f
-

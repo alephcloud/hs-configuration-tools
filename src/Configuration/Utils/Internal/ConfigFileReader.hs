@@ -43,8 +43,8 @@ import Configuration.Utils.Validation
 import Control.Applicative
 import Control.DeepSeq (NFData)
 import Control.Monad
-import Control.Monad.IO.Class
 import Control.Monad.Error.Class
+import Control.Monad.IO.Class
 
 import qualified Data.ByteString.Char8 as B8
 import Data.Monoid.Unicode
@@ -54,7 +54,7 @@ import qualified Data.Yaml as Yaml
 
 import GHC.Generics
 
-import Prelude hiding (concatMap, mapM_, any)
+import Prelude hiding (any, concatMap, mapM_)
 import Prelude.Unicode
 
 #ifdef REMOTE_CONFIGS
@@ -208,7 +208,7 @@ loadRemote conf path = do
     url = getConfigFile path
     policy = _cfcHttpsPolicy conf
     doHttp = liftIO $ do
-        request ← (HTTP.parseUrl $ T.unpack url)
+        request ← (HTTP.parseUrlThrow $ T.unpack url)
             <&> over requestHeaders ((:) acceptHeader)
         resp ← httpWithValidationPolicy request policy
         let format = maybe Other contentType ∘ L.lookup HTTP.hContentType $ HTTP.responseHeaders resp
@@ -220,4 +220,3 @@ requestHeaders ∷ Lens' HTTP.Request HTTP.RequestHeaders
 requestHeaders = lens HTTP.requestHeaders $ \s a → s { HTTP.requestHeaders = a }
 
 #endif
-

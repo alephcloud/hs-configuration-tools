@@ -2,16 +2,16 @@
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
-{-# LANGUAGE UnicodeSyntax #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UnicodeSyntax #-}
 
-module Main
-( main
-) where
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
+module Main ( main ) where
 
 import Configuration.Utils
-import PkgInfo_trivial
+import PkgInfo
 
 instance FromJSON (() → ()) where
     parseJSON _ = pure id
@@ -21,4 +21,3 @@ mainInfo = programInfo "Hello World" (pure id) ()
 
 main ∷ IO ()
 main = runWithPkgInfoConfiguration mainInfo pkgInfo . const $ putStrLn "hello world"
-

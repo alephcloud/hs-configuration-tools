@@ -140,6 +140,7 @@ test-suite url-example-test
 
     other-modules:
         Example
+        PkgInfo
         TestTools
         Tests.BoolOption
         Tests.MonoidConfig
@@ -171,6 +172,9 @@ test-suite trivial
     type: exitcode-stdio-1.0
     main-is: Trivial.hs
     hs-source-dirs: examples
+
+    other-modules:
+        PkgInfo
 
     build-depends:
         base-unicode-symbols >= 0.2.2.4,
