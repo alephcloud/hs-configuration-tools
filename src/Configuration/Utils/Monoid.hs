@@ -13,21 +13,22 @@
 -- Maintainer: Lars Kuhtz <lkuhtz@pivotmail.com>
 -- Stability: experimental
 --
--- The distinction between appending on the left and appending on
--- the right is important for monoids that are sensitive to ordering
--- such as 'List'. It is also of relevance for monoids with set semantics
--- with non-extensional equality such as `HashMap`.
+-- The distinction between appending on the left and appending on the right is
+-- important for monoids that are sensitive to ordering such as 'List'. It is
+-- also of relevance for monoids with set semantics with non-extensional
+-- equality such as `HashMap`.
 --
 module Configuration.Utils.Monoid
-( LeftMonoidalUpdate
-, leftMonoidalUpdate
-, fromLeftMonoidalUpdate
-, pLeftMonoidalUpdate
-, RightMonoidalUpdate
-, rightMonoidalUpdate
-, fromRightMonoidalUpdate
-, pRightMonoidalUpdate
-) where
+  ( LeftMonoidalUpdate
+  , leftMonoidalUpdate
+  , fromLeftMonoidalUpdate
+  , pLeftMonoidalUpdate
+  , pLeftSemigroupalUpdate
+  , RightMonoidalUpdate
+  , rightMonoidalUpdate
+  , fromRightMonoidalUpdate
+  , pRightMonoidalUpdate
+  ) where
 
 import Configuration.Utils.CommandLine
 import Configuration.Utils.Internal
@@ -35,11 +36,13 @@ import Configuration.Utils.Internal
 import Control.Monad.Writer hiding (mapM_)
 
 import Data.Aeson
+import qualified Data.List.NonEmpty as NEL
 import Data.Semigroup
+import Data.Semigroup.Foldable (fold1)
 
 import qualified Options.Applicative.Types as O
 
-import Prelude hiding (concatMap, mapM_, any)
+import Prelude hiding (any, concatMap, mapM_)
 import Prelude.Unicode
 
 -- | Update a value by appending on the left. Under normal
@@ -99,6 +102,13 @@ instance (FromJSON a, Monoid a) ⇒ FromJSON (LeftMonoidalUpdate a → LeftMonoi
 pLeftMonoidalUpdate ∷ Monoid a ⇒ O.Parser a → MParser a
 pLeftMonoidalUpdate pElement = mappend ∘ mconcat ∘ reverse <$> many pElement
 
+-- | Like `pLeftMonoidalUpdate`, but works for `Semigroup`s instead. Using this
+-- parser requires the input to have at least one copy (say, for flags that can
+-- be passed multiple times).
+--
+pLeftSemigroupalUpdate ∷ Semigroup a ⇒ O.Parser a → MParser a
+pLeftSemigroupalUpdate pElement = (<>) ∘ fold1 ∘ NEL.fromList ∘ reverse <$> some pElement
+
 -- | Update a value by appending on the right. Under normal
 -- circumstances you'll never use this type directly but only
 -- its 'FromJSON' instance. See the 'leftMonoidalUpdate' for an example.
@@ -128,4 +138,3 @@ instance (FromJSON a, Monoid a) ⇒ FromJSON (RightMonoidalUpdate a → RightMon
 --
 pRightMonoidalUpdate ∷ Monoid a ⇒ O.Parser a → MParser a
 pRightMonoidalUpdate pElement = flip mappend ∘ mconcat <$> many pElement
-
