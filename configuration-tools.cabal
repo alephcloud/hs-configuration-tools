@@ -49,7 +49,7 @@ extra-doc-files:
 
 custom-setup
     setup-depends:
-        Cabal >= 1.24,
+        Cabal >= 2.2,
         base >= 4.8 && < 5.0,
         bytestring >= 0.10.0.2,
         directory >= 1.2.1.0,
@@ -91,7 +91,7 @@ library
         exposed-modules:
             Configuration.Utils.Internal.HttpsCertPolicy
 
-    build-depends: Cabal >= 1.24
+    build-depends: Cabal >= 2.2
                  , aeson >= 0.7.0.6
                  , ansi-wl-pprint >= 0.6
                  , attoparsec >= 0.11.3.4
@@ -145,7 +145,7 @@ test-suite url-example-test
         Tests.BoolOption
         Tests.MonoidConfig
 
-    build-depends: Cabal >= 1.24
+    build-depends: Cabal >= 2.2
                  , base-unicode-symbols >= 0.2.2.4
                  , bytestring >= 0.10
                  , configuration-tools
