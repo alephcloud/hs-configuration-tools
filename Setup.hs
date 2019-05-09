@@ -1,5 +1,5 @@
 -- ------------------------------------------------------ --
--- Copyright © 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2015-2019 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
@@ -102,13 +102,13 @@ module Main
 #define MIN_VERSION_Cabal(a,b,c) 0
 #endif
 
+import qualified Distribution.InstalledPackageInfo as I
 import Distribution.PackageDescription
 import Distribution.Simple
-import Distribution.Simple.Setup
-import qualified Distribution.InstalledPackageInfo as I
-import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.BuildPaths
+import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
+import Distribution.Simple.Setup
 import Distribution.Text
 
 #if MIN_VERSION_Cabal(2,0,0)
@@ -135,14 +135,10 @@ import Data.Monoid
 import Prelude hiding (readFile, writeFile)
 
 import System.Directory
-    ( doesFileExist
-    , doesDirectoryExist
-    , createDirectoryIfMissing
-    , getCurrentDirectory
-    , canonicalizePath
-    )
-import System.FilePath (isDrive, (</>), takeDirectory)
+    (canonicalizePath, createDirectoryIfMissing, doesDirectoryExist,
+    doesFileExist, getCurrentDirectory)
 import System.Exit (ExitCode(ExitSuccess))
+import System.FilePath (isDrive, takeDirectory, (</>))
 
 -- | Include this function when your setup doesn't contain any
 -- extra functionality.
@@ -466,4 +462,3 @@ pkgIdWithLicense a = (display . packageId) a
     ++ "]"
   where
     cr = (unwords . words . I.copyright) a
-

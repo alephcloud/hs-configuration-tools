@@ -1,4 +1,4 @@
-cabal-version: 2.2
+cabal-version: 1.24
 
 name: configuration-tools
 version: 0.4.1
@@ -32,7 +32,7 @@ license-file: LICENSE
 author: Lars Kuhtz <lakuhtz@gmail.com>
 maintainer: Lars Kuhtz <lakuhtz@gmail.com>
 copyright:
-    (c) 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2015-2019 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
 category: Configuration, Console
 build-type: Custom
@@ -49,7 +49,7 @@ extra-doc-files:
 
 custom-setup
     setup-depends:
-        Cabal >= 2.2,
+        Cabal >= 1.24,
         base >= 4.8 && < 5.0,
         bytestring >= 0.10.0.2,
         directory >= 1.2.1.0,
@@ -66,14 +66,10 @@ flag remote-configs
     Default: True
     Manual: True
 
-common commons
-    default-language: Haskell2010
-    build-depends: base >= 4.8 && < 5
-    ghc-options: -Wall -Wincomplete-record-updates -Wincomplete-uni-patterns
-
 library
-    import: commons
     hs-source-dirs: src
+    default-language: Haskell2010
+    ghc-options: -Wall
 
     exposed-modules:
         Configuration.Utils
@@ -91,10 +87,11 @@ library
         exposed-modules:
             Configuration.Utils.Internal.HttpsCertPolicy
 
-    build-depends: Cabal >= 2.2
+    build-depends: Cabal >= 1.24
                  , aeson >= 0.7.0.6
                  , ansi-wl-pprint >= 0.6
                  , attoparsec >= 0.11.3.4
+                 , base >= 4.8 && < 5
                  , base-unicode-symbols >= 0.2.2.4
                  , bytestring >= 0.10.0.2
                  , case-insensitive >= 1.2
@@ -132,7 +129,8 @@ library
         cpp-options: -DREMOTE_CONFIGS
 
 test-suite url-example-test
-    import: commons
+    default-language: Haskell2010
+    ghc-options: -Wall
     type: exitcode-stdio-1.0
     main-is: TestExample.hs
     hs-source-dirs: examples, test
@@ -145,7 +143,8 @@ test-suite url-example-test
         Tests.BoolOption
         Tests.MonoidConfig
 
-    build-depends: Cabal >= 2.2
+    build-depends: Cabal >= 1.24
+                 , base >= 4.8 && < 5
                  , base-unicode-symbols >= 0.2.2.4
                  , bytestring >= 0.10
                  , configuration-tools
@@ -166,7 +165,8 @@ test-suite url-example-test
         cpp-options: -DREMOTE_CONFIGS
 
 test-suite trivial
-    import: commons
+    default-language: Haskell2010
+    ghc-options: -Wall
     type: exitcode-stdio-1.0
     main-is: Trivial.hs
     hs-source-dirs: examples
@@ -175,5 +175,6 @@ test-suite trivial
     other-modules:
         PkgInfo
 
-    build-depends: base-unicode-symbols >= 0.2.2.4
+    build-depends: base >= 4.8 && < 5
+                 , base-unicode-symbols >= 0.2.2.4
                  , configuration-tools
