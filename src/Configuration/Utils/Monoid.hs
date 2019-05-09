@@ -31,7 +31,7 @@ module Configuration.Utils.Monoid
 import Configuration.Utils.CommandLine
 import Configuration.Utils.Internal
 
-import Control.Monad.Writer hiding (mapM_)
+import Control.Monad.Writer hiding (mapM_, (<>))
 
 import Data.Aeson
 import qualified Data.List.NonEmpty as NEL

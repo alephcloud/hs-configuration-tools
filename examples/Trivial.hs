@@ -11,7 +11,7 @@
 module Main ( main ) where
 
 import Configuration.Utils
-import PkgInfo
+import PkgInfo_trivial
 
 instance FromJSON (() → ()) where
     parseJSON _ = pure id

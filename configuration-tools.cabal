@@ -134,11 +134,9 @@ test-suite url-example-test
     type: exitcode-stdio-1.0
     main-is: TestExample.hs
     hs-source-dirs: examples, test
-    autogen-modules: PkgInfo
 
     other-modules:
         Example
-        PkgInfo
         TestTools
         Tests.BoolOption
         Tests.MonoidConfig
@@ -170,10 +168,6 @@ test-suite trivial
     type: exitcode-stdio-1.0
     main-is: Trivial.hs
     hs-source-dirs: examples
-    autogen-modules: PkgInfo
-
-    other-modules:
-        PkgInfo
 
     build-depends: base >= 4.8 && < 5
                  , base-unicode-symbols >= 0.2.2.4
