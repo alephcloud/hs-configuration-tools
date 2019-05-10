@@ -26,6 +26,7 @@ module Configuration.Utils.Monoid
   , rightMonoidalUpdate
   , fromRightMonoidalUpdate
   , pRightMonoidalUpdate
+  , pRightSemigroupalUpdate
   ) where
 
 import Configuration.Utils.CommandLine
@@ -136,3 +137,10 @@ instance (FromJSON a, Monoid a) ⇒ FromJSON (RightMonoidalUpdate a → RightMon
 --
 pRightMonoidalUpdate ∷ Monoid a ⇒ O.Parser a → MParser a
 pRightMonoidalUpdate pElement = flip mappend ∘ mconcat <$> many pElement
+
+-- | Like `pRightMonoidalUpdate`, but works for `Semigroup`s instead. Using this
+-- parser requires the input to have at least one copy (say, for flags that can
+-- be passed multiple times).
+--
+pRightSemigroupalUpdate ∷ Semigroup a ⇒ O.Parser a → MParser a
+pRightSemigroupalUpdate pElement = flip (<>) ∘ fold1 ∘ NEL.fromList <$> some pElement

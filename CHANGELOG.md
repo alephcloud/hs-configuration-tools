@@ -1,7 +1,7 @@
 0.4.1 (2019-05-10)
 ==================
 
-* Added `pLeftSemigroupalUpdate`
+* Added `pLeftSemigroupalUpdate` and `pRightSemigroupalUpdate`.
 
 0.4.0 (2018-08-21)
 ==================
