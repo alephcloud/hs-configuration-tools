@@ -119,7 +119,7 @@ library
           , connection >= 0.2
           , data-default >= 0.5
           , enclosed-exceptions >= 1.0
-          , http-client >= 0.4
+          , http-client >= 0.4.30
           , http-client-tls >= 0.2
           , http-types >= 0.8
           , monad-control >= 1.0
