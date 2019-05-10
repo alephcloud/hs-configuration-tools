@@ -1,5 +1,6 @@
 -- ------------------------------------------------------ --
--- Copyright © 2015-2019 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2019 Colin Woodbury <colin@fosskers.ca>
+-- Copyright © 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
