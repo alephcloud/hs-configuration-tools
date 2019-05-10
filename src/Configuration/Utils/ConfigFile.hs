@@ -75,7 +75,7 @@ import Data.String
 import qualified Data.Text as T
 import Data.Typeable
 
-import Prelude hiding (concatMap, mapM_, any)
+import Prelude hiding (any, concatMap, mapM_)
 
 #ifdef REMOTE_CONFIGS
 import Configuration.Utils.Internal.HttpsCertPolicy
@@ -276,8 +276,7 @@ pConfigFilesConfig = pure id
 -- Miscellaneous Utilities
 
 dropAndUncaml ∷ Int → String → String
-dropAndUncaml i l
-    | length l < i + 1 = l
-    | otherwise = let (h:t) = drop i l
-        in toLower h : concatMap (\x → if isUpper x then "-" ⊕ [toLower x] else [x]) t
-
+dropAndUncaml _ "" = ""
+dropAndUncaml i l = case drop i l of
+    [] -> l
+    (h:t) -> toLower h : concatMap (\x → if isUpper x then "-" ⊕ [toLower x] else [x]) t

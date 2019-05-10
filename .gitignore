@@ -2,4 +2,4 @@ cabal.sandbox.config
 dist
 .*.swp
 .hdevtools.sock
-
+.stack-work/*

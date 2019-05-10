@@ -1,8 +1,7 @@
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
@@ -125,8 +124,8 @@ module Configuration.Utils
 
 import Configuration.Utils.CommandLine
 import Configuration.Utils.ConfigFile
-import qualified Configuration.Utils.Internal.ConfigFileReader as CF
 import Configuration.Utils.Internal
+import qualified Configuration.Utils.Internal.ConfigFileReader as CF
 import Configuration.Utils.Maybe
 import Configuration.Utils.Monoid
 import Configuration.Utils.Operators
@@ -148,7 +147,7 @@ import qualified Options.Applicative.Types as O
 
 import qualified Options.Applicative as O
 
-import Prelude hiding (concatMap, mapM_, any)
+import Prelude hiding (any, concatMap, mapM_)
 import Prelude.Unicode
 
 import System.IO
@@ -316,18 +315,6 @@ data AppConfiguration a = AppConfiguration
     , _configFiles ∷ ![ConfigFile]
     , _mainConfig ∷ !a
     }
-
--- | A flag that indicates that the application should output the effective
--- configuration and exit.
---
-printConfig ∷ Lens' (AppConfiguration a) Bool
-printConfig = lens _printConfig $ \s a → s { _printConfig = a }
-
--- | The 'ConfigFilesConfig' collects all parameters that determine how
--- configuration files are loaded and parsed.
---
-configFilesConfig ∷ Lens' (AppConfiguration a) ConfigFilesConfig
-configFilesConfig = lens _configFilesConfig $ \s a → s { _configFilesConfig = a }
 
 -- | A list of configuration file locations. Configuration file locations are
 -- set either statically in the code or are provided dynamically on the command
@@ -695,4 +682,3 @@ validateConfig appInfo conf = do
     when (any (const True) warnings) $ do
         T.hPutStrLn stderr "WARNINGS:"
         mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
-

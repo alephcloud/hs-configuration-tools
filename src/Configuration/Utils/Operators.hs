@@ -56,7 +56,7 @@ infixr 5 ×
 -- | Functional composition for applicative functors.
 --
 (<*<) ∷ Applicative f ⇒ f (b → c) → f (a → b) → f (a → c)
-(<*<) a b = pure (.) <*> a <*> b
+(<*<) a b = ((.) <$> a) <*> b
 infixr 4 <*<
 {-# INLINE (<*<) #-}
 
@@ -109,4 +109,3 @@ infixr 4 <.>
 infixr 4 ⊙
 {-# INLINE (⊙) #-}
 {-# DEPRECATED (⊙) "use '<*<' instead" #-}
-
