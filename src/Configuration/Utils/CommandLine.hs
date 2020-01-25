@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -71,7 +72,12 @@ import Prelude hiding (any, concatMap, mapM_)
 
 import qualified Text.ParserCombinators.ReadP as P hiding (string)
 
+#if MIN_VERSION_base(4,13,0)
+import Prelude.Unicode hiding ((×))
+#else
 import Prelude.Unicode
+#endif
+
 
 -- -------------------------------------------------------------------------- --
 -- Applicative Option Parsing with Default Values

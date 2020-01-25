@@ -18,9 +18,9 @@ module Main
 ( main
 ) where
 
-import TestTools
 import Tests.BoolOption
 import Tests.MonoidConfig
+import TestTools
 
 import Configuration.Utils
 import Configuration.Utils.Internal
@@ -35,7 +35,11 @@ import qualified Data.Text.IO as T
 
 import Example hiding (main)
 
+#if MIN_VERSION_base(4,13,0)
+import Prelude.Unicode hiding ((×))
+#else
 import Prelude.Unicode
+#endif
 
 #if MIN_VERSION_Cabal(2,0,0)
 import PkgInfo
@@ -386,4 +390,3 @@ t3 = ConfAssertion ["--user=c_u"] (auth ∘ user) "c_u"
 
 t4 ∷ ConfAssertion HttpURL
 t4 = ConfAssertion ["--pwd=c_pwd"] (auth ∘ pwd) "c_pwd"
-

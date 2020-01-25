@@ -148,7 +148,11 @@ import qualified Options.Applicative.Types as O
 import qualified Options.Applicative as O
 
 import Prelude hiding (any, concatMap, mapM_)
+#if MIN_VERSION_base(4,13,0)
+import Prelude.Unicode hiding ((×))
+#else
 import Prelude.Unicode
+#endif
 
 import System.IO
 

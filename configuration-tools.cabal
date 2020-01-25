@@ -1,7 +1,7 @@
 cabal-version: 1.24
 
 name: configuration-tools
-version: 0.4.1
+version: 0.4.2
 synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -38,7 +38,8 @@ copyright:
 category: Configuration, Console
 build-type: Custom
 tested-with:
-      GHC==8.6.5
+      GHC==8.8.2
+    , GHC==8.6.5
     , GHC==8.4.3
     , GHC==8.2.2
     , GHC==8.0.2
@@ -177,4 +178,5 @@ test-suite trivial
     build-depends:
         base >= 4.8 && < 5
       , base-unicode-symbols >= 0.2.2.4
+      , Cabal >= 1.24
       , configuration-tools

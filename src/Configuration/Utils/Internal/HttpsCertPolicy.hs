@@ -64,7 +64,11 @@ import qualified Data.X509.Validation as TLS
 import qualified Options.Applicative as O
 
 import Prelude hiding (any, concatMap, mapM_)
+#if MIN_VERSION_base(4,13,0)
+import Prelude.Unicode hiding ((×))
+#else
 import Prelude.Unicode
+#endif
 
 import qualified Network.Connection as HTTP
 import qualified Network.HTTP.Client as HTTP

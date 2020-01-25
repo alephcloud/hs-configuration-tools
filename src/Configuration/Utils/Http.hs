@@ -59,7 +59,11 @@ import qualified Data.DList as DL
 import Data.Maybe (isJust)
 import Data.Monoid.Unicode
 
+#if MIN_VERSION_base(4,13,0)
+import Prelude.Unicode hiding ((×))
+#else
 import Prelude.Unicode
+#endif
 
 -- -------------------------------------------------------------------------- --
 -- Http Service TLS Configuration
@@ -279,4 +283,3 @@ httpService2clientConfiguration HttpServiceConfiguration{..} = HttpClientConfigu
     , _hccPort = _hscPort
     , _hccUseTLS = isJust _hscUseTLS
     }
-
