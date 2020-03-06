@@ -1,6 +1,6 @@
 -- ------------------------------------------------------ --
 -- Copyright © 2019 Colin Woodbury <colin@fosskers.ca>
--- Copyright © 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2015-2020 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
@@ -113,6 +113,9 @@ import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Setup
 import Distribution.Text
+#if MIN_VERSION_Cabal(3,2,0)
+import Distribution.Utils.ShortText
+#endif
 
 #if MIN_VERSION_Cabal(2,0,0)
 import qualified Distribution.Compat.Graph as Graph
@@ -195,6 +198,14 @@ prettyLicense :: I.InstalledPackageInfo -> String
 prettyLicense = either prettyShow prettyShow . I.license
 #else
 prettyLicense = prettyShow . I.license
+#endif
+
+#if MIN_VERSION_Cabal(3,2,0)
+ft :: ShortText -> String
+ft = fromShortText
+#else
+ft :: String -> String
+ft = id
 #endif
 
 -- -------------------------------------------------------------------------- --
@@ -370,10 +381,10 @@ pkgInfoModule moduleName cName pkgDesc bInfo = do
             , "    copyright = " <> (pack . show . copyright) pkgDesc
             , ""
             , "    author :: IsString a => a"
-            , "    author = \"" <> (pack . author) pkgDesc <> "\""
+            , "    author = \"" <> (pack . ft . author) pkgDesc <> "\""
             , ""
             , "    homepage :: IsString a => a"
-            , "    homepage = \"" <> (pack . homepage) pkgDesc <> "\""
+            , "    homepage = \"" <> (pack . ft . homepage) pkgDesc <> "\""
             , ""
             , "    package :: IsString a => a"
             , "    package = \"" <> (pack . display . package) pkgDesc <> "\""
@@ -463,4 +474,4 @@ pkgIdWithLicense a = (display . packageId) a
     ++ (if cr /= "" then ", " ++ cr else "")
     ++ "]"
   where
-    cr = (unwords . words . I.copyright) a
+    cr = (unwords . words . ft . I.copyright) a
