@@ -5,9 +5,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-#if __GLASGOW_HASKELL__>=708
 {-# LANGUAGE OverloadedLists #-}
-#endif
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -50,9 +48,7 @@ import Configuration.Utils.Internal
 import Configuration.Utils.Validation
 
 import Control.Monad (when)
-#if __GLASGOW_HASKELL__>=708
 import Control.Monad.Writer.Class (tell)
-#endif
 
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.DList as DL
@@ -174,10 +170,8 @@ validateHttpServiceConfiguration ∷ ConfigValidation HttpServiceConfiguration D
 validateHttpServiceConfiguration conf = do
     maybe (return ()) validateHttpServiceTLSConfiguration $ _hscUseTLS conf
     validatePort "port" $ _hscPort conf
-#if __GLASGOW_HASKELL__>=708
     when (_hscPort conf < 1024) $
         tell ["listening on a priviledged port requires super user rights"]
-#endif
     validateNonEmpty "host" $ _hscHost conf
     validateIPv4 "interface" . B8.unpack $ _hscInterface conf
 
