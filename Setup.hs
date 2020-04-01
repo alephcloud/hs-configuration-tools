@@ -1,10 +1,12 @@
 -- ------------------------------------------------------ --
 -- Copyright © 2019 Colin Woodbury <colin@fosskers.ca>
--- Copyright © 2015-2018 Lars Kuhtz <lakuhtz@gmail.com>
+-- Copyright © 2015-2020 Lars Kuhtz <lakuhtz@gmail.com>
 -- Copyright © 2014 AlephCloud Systems, Inc.
 -- ------------------------------------------------------ --
 
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -111,6 +113,9 @@ import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Setup
 import Distribution.Text
+#if MIN_VERSION_Cabal(3,2,0)
+import Distribution.Utils.ShortText
+#endif
 
 #if MIN_VERSION_Cabal(2,0,0)
 import qualified Distribution.Compat.Graph as Graph
@@ -195,6 +200,14 @@ prettyLicense = either prettyShow prettyShow . I.license
 prettyLicense = prettyShow . I.license
 #endif
 
+#if MIN_VERSION_Cabal(3,2,0)
+ft :: ShortText -> String
+ft = fromShortText
+#else
+ft :: String -> String
+ft = id
+#endif
+
 -- -------------------------------------------------------------------------- --
 -- Cabal 2.0
 
@@ -272,12 +285,11 @@ pkgInfoModuleName = "PkgInfo"
 
 updateFile :: FilePath -> B.ByteString -> IO ()
 updateFile fileName content = do
-    doesFileExist fileName >>= \x -> if x
-    then do
-        oldRevisionFile <- B.readFile fileName
-        when (oldRevisionFile /= content) update
-    else
-        update
+    x <- doesFileExist fileName
+    if | not x -> update
+       | otherwise -> do
+           oldRevisionFile <- B.readFile fileName
+           when (oldRevisionFile /= content) update
   where
     update = B.writeFile fileName content
 
@@ -308,7 +320,7 @@ getVcsOfDir d = do
 
 pkgInfoModule :: String -> Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
 pkgInfoModule moduleName cName pkgDesc bInfo = do
-    (tag, revision, branch) <- getVCS >>= \x -> case x of
+    (tag, revision, branch) <- getVCS >>= \case
         Just Mercurial -> hgInfo
         Just Git -> gitInfo
         _ -> noVcsInfo
@@ -369,10 +381,10 @@ pkgInfoModule moduleName cName pkgDesc bInfo = do
             , "    copyright = " <> (pack . show . copyright) pkgDesc
             , ""
             , "    author :: IsString a => a"
-            , "    author = \"" <> (pack . author) pkgDesc <> "\""
+            , "    author = \"" <> (pack . ft . author) pkgDesc <> "\""
             , ""
             , "    homepage :: IsString a => a"
-            , "    homepage = \"" <> (pack . homepage) pkgDesc <> "\""
+            , "    homepage = \"" <> (pack . ft . homepage) pkgDesc <> "\""
             , ""
             , "    package :: IsString a => a"
             , "    package = \"" <> (pack . display . package) pkgDesc <> "\""
@@ -462,4 +474,4 @@ pkgIdWithLicense a = (display . packageId) a
     ++ (if cr /= "" then ", " ++ cr else "")
     ++ "]"
   where
-    cr = (unwords . words . I.copyright) a
+    cr = (unwords . words . ft . I.copyright) a
