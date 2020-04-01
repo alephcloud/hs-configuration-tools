@@ -107,7 +107,7 @@ remoteTests = concat <$> mapM run
 
     run (format, label) = withConfigFileServer typedConfigs textConfigs format $
         sequence
-            × tests2Files2 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            % tests2Files2 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ tests2Files3 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
             ⊕ testsTlsUrl

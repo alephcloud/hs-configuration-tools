@@ -19,8 +19,6 @@ module Configuration.Utils.Operators
 , (>*>)
 , (<$<)
 , (>$>)
-, (<.>)
-, (⊙)
 ) where
 
 -- -------------------------------------------------------------------------- --
@@ -84,29 +82,3 @@ infixr 4 <$<
 (>$>) = flip (<$<)
 infixr 4 >$>
 {-# INLINE (>$>) #-}
-
--- | Functional composition for applicative functors.
---
--- This is a rather popular operator. Due to conflicts (for instance with the
--- lens package) it may have to be imported qualified.
---
-(<.>) ∷ Applicative f ⇒ f (b → c) → f (a → b) → f (a → c)
-(<.>) = (<*<)
-infixr 4 <.>
-{-# INLINE (<.>) #-}
-{-# DEPRECATED (<.>) "use '<*<' instead" #-}
-
--- | For people who like nicely aligned code and do not mind messing with
--- editor key-maps: here a version of '<.>' that uses a unicode symbol
---
--- The hex value of the UTF-8 character ⊙ is 0x2299.
---
--- A convenient VIM key-map is:
---
--- > iabbrev <buffer> ../ ⊙
---
-(⊙) ∷ Applicative f ⇒ f (b → c) → f (a → b) → f (a → c)
-(⊙) = (<.>)
-infixr 4 ⊙
-{-# INLINE (⊙) #-}
-{-# DEPRECATED (⊙) "use '<*<' instead" #-}

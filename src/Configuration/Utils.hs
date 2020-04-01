@@ -357,12 +357,12 @@ pAppConfiguration mainParser = AppConfiguration
     <*> mainParser
   where
     pPrintConfig = O.switch
-        × O.long "print-config"
+        % O.long "print-config"
         ⊕ O.help "Print the parsed configuration to standard out and exit"
         ⊕ O.showDefault
 
     pConfigFile = ConfigFileRequired ∘ T.pack <$> O.strOption
-        × O.long "config-file"
+        % O.long "config-file"
         ⊕ O.metavar "FILE"
         ⊕ O.help "Configuration file in YAML or JSON format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
 
@@ -539,7 +539,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
     -- the 'O.helper' option from optparse-applicative is hidden by default
     -- which seems a bit weired. This option doesn't hide the access to help.
     nonHiddenHelper = abortOption ShowHelpText
-        × long "help"
+        % long "help"
         ⊕ short 'h'
         ⊕ short '?'
         ⊕ help "Show this help message"
@@ -605,7 +605,7 @@ runInternal appInfo maybePkgInfo mainFunction = do
         O.customExecParser parserPrefs (mainOptions appInfo maybePkgInfo)
 
     -- Load and parse all configuration files
-    appConf ← cliAppConf & mainConfig `id` \a → a <$> errorT × CF.parseConfigFiles
+    appConf ← cliAppConf & mainConfig `id` \a → a <$> errorT % CF.parseConfigFiles
         (_configFilesConfig cliAppConf)
         (_piDefaultConfiguration appInfo)
         (_configFiles cliAppConf)

@@ -80,8 +80,8 @@ validateAuth conf =
 
 instance FromJSON (Auth → Auth) where
     parseJSON = withObject "Auth" $ \o → id
-        <$< user ..: "user" × o
-        <*< pwd ..: "pwd" × o
+        <$< user ..: "user" % o
+        <*< pwd ..: "pwd" % o
 
 instance ToJSON Auth where
     toJSON a = object
@@ -92,10 +92,10 @@ instance ToJSON Auth where
 pAuth ∷ MParser Auth
 pAuth = id
     <$< user .:: strOption
-        × long "user"
+        % long "user"
         ⊕ help "user name"
     <*< pwd .:: strOption
-        × long "pwd"
+        % long "pwd"
         ⊕ help "password for user"
 
 -- | Simplified specification of an HTTP URL
@@ -130,9 +130,9 @@ validateHttpURL conf = do
 
 instance FromJSON (HttpURL → HttpURL) where
     parseJSON = withObject "HttpURL" $ \o → id
-        <$< auth %.: "auth" × o
-        <*< domain ..: "domain" × o
-        <*< path ..: "path" × o
+        <$< auth %.: "auth" % o
+        <*< domain ..: "domain" % o
+        <*< path ..: "path" % o
 
 instance ToJSON HttpURL where
     toJSON a = object
@@ -145,11 +145,11 @@ pHttpURL ∷ MParser HttpURL
 pHttpURL = id
     <$< auth %:: pAuth
     <*< domain .:: strOption
-        × long "domain"
+        % long "domain"
         ⊕ short 'd'
         ⊕ help "HTTP domain"
     <*< path .:: strOption
-        × long "path"
+        % long "path"
         ⊕ help "HTTP URL path"
 
 -- | Information about the main Application

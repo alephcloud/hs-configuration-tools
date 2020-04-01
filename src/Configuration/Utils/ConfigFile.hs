@@ -139,8 +139,8 @@ setProperty s k p o = case H.lookup k o of
 -- >
 -- > instance FromJSON (Auth → Auth) where
 -- >     parseJSON = withObject "Auth" $ \o → id
--- >         <$< user ..: "user" × o
--- >         <*< pwd ..: "pwd" × o
+-- >         <$< user ..: "user" % o
+-- >         <*< pwd ..: "pwd" % o
 --
 (..:) ∷ FromJSON b ⇒ Lens' a b → T.Text → Object → Parser (a → a)
 (..:) s k = setProperty s k parseJSON
@@ -211,8 +211,8 @@ updateProperty s k p o = case H.lookup k o of
 -- >
 -- > instance FromJSON (HttpURL → HttpURL) where
 -- >     parseJSON = withObject "HttpURL" $ \o → id
--- >         <$< auth %.: "auth" × o
--- >         <*< domain ..: "domain" × o
+-- >         <$< auth %.: "auth" % o
+-- >         <*< domain ..: "domain" % o
 --
 (%.:) ∷ FromJSON (b → b) ⇒ Lens' a b → T.Text → Object → Parser (a → a)
 (%.:) s k = updateProperty s k parseJSON

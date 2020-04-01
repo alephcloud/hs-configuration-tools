@@ -66,13 +66,13 @@ instance ToJSON RoutingTable where
 
 instance FromJSON (RoutingTable → RoutingTable) where
     parseJSON = withObject "RoutingTable" $ \o → id
-        <$< routingTableMap . fromLeftMonoidalUpdate %.: "route_map" × o
+        <$< routingTableMap . fromLeftMonoidalUpdate %.: "route_map" % o
 
 pRoutingTable ∷ MParser RoutingTable
 pRoutingTable = routingTableMap %:: pLeftMonoidalUpdate pRoute
   where
     pRoute = option (eitherReader readRoute)
-        × long "route"
+        % long "route"
         ⊕ help "add a route to the routing table; the APIROUTE part must not contain a colon character"
         ⊕ metavar "APIROUTE:APIURL"
 
@@ -127,12 +127,12 @@ instance ToJSON StringConfigR where
 
 instance FromJSON (StringConfigR → StringConfigR) where
     parseJSON = withObject "StringConfigR" $ \o → id
-        <$< stringConfigR . fromRightMonoidalUpdate %.: "string" × o
+        <$< stringConfigR . fromRightMonoidalUpdate %.: "string" % o
 
 pStringConfigR ∷ MParser StringConfigR
 pStringConfigR = stringConfigR %:: pRightMonoidalUpdate pString
   where
-    pString = T.pack <$> strOption × long "string"
+    pString = T.pack <$> strOption % long "string"
 
 -- Test cases
 
@@ -202,12 +202,12 @@ instance ToJSON StringConfigL where
 
 instance FromJSON (StringConfigL → StringConfigL) where
     parseJSON = withObject "StringConfigL" $ \o → id
-        <$< stringConfigL . fromLeftMonoidalUpdate %.: "string" × o
+        <$< stringConfigL . fromLeftMonoidalUpdate %.: "string" % o
 
 pStringConfigL ∷ MParser StringConfigL
 pStringConfigL = stringConfigL %:: pLeftMonoidalUpdate pString
   where
-    pString = T.pack <$> strOption × long "string"
+    pString = T.pack <$> strOption % long "string"
 
 -- Test cases
 

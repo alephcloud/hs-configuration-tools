@@ -109,12 +109,12 @@ pHttpsCertPolicy
     → MParser HttpsCertPolicy
 pHttpsCertPolicy prefix = id
     <$< certPolicyInsecure .:: boolOption_
-        × O.long (T.unpack prefix ⊕ "https-insecure")
+        % O.long (T.unpack prefix ⊕ "https-insecure")
         ⊕ O.help "Bypass certificate validation for all HTTPS connections to all services. ONLY USE THIS WHEN YOU UNDERSTAND WHAT YOU DO."
-    <*< certPolicyHostFingerprints %:: pLeftMonoidalUpdate × pRule
+    <*< certPolicyHostFingerprints %:: pLeftMonoidalUpdate % pRule
   where
     pRule = O.option (O.eitherReader readFingerprint)
-        × O.long (T.unpack prefix ⊕ "https-allow-cert")
+        % O.long (T.unpack prefix ⊕ "https-allow-cert")
         ⊕ O.help "Unconditionally trust the certificate for connecting to the service. ONLY USE THIS WHEN YOU ARE SURE THAT THE CERTIFICATE CAN BE TRUSTED."
         ⊕ O.metavar "HOSTNAME:PORT:FINGERPRINT"
     readFingerprint = evalStateT $ do
