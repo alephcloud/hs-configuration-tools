@@ -61,7 +61,7 @@ source-repository head
 
 flag remote-configs
     Description: enable loading of configuration files from HTTP URLs
-    Default: True
+    Default: False
     Manual: True
 
 library
