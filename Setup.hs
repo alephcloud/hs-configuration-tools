@@ -101,30 +101,21 @@ module Main
 , mkPkgInfoModules
 ) where
 
-#ifndef MIN_VERSION_Cabal
-#define MIN_VERSION_Cabal(a,b,c) 0
-#endif
-
+import qualified Distribution.Compat.Graph as Graph
 import qualified Distribution.InstalledPackageInfo as I
 import Distribution.PackageDescription
+import Distribution.Pretty
 import Distribution.Simple
 import Distribution.Simple.BuildPaths
 import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Setup
 import Distribution.Text
-#if MIN_VERSION_Cabal(3,2,0)
-import Distribution.Utils.ShortText
-#endif
-
-#if MIN_VERSION_Cabal(2,0,0)
-import qualified Distribution.Compat.Graph as Graph
 import Distribution.Types.LocalBuildInfo
 import Distribution.Types.UnqualComponentName
-#endif
 
-#if MIN_VERSION_Cabal(2,2,0)
-import Distribution.Pretty
+#if MIN_VERSION_Cabal(3,2,0)
+import Distribution.Utils.ShortText
 #endif
 
 import System.Process
@@ -172,33 +163,8 @@ mkPkgInfoModules hooks = hooks
 -- -------------------------------------------------------------------------- --
 -- Compat Implementations
 
-#if !MIN_VERSION_Cabal(2,0,0)
-unFlagName :: FlagName -> String
-unFlagName (FlagName s) = s
-#endif
-
-#if !MIN_VERSION_Cabal(2,2,0)
-unFlagAssignment :: FlagAssignment -> [(FlagName, Bool)]
-unFlagAssignment = id
-#endif
-
-#if !MIN_VERSION_Cabal(2,2,0)
-prettyShow :: Text a => a -> String
-prettyShow = display
-#endif
-
-#if !MIN_VERSION_Cabal(2,0,0)
--- unUnqualComponentName :: UnqualComponentName -> String
-unUnqualComponentName :: String -> String
-unUnqualComponentName = id
-#endif
-
 prettyLicense :: I.InstalledPackageInfo -> String
-#if MIN_VERSION_Cabal(2,2,0)
 prettyLicense = either prettyShow prettyShow . I.license
-#else
-prettyLicense = prettyShow . I.license
-#endif
 
 #if MIN_VERSION_Cabal(3,2,0)
 ft :: ShortText -> String
@@ -211,7 +177,6 @@ ft = id
 -- -------------------------------------------------------------------------- --
 -- Cabal 2.0
 
-#if MIN_VERSION_Cabal(2,0,0)
 mkPkgInfoModulesPostConf
     :: (Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ())
     -> Args
@@ -242,40 +207,6 @@ updatePkgInfoModule pkgDesc bInfo clbInfo = do
 
     legacyModuleName = legacyPkgInfoModuleName cName
     legacyFileName = dirName ++ "/" ++ legacyModuleName ++ ".hs"
-
--- -------------------------------------------------------------------------- --
--- Cabal 1.24
-
-#else
-
-mkPkgInfoModulesPostConf
-    :: (Args -> ConfigFlags -> PackageDescription -> LocalBuildInfo -> IO ())
-    -> Args
-    -> ConfigFlags
-    -> PackageDescription
-    -> LocalBuildInfo
-    -> IO ()
-mkPkgInfoModulesPostConf hook args flags pkgDesc bInfo = do
-    mkModules
-    hook args flags pkgDesc bInfo
-  where
-    mkModules = mapM_ (f . \(a,_,_) -> a) $ componentsConfigs bInfo
-    f cname = case cname of
-        CLibName -> updatePkgInfoModule Nothing pkgDesc bInfo
-        CExeName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
-        CTestName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
-        CBenchName s -> updatePkgInfoModule (Just $ unUnqualComponentName s) pkgDesc bInfo
-
-updatePkgInfoModule :: Maybe String -> PackageDescription -> LocalBuildInfo -> IO ()
-updatePkgInfoModule cName pkgDesc bInfo = do
-    createDirectoryIfMissing True dirName
-    moduleBytes <- pkgInfoModule moduleName cName pkgDesc bInfo
-    updateFile fileName moduleBytes
-  where
-    dirName = autogenModulesDir bInfo
-    moduleName = legacyPkgInfoModuleName cName
-    fileName = dirName ++ "/" ++ moduleName ++ ".hs"
-#endif
 
 -- -------------------------------------------------------------------------- --
 -- Generate PkgInfo Module

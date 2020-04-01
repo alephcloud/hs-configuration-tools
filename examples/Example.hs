@@ -48,11 +48,7 @@ import Prelude.Unicode
 
 -- This assumes usage of cabal with custom Setup.hs
 --
-#if MIN_VERSION_Cabal(2,0,0)
 import PkgInfo
-#else
-import PkgInfo_url_example_test
-#endif
 
 -- | Specification of the authentication section of a URL.
 --

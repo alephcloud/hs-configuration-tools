@@ -13,11 +13,7 @@ module Main ( main ) where
 
 import Configuration.Utils
 
-#if MIN_VERSION_Cabal(2,0,0)
 import PkgInfo
-#else
-import PkgInfo_trivial
-#endif
 
 instance FromJSON (() → ()) where
     parseJSON _ = pure id

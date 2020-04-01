@@ -41,11 +41,7 @@ import Prelude.Unicode hiding ((×))
 import Prelude.Unicode
 #endif
 
-#if MIN_VERSION_Cabal(2,0,0)
 import PkgInfo
-#else
-import PkgInfo_url_example_test
-#endif
 
 -- -------------------------------------------------------------------------- --
 -- main
