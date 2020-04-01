@@ -1,0 +1,4 @@
+resolver: lts-15.6
+
+extra-deps:
+  - base-unicode-symbols-0.2.3
