@@ -22,7 +22,6 @@ module Configuration.Utils.FromJsonWithDef
 -- * Misc Utils
 , checkUnexpected
 , identifyJSON
-, (×)
 ) where
 
 import Control.Applicative
@@ -187,7 +186,7 @@ instance (FromJSON a, FromJsonWithDef a) ⇒ FromJsonWithDef [a] where
 
 -- | Parse an object field with a default value.
 -- For using this ternary operator within ideomatic
--- applicative style code it can be combined with the '×'
+-- applicative style code it can be combined with the '%'
 -- operator that is defined below
 --
 -- @
@@ -195,8 +194,8 @@ instance (FromJSON a, FromJsonWithDef a) ⇒ FromJsonWithDef [a] where
 --
 -- instance FromJsonWithDef A where
 --     parseJsonWithDef d = withObject "A" $ \o → A
---         <$> o ∴ "a" × fmap a d
---         <*> o ∴ "b" × fmap b d
+--         <$> o ∴ "a" % fmap a d
+--         <*> o ∴ "b" % fmap b d
 -- @
 --
 -- The hex value of the UTF-8 character ∴ is 0x2234.
@@ -209,21 +208,3 @@ instance (FromJSON a, FromJsonWithDef a) ⇒ FromJsonWithDef [a] where
     Just v → parseJsonWithDef d v
   where
     err = fail $ "missing property " ⊕ T.unpack js
-
--- | This operator is an alternative for '($)' with a higher precedence which
--- makes it suitable for usage within Applicative style funtors without the need
--- to add parenthesis.
---
--- The hex value of the UTF-8 char × is 0x00d7
---
--- In vim type: @Ctrl-V u 00d7@
---
--- You may also define a key binding by adding something like the following line
--- to your vim configuration file:
---
--- > iabbrev <buffer> >< ×
---
-(×) ∷ (a → b) → a → b
-(×) = ($)
-infixr 5 ×
-{-# INLINE (×) #-}

@@ -53,15 +53,15 @@ defaultA = A True True True
 pA ∷ MParser A
 pA = id
     <$< a .:: boolOption_
-        × long "a"
+        % long "a"
         ⊕ short 'a'
         ⊕ help "a flag"
     <*< b .:: boolOption
-        × long "b"
+        % long "b"
         ⊕ short 'b'
         ⊕ help "b flag"
     <*< c .:: enableDisableFlag
-        × long "c"
+        % long "c"
         ⊕ long "c_"
         ⊕ short 'd' -- 'c' is taken by --config-file
         ⊕ help "c flag"
@@ -191,4 +191,3 @@ boolOptionTests pkgInfo = atests ⊕ btests ⊕ ctests ⊕ ctests_
 
     runC (x ∷ Int) = runTest pkgInfo infoA ("boolOption-c1-" ⊕ sshow x)
     runC_ (x ∷ Int) = runTest pkgInfo infoA_ ("boolOption-c2-" ⊕ sshow x)
-

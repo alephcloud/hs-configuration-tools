@@ -107,11 +107,11 @@ type MParser a = O.Parser (a → a)
 -- > pAuth ∷ MParser Auth
 -- > pAuth = id
 -- >    <$< user .:: strOption
--- >        × long "user"
+-- >        % long "user"
 -- >        ⊕ short 'u'
 -- >        ⊕ help "user name"
 -- >    <*< pwd .:: strOption
--- >        × long "pwd"
+-- >        % long "pwd"
 -- >        ⊕ help "password for user"
 --
 (.::) ∷ (Alternative f, Applicative f) ⇒ Lens' a b → f b → f (a → a)
@@ -145,7 +145,7 @@ infixr 5 .::
 -- > pHttpURL = id
 -- >     <$< auth %:: pAuth
 -- >     <*< domain .:: strOption
--- >         × long "domain"
+-- >         % long "domain"
 -- >         ⊕ short 'd'
 -- >         ⊕ help "HTTP domain"
 --
@@ -182,7 +182,7 @@ boolOption
     ∷ O.Mod O.OptionFields Bool
     → O.Parser Bool
 boolOption mods = O.option (O.eitherReader (boolReader ∷ String → Either String Bool))
-    × O.metavar "true|false"
+    % O.metavar "true|false"
     ⊕ O.completeWith ["true", "false", "TRUE", "FALSE", "True", "False"]
     ⊕ mods
 
@@ -258,7 +258,7 @@ fileOption
     ∷ O.Mod O.OptionFields String
     → O.Parser FilePath
 fileOption mods = O.strOption
-    × O.metavar "FILE"
+    % O.metavar "FILE"
     ⊕ O.action "file"
     ⊕ mods
 

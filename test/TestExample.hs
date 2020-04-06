@@ -41,11 +41,7 @@ import Prelude.Unicode hiding ((×))
 import Prelude.Unicode
 #endif
 
-#if MIN_VERSION_Cabal(2,0,0)
 import PkgInfo
-#else
-import PkgInfo_url_example_test
-#endif
 
 -- -------------------------------------------------------------------------- --
 -- main
@@ -55,7 +51,7 @@ main = do
 
     -- run tests
     localResults ← sequence
-        × tests0
+        $ tests0
         ⊕ monoidUpdateTests pkgInfo
         ⊕ boolOptionTests pkgInfo
     localFileResults ← localFileTests
@@ -64,7 +60,7 @@ main = do
 
     -- report results
     let (successes, failures) = L.partition id
-            × localResults
+            $ localResults
             ⊕ remoteResults
             ⊕ localFileResults
             ⊕ helpResults
@@ -81,7 +77,7 @@ helpTests ∷ IO [Bool]
 helpTests =
     withConfigFile Yaml config0 $ \tmpPath0 →
     withConfigFile Json config1Part $ \tmpPath1 → sequence
-        × testPrintHelp [tmpPath0, tmpPath1]
+        $ testPrintHelp [tmpPath0, tmpPath1]
 
 localFileTests ∷ IO [Bool]
 localFileTests = concat <$> mapM run
@@ -94,7 +90,7 @@ localFileTests = concat <$> mapM run
     run (format1, format2, label) =
         withConfigFile format1 config0 $ \tmpPath0 →
         withConfigFile format2 config1Part $ \tmpPath1 → sequence
-            × testsConfigFile ("configFile-" ⊕ label) [tmpPath0, tmpPath1]
+            $ testsConfigFile ("configFile-" ⊕ label) [tmpPath0, tmpPath1]
             ⊕ tests2Files1 ("local-" ⊕ label) [tmpPath0, tmpPath1]
             ⊕ tests2Files2 ("local-" ⊕ label) (tmpPath0) (tmpPath1)
             ⊕ tests2Files3 ("local-" ⊕ label) (tmpPath0) (tmpPath1)
@@ -111,7 +107,7 @@ remoteTests = concat <$> mapM run
 
     run (format, label) = withConfigFileServer typedConfigs textConfigs format $
         sequence
-            × tests2Files2 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
+            % tests2Files2 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ tests2Files3 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
             ⊕ testsInvalidUrl
             ⊕ testsTlsUrl

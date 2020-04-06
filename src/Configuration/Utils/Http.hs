@@ -5,9 +5,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-#if __GLASGOW_HASKELL__>=708
 {-# LANGUAGE OverloadedLists #-}
-#endif
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -50,9 +48,7 @@ import Configuration.Utils.Internal
 import Configuration.Utils.Validation
 
 import Control.Monad (when)
-#if __GLASGOW_HASKELL__>=708
 import Control.Monad.Writer.Class (tell)
-#endif
 
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.DList as DL
@@ -97,8 +93,8 @@ validateHttpServiceTLSConfiguration conf = do
 
 instance FromJSON (HttpServiceTLSConfiguration → HttpServiceTLSConfiguration) where
     parseJSON = withObject "HttpServiceTLSConfiguration" $ \o → id
-        <$< hstcCertFile ..: "cert-file" × o
-        <*< hstcKeyFile ..: "pem-file" × o
+        <$< hstcCertFile ..: "cert-file" % o
+        <*< hstcKeyFile ..: "pem-file" % o
 
 -- | This is used as default when wrapped into Maybe and
 --
@@ -125,10 +121,10 @@ instance ToJSON HttpServiceTLSConfiguration where
 pHttpServiceTLSConfiguration ∷ String → MParser HttpServiceTLSConfiguration
 pHttpServiceTLSConfiguration prefix = id
     <$< hstcCertFile .:: strOption
-        × long (prefix ⊕ "cert-file")
+        % long (prefix ⊕ "cert-file")
         ⊕ help "File with PEM encoded TLS Certificate"
     <*< hstcKeyFile .:: strOption
-        × long (prefix ⊕ "key-file")
+        % long (prefix ⊕ "key-file")
         ⊕ help "File with PEM encoded TLS key"
 
 -- -------------------------------------------------------------------------- --
@@ -174,19 +170,17 @@ validateHttpServiceConfiguration ∷ ConfigValidation HttpServiceConfiguration D
 validateHttpServiceConfiguration conf = do
     maybe (return ()) validateHttpServiceTLSConfiguration $ _hscUseTLS conf
     validatePort "port" $ _hscPort conf
-#if __GLASGOW_HASKELL__>=708
     when (_hscPort conf < 1024) $
         tell ["listening on a priviledged port requires super user rights"]
-#endif
     validateNonEmpty "host" $ _hscHost conf
     validateIPv4 "interface" . B8.unpack $ _hscInterface conf
 
 instance FromJSON (HttpServiceConfiguration → HttpServiceConfiguration) where
     parseJSON = withObject "HttpServiceConfiguration" $ \o → id
-        <$< hscHost ∘ bs ..: "host" × o
-        <*< hscPort ..: "port" × o
-        <*< hscInterface ∘ bs ..: "interface" × o
-        <*< hscUseTLS %.: "use-tls" × o
+        <$< hscHost ∘ bs ..: "host" % o
+        <*< hscPort ..: "port" % o
+        <*< hscInterface ∘ bs ..: "interface" % o
+        <*< hscUseTLS %.: "use-tls" % o
       where
         bs ∷ Iso' B8.ByteString String
         bs = iso B8.unpack B8.pack
@@ -202,13 +196,13 @@ instance ToJSON HttpServiceConfiguration where
 pHttpServiceConfiguration ∷ String → MParser HttpServiceConfiguration
 pHttpServiceConfiguration prefix = id
     <$< hscHost ∘ bs .:: strOption
-        × long (prefix ⊕ "host")
+        % long (prefix ⊕ "host")
         ⊕ help "Hostname of the service"
     <*< hscPort .:: option auto
-        × long (prefix ⊕ "port")
+        % long (prefix ⊕ "port")
         ⊕ help "Port of the service"
     <*< hscInterface ∘ bs .:: option auto
-        × long (prefix ⊕ "interface")
+        % long (prefix ⊕ "interface")
         ⊕ help "Interface of the service"
     <*< (hscUseTLS %:: (fmap <$> pHttpServiceTLSConfiguration prefix))
   where
@@ -248,9 +242,9 @@ validateHttpClientConfiguration conf = do
 
 instance FromJSON (HttpClientConfiguration → HttpClientConfiguration) where
     parseJSON = withObject "HttpClientConfiguration" $ \o → id
-        <$< hccHost ∘ bs ..: "host" × o
-        <*< hccPort ..: "port" × o
-        <*< hccUseTLS ..: "use-tls" × o
+        <$< hccHost ∘ bs ..: "host" % o
+        <*< hccPort ..: "port" % o
+        <*< hccUseTLS ..: "use-tls" % o
       where
         bs ∷ Iso' B8.ByteString String
         bs = iso B8.unpack B8.pack
@@ -265,13 +259,13 @@ instance ToJSON HttpClientConfiguration where
 pHttpClientConfiguration ∷ String → MParser HttpClientConfiguration
 pHttpClientConfiguration serviceName = id
     <$< hccHost ∘ bs .:: strOption
-        × long (serviceName ⊕ "-host")
+        % long (serviceName ⊕ "-host")
         ⊕ help ("Hostname of " ⊕ serviceName)
     <*< hccPort .:: option auto
-        × long (serviceName ⊕ "-port")
+        % long (serviceName ⊕ "-port")
         ⊕ help ("Port of " ⊕ serviceName)
     <*< hccUseTLS .:: switch
-        × long (serviceName ⊕ "-use-tls")
+        % long (serviceName ⊕ "-use-tls")
         ⊕ help ("Connect to " ⊕ serviceName ⊕ " via TLS")
   where
     bs ∷ Iso' B8.ByteString String

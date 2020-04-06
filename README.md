@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/alephcloud/hs-configuration-tools.svg?branch=master)](https://travis-ci.org/alephcloud/hs-configuration-tools)
+![](https://github.com/alephcloud/hs-configuration-tools/workflows/Tests/badge.svg)
 [![Hackage](https://img.shields.io/hackage/v/configuration-tools.svg)](https://hackage.haskell.org/package/configuration-tools)
 
 Overview
@@ -556,4 +556,3 @@ are planned.
     function.
 
 *   Add functionality optparse-applicative that allows to group options.
-

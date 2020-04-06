@@ -233,7 +233,7 @@ withConfigFileServer configs configTexts maybeFormat inner = do
     app req respond = do
 
         let format = fromMaybe Other $ maybeFormat
-                <|> (contentType <$> L.lookup HTTP.hAccept × WAI.requestHeaders req)
+                <|> (contentType <$> L.lookup HTTP.hAccept % WAI.requestHeaders req)
 
             maybeBody = LB.fromStrict <$> do
                 p ← listToMaybe $ WAI.pathInfo req
