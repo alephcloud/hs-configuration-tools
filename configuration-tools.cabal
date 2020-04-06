@@ -86,6 +86,9 @@ library
     other-modules:
         PkgInfo
 
+    autogen-modules:
+        PkgInfo
+
     if flag(remote-configs)
         exposed-modules:
             Configuration.Utils.Internal.HttpsCertPolicy
@@ -147,6 +150,9 @@ test-suite url-example-test
         Tests.MonoidConfig
         PkgInfo
 
+    autogen-modules:
+        PkgInfo
+
     build-depends:
         Cabal >= 2.2
       , base >= 4.11 && < 5
@@ -178,6 +184,9 @@ test-suite trivial
     hs-source-dirs: examples
 
     other-modules:
+        PkgInfo
+
+    autogen-modules:
         PkgInfo
 
     build-depends:
