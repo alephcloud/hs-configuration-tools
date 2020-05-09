@@ -25,9 +25,10 @@ jobs:
       with:
          ghc-version: ${{ matrix.ghc }}
          cabal-version: ${{ matrix.cabal }}
-    - name: Create cabal.project.local
+    - name: Configure project
       run: |
         cat > cabal.project.local <<EOF
+        store-dir: "./cabal-store"
         package configuration-tools
           documentation: True
           benchmarks: True
@@ -38,25 +39,20 @@ jobs:
       name: Cache cabal store
       with:
         path: cabal-store/ghc-${{ matrix.ghc }}
-        key: ${{ matrix.os }}-${{ matrix.ghc }}-store-${{ github.sha }}
+        key: ${{ matrix.os }}-${{ matrix.ghc }}-store-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
         restore-keys: |
-          ${{ matrix.os }}-${{ matrix.ghc }}-store-
+          ${{ matrix.os }}-${{ matrix.ghc }}-store-${{ contains(matrix.remoteConfigs, '+') }}
           ${{ matrix.os }}-${{ matrix.ghc }}-store
     - uses: actions/cache@v1
       name: Cache dist-newstyle
       with:
         path: dist-newstyle
-        key: ${{ matrix.os }}-${{ matrix.ghc }}-dist-${{ github.sha }}
+        key: ${{ matrix.os }}-${{ matrix.ghc }}-dist-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
         restore-keys: |
-          ${{ matrix.os }}-${{ matrix.ghc }}-dist-
+          ${{ matrix.os }}-${{ matrix.ghc }}-dist-${{ contains(matrix.remoteConfigs, '+') }}
           ${{ matrix.os }}-${{ matrix.ghc }}-dist
 
     # Build
-    - name: Configure project
-      run: |
-        cat > cabal.project.local <<EOF
-        store-dir: "./cabal-store"
-        EOF
     - name: Update package database
       run: cabal v2-update
     - name: Configure build
