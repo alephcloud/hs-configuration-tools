@@ -46,6 +46,7 @@ import Control.Monad
 import Control.Monad.Error.Class
 import Control.Monad.IO.Class
 
+import Data.Bifunctor
 import qualified Data.ByteString.Char8 as B8
 import Data.Monoid.Unicode
 import qualified Data.Text as T
@@ -147,8 +148,8 @@ loadLocal path = do
   where
     file = getConfigFile path
 
-    parser Json f = fmapL T.pack ∘ eitherDecodeStrict' <$> B8.readFile (T.unpack f)
-    parser _ f = fmapL sshow <$> Yaml.decodeFileEither (T.unpack f)
+    parser Json f = first T.pack ∘ eitherDecodeStrict' <$> B8.readFile (T.unpack f)
+    parser _ f = first sshow <$> Yaml.decodeFileEither (T.unpack f)
 
 data ConfigFileFormat
     = Yaml
@@ -202,8 +203,8 @@ loadRemote conf path = do
             Left e → throwError $ "failed to parse remote configuration " ⊕ url ⊕ ": " ⊕ e
             Right r → return r
   where
-    parser Json = fmapL T.pack ∘ eitherDecodeStrict'
-    parser _ = fmapL sshow ∘ Yaml.decodeEither'
+    parser Json = first T.pack ∘ eitherDecodeStrict'
+    parser _ = first sshow ∘ Yaml.decodeEither'
 
     url = getConfigFile path
     policy = _cfcHttpsPolicy conf

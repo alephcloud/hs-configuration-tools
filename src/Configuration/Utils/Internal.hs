@@ -31,7 +31,6 @@ module Configuration.Utils.Internal
 , sshow
 , exceptT
 , errorT
-, fmapL
 ) where
 
 import Control.Applicative (Const(..))
@@ -39,6 +38,8 @@ import Control.Monad
 import Control.Monad.Reader.Class
 import Control.Monad.Except
 
+import Data.Function ((&))
+import Data.Functor ((<&>))
 import Data.Functor.Identity
 import Data.Monoid.Unicode
 import Data.Profunctor
@@ -47,8 +48,6 @@ import Data.String
 import qualified Data.Text as T
 
 import Prelude.Unicode
-
-infixl 1 &, <&>
 
 -- -------------------------------------------------------------------------- --
 -- Lenses
@@ -102,14 +101,6 @@ iso f g = dimap f (fmap g)
 -- -------------------------------------------------------------------------- --
 -- Misc Utils
 
-(&) ∷ a → (a → b) → b
-(&) = flip ($)
-{-# INLINE (&) #-}
-
-(<&>) ∷ Functor f ⇒ f a → (a → b) → f b
-(<&>) = flip fmap
-{-# INLINE (<&>) #-}
-
 sshow
     ∷ (Show a, IsString s)
     ⇒ a
@@ -132,8 +123,4 @@ errorT
     → m a
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
 {-# INLINE errorT #-}
-
-fmapL ∷ (a → b) → Either a c → Either b c
-fmapL f = either (Left ∘ f) Right
-{-# INLINE fmapL #-}
 

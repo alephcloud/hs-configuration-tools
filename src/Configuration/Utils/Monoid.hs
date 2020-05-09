@@ -90,13 +90,13 @@ instance (FromJSON a, Monoid a) ⇒ FromJSON (LeftMonoidalUpdate a → LeftMonoi
 -- >         <> metavar "APIROUTE:APIURL"
 -- >
 -- >     readRoute s = case break (== ':') s of
--- >         (a,':':b) → fmapL T.unpack $ do
+-- >         (a,':':b) → first T.unpack $ do
 -- >             validateNonEmpty "APIROUTE" a
 -- >             validateHttpOrHttpsUrl "APIURL" b
 -- >             return $ HM.singleton (T.pack a) (T.pack b)
 -- >         _ → Left "missing colon between APIROUTE and APIURL"
 -- >
--- >     fmapL f = either (Left . f) Right
+-- >     first f = either (Left . f) Right
 --
 pLeftMonoidalUpdate ∷ Monoid a ⇒ O.Parser a → MParser a
 pLeftMonoidalUpdate pElement = mappend ∘ mconcat ∘ reverse <$> many pElement
