@@ -28,29 +28,38 @@ jobs:
     - name: Configure project
       run: |
         cat > cabal.project.local <<EOF
-        store-dir: "./cabal-store"
         package configuration-tools
           documentation: True
           benchmarks: True
           tests: True
           flags: ${{ matrix.remoteConfigs }}
         EOF
+
+    # Restore Packages from Caches
     - uses: actions/cache@v1
-      name: Cache cabal store
+      name: Cache ~/.cabal/packages
       with:
-        path: cabal-store/ghc-${{ matrix.ghc }}
-        key: ${{ matrix.os }}-${{ matrix.ghc }}-store-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
+        path: ~/.cabal/packages
+        key: ${{ runner.os }}-${{ matrix.ghc }}-packages-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
         restore-keys: |
-          ${{ matrix.os }}-${{ matrix.ghc }}-store-${{ contains(matrix.remoteConfigs, '+') }}
-          ${{ matrix.os }}-${{ matrix.ghc }}-store
+          ${{ runner.os }}-${{ matrix.ghc }}-packages-${{ contains(matrix.remoteConfigs, '+') }}
+          ${{ runner.os }}-${{ matrix.ghc }}-packages
+    - uses: actions/cache@v1
+      name: Cache ~/.cabal/store
+      with:
+        path: ~/.cabal/store
+        key: ${{ runner.os }}-${{ matrix.ghc }}-store-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.ghc }}-store-${{ contains(matrix.remoteConfigs, '+') }}
+          ${{ runner.os }}-${{ matrix.ghc }}-store
     - uses: actions/cache@v1
       name: Cache dist-newstyle
       with:
         path: dist-newstyle
-        key: ${{ matrix.os }}-${{ matrix.ghc }}-dist-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
+        key: ${{ runner.os }}-${{ matrix.ghc }}-dist-${{ contains(matrix.remoteConfigs, '+') }}-${{ github.sha }}
         restore-keys: |
-          ${{ matrix.os }}-${{ matrix.ghc }}-dist-${{ contains(matrix.remoteConfigs, '+') }}
-          ${{ matrix.os }}-${{ matrix.ghc }}-dist
+          ${{ runner.os }}-${{ matrix.ghc }}-dist-${{ contains(matrix.remoteConfigs, '+') }}
+          ${{ runner.os }}-${{ matrix.ghc }}-dist
 
     # Build
     - name: Update package database
