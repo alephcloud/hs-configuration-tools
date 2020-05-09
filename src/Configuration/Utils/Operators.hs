@@ -50,7 +50,7 @@ infixr 5 %
 (×) = ($)
 infixr 5 ×
 {-# INLINE (×) #-}
-{-# DEPRECATED (×) "use '$' instead" #-}
+{-# DEPRECATED (×) "use '%' instead" #-}
 
 -- | Functional composition for applicative functors.
 --
