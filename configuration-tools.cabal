@@ -173,6 +173,7 @@ test-suite url-example-test
           , wai >= 3.0
           , warp >= 3.0
           , warp-tls >= 3.0
+          , network >= 2.8
 
         cpp-options: -DREMOTE_CONFIGS
 
