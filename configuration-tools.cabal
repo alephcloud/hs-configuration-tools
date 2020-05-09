@@ -38,9 +38,9 @@ copyright:
 category: Configuration, Console
 build-type: Custom
 tested-with:
-      GHC==8.8.3
+      GHC==8.10.1
+    , GHC==8.8.3
     , GHC==8.6.5
-    , GHC==8.4.4
 
 extra-doc-files:
     README.md,
@@ -173,6 +173,7 @@ test-suite url-example-test
           , wai >= 3.0
           , warp >= 3.0
           , warp-tls >= 3.0
+          , network >= 2.8
 
         cpp-options: -DREMOTE_CONFIGS
 

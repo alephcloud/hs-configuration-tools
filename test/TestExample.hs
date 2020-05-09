@@ -67,8 +67,7 @@ main = do
 
     T.putStrLn $ "success: " ⊕ sshow (length successes)
     T.putStrLn $ "failures: " ⊕ sshow (length failures)
-    unless (length failures ≡ 0) $ do
-        error "test suite failed"
+    unless (length failures ≡ 0) $ error "test suite failed"
 
 -- -------------------------------------------------------------------------- --
 -- Test categories
@@ -105,12 +104,12 @@ remoteTests = concat <$> mapM run
     typedConfigs = [("config0", ConfigType config0), ("config1", ConfigType config1Part)]
     textConfigs = [("invalid", "invalid: invalid")]
 
-    run (format, label) = withConfigFileServer typedConfigs textConfigs format $
+    run (format, label) = withConfigFileServer typedConfigs textConfigs format $ \httpPort httpsPort →
         sequence
-            % tests2Files2 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
-            ⊕ tests2Files3 ("remote-" ⊕ label) (serverUrl ⊕ "/config0") (serverUrl ⊕ "/config1")
-            ⊕ testsInvalidUrl
-            ⊕ testsTlsUrl
+            % tests2Files2 ("remote-" ⊕ label) (serverUrl httpPort ⊕ "/config0") (serverUrl httpPort ⊕ "/config1")
+            ⊕ tests2Files3 ("remote-" ⊕ label) (serverUrl httpPort ⊕ "/config0") (serverUrl httpPort ⊕ "/config1")
+            ⊕ testsInvalidUrl httpPort
+            ⊕ testsTlsUrl httpPort httpsPort
 #else
 remoteTests = return []
 #endif
@@ -140,17 +139,17 @@ testsConfigFile prefix files =
 #ifdef REMOTE_CONFIGS
 -- | Test with invalid remote URLs
 --
-testsInvalidUrl ∷ [IO Bool]
-testsInvalidUrl =
+testsInvalidUrl ∷ Int → [IO Bool]
+testsInvalidUrl httpPort =
     [ runTest pkgInfo mainInfo "invalidUrl-0" False [x0, d1]
     , runTest pkgInfo mainInfo "invalidUrl-1" False [x1, d1]
     ]
   where
     x0 = trueAssertion ["--config-file=http://invalid"]
-    x1 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/invalid"]
+    x1 = trueAssertion ["--config-file=" ⊕ T.unpack (serverUrl httpPort) ⊕ "/invalid"]
 
-testsTlsUrl ∷ [IO Bool]
-testsTlsUrl =
+testsTlsUrl ∷ Int → Int → [IO Bool]
+testsTlsUrl httpPort httpsPort =
     [ runTest pkgInfo mainInfo "tlsUrl-0" True [cf0, f1 c0]
     , runTest pkgInfo mainInfo "tlsUrl-1" False [cf0t, f1 c0]
     , runTest pkgInfo mainInfo "tlsUrl-2" False [cf0tl, f1 c0]
@@ -160,12 +159,12 @@ testsTlsUrl =
     , runTest pkgInfo mainInfo "tlsUrl-6" True [insec, cf0t, f1 c0]
     ]
   where
-    cf0 = trueAssertion ["--config-file=" ⊕ T.unpack serverUrl ⊕ "/config0"]
-    cf0t = trueAssertion ["--config-file=" ⊕ T.unpack serverTlsUrl ⊕ "/config0"]
+    cf0 = trueAssertion ["--config-file=" ⊕ T.unpack (serverUrl httpPort) ⊕ "/config0"]
+    cf0t = trueAssertion ["--config-file=" ⊕ T.unpack (serverTlsUrl httpsPort) ⊕ "/config0"]
     cf0tl = trueAssertion ["--config-file=" ⊕ "https://localhost:8284" ⊕ "/config0"] -- FIXME don't hardcode this
     insec = trueAssertion ["--config-https-insecure"]
-    fingerF = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack serverTlsUrl) ⊕ ":0x+SV6/D6JSIKK8pPCpaMZvMXelXb2CnJ8xWo8qi4Fo="]
-    fingerT = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack serverTlsUrl) ⊕ ":HK4/ZeG/3c+H5R/3eTlysmJxmrBil6w8oLdvOdHFlsg="]
+    fingerF = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack $ serverTlsUrl httpsPort) ⊕ ":0x+SV6/D6JSIKK8pPCpaMZvMXelXb2CnJ8xWo8qi4Fo="]
+    fingerT = trueAssertion ["--config-https-allow-cert=" ⊕ drop 8 (T.unpack $ serverTlsUrl httpsPort) ⊕ ":HK4/ZeG/3c+H5R/3eTlysmJxmrBil6w8oLdvOdHFlsg="]
     c0 = config0
 #endif
 

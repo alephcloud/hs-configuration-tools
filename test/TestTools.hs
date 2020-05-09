@@ -79,6 +79,7 @@ import qualified Network.Wai as WAI
 import qualified Network.Wai.Handler.Warp as WARP
 import qualified Network.Wai.Handler.WarpTLS as WARP
 import qualified Network.HTTP.Types as HTTP
+import Network.Socket (close)
 #endif
 
 -- -------------------------------------------------------------------------- --
@@ -220,15 +221,13 @@ withConfigFileServer
     ∷ [(T.Text, ConfigType)]
     → [(T.Text, T.Text)]
     → Maybe ConfigFileFormat
+    → (Int → Int → IO a)
     → IO a
-    → IO a
-withConfigFileServer configs configTexts maybeFormat inner = do
-    w0 ← forkIO $ WARP.run serverPort app
-    w1 ←  forkIO $ WARP.runTLS tlsSettings (warpSettings serverTlsPort) app
-    inner `finally` do
-        killThread w0
-        killThread w1
-
+withConfigFileServer configs configTexts maybeFormat inner =
+    WARP.testWithApplication (return app) $ \httpPort →
+        bracket WARP.openFreePort (close ∘ snd) $ \(httpsPort, sock) → do
+            s ← forkIO $ WARP.runTLSSocket tlsSettings (warpSettings httpsPort) sock app
+            inner httpPort httpsPort `finally` killThread s
   where
     app req respond = do
 
@@ -252,17 +251,11 @@ withConfigFileServer configs configTexts maybeFormat inner = do
     contentTypeHeader Json = (HTTP.hContentType, head jsonMimeType)
     contentTypeHeader _ = (HTTP.hContentType, head yamlMimeType)
 
-serverPort ∷ Int
-serverPort = 8283
+serverUrl ∷ Int → T.Text
+serverUrl serverPort = "http://127.0.0.1:" ⊕ sshow serverPort
 
-serverTlsPort ∷ Int
-serverTlsPort = 8284
-
-serverUrl ∷ T.Text
-serverUrl = "http://127.0.0.1:" ⊕ sshow serverPort
-
-serverTlsUrl ∷ T.Text
-serverTlsUrl = "https://127.0.0.1:" ⊕ sshow serverTlsPort
+serverTlsUrl ∷ Int → T.Text
+serverTlsUrl serverTlsPort = "https://127.0.0.1:" ⊕ sshow serverTlsPort
 
 tlsSettings ∷ WARP.TLSSettings
 tlsSettings = WARP.tlsSettingsMemory serverCert serverKey
