@@ -37,7 +37,7 @@ jobs:
     - uses: actions/cache@v1
       name: Cache cabal store
       with:
-        path: /home/runner/.cabal/store/ghc-${{ matrix.ghc }}
+        path: cabal-store/ghc-${{ matrix.ghc }}
         key: ${{ matrix.os }}-${{ matrix.ghc }}-store-${{ github.sha }}
         restore-keys: |
           ${{ matrix.os }}-${{ matrix.ghc }}-store-
@@ -52,6 +52,11 @@ jobs:
           ${{ matrix.os }}-${{ matrix.ghc }}-dist
 
     # Build
+    - name: Configure project
+      run: |
+        cat > cabal.project.local <<EOF
+        store-dir: "./cabal-store"
+        EOF
     - name: Update package database
       run: cabal v2-update
     - name: Configure build
