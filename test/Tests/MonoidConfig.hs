@@ -25,6 +25,7 @@ import Configuration.Utils.Internal
 import Configuration.Utils.Internal.ConfigFileReader
 import Configuration.Utils.Validation
 
+import Data.Bifunctor
 import qualified Data.HashMap.Strict as HM
 import Data.Monoid.Unicode
 import Data.String
@@ -77,7 +78,7 @@ pRoutingTable = routingTableMap %:: pLeftMonoidalUpdate pRoute
         ⊕ metavar "APIROUTE:APIURL"
 
     readRoute s = case break (== ':') s of
-        (a,':':b) → fmapL T.unpack $ do
+        (a,':':b) → first T.unpack $ do
             validateNonEmpty "APIROUTE" a
             validateHttpOrHttpsUrl "APIURL" b
             return $ HM.singleton (T.pack a) (T.pack b)

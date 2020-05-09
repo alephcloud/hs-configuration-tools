@@ -1,5 +1,13 @@
 # configuration-tools
 
+## Unreleased
+
+#### Removed
+
+* The function `fmapL` is removed from `Configuration.Utils.Internal`. Instead
+  the function `first` from `Data.Bifunctor` from the `base` package can be
+  used.
+
 ## 0.5.0 (2020-04-06)
 
 #### Changed

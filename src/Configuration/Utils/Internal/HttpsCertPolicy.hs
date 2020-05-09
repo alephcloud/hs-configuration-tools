@@ -40,11 +40,11 @@ import Configuration.Utils.Monoid
 import Configuration.Utils.Operators
 import Configuration.Utils.Validation
 
-import Control.Arrow (second)
 import Control.Exception (Exception, Handler(..), catches, throwIO)
 import Control.Monad.State
 import Control.Monad.Writer
 
+import Data.Bifunctor
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.ByteString.Lazy as LB
@@ -128,7 +128,7 @@ pHttpsCertPolicy prefix = id
 
     next = state $ second (drop 1) ∘ break (≡ ':')
 
-    x = lift ∘ fmapL T.unpack
+    x = lift ∘ first T.unpack
 
 -- -------------------------------------------------------------------------- --
 -- HTTP Requests With Certificate Validation Policy
@@ -158,7 +158,7 @@ httpWithValidationPolicy
 httpWithValidationPolicy request policy = do
     certVar ← newIORef Nothing
     settings ← getSettings policy certVar
-    mgr <- HTTP.newManager settings
+    mgr ← HTTP.newManager settings
     HTTP.httpLbs request mgr `catches`
         [ Handler $ \(e ∷ TLS.TLSException) → do
             cert ← readIORef certVar
