@@ -76,6 +76,7 @@ library
         Configuration.Utils.ConfigFile
         Configuration.Utils.Http
         Configuration.Utils.Internal
+        Configuration.Utils.Internal.JsonTools
         Configuration.Utils.Internal.ConfigFileReader
         Configuration.Utils.Maybe
         Configuration.Utils.Monoid
@@ -116,6 +117,7 @@ library
       , text >= 1.0
       , transformers >= 0.4
       , unordered-containers >= 0.2.4.0
+      , vector >= 0.12
       , yaml >= 0.8.8.3
 
     if flag(remote-configs)
