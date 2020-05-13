@@ -47,6 +47,8 @@ module Configuration.Utils.CommandLine
 , enableDisableFlag
 , fileOption
 , eitherReadP
+, jsonOption
+, jsonReader
 , module Options.Applicative
 ) where
 
@@ -56,6 +58,8 @@ import Configuration.Utils.Operators
 import Control.Applicative
 import Control.Monad.Writer hiding (mapM_)
 
+import Data.Aeson
+import qualified Data.ByteString.Lazy.Char8 as BL8
 import qualified Data.CaseInsensitive as CI
 import Data.Maybe
 import Data.Monoid.Unicode
@@ -272,3 +276,10 @@ eitherReadP label p s =
         [x] → Right x
         [] → Left $ "eitherReadP: no parse for " ⊕ label ⊕ " of " ⊕ s
         _ → Left $ "eitherReadP: ambigous parse for " ⊕ label ⊕ " of " ⊕ s
+
+jsonOption ∷ FromJSON a ⇒ Mod OptionFields a → O.Parser a
+jsonOption = O.option jsonReader
+
+jsonReader ∷ FromJSON a ⇒ ReadM a
+jsonReader = eitherReader $ eitherDecode' ∘ BL8.pack
+
