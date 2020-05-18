@@ -125,6 +125,7 @@ module Configuration.Utils
 import Configuration.Utils.CommandLine
 import Configuration.Utils.ConfigFile
 import Configuration.Utils.Internal
+import Configuration.Utils.Internal.JsonTools
 import qualified Configuration.Utils.Internal.ConfigFileReader as CF
 import Configuration.Utils.Maybe
 import Configuration.Utils.Monoid
@@ -135,6 +136,7 @@ import Control.Monad.Except hiding (mapM_)
 import Control.Monad.Writer hiding (mapM_)
 
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.CaseInsensitive as CI
 import Data.Foldable
 import Data.Maybe
 import Data.Monoid.Unicode
@@ -301,6 +303,29 @@ programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
 -- -------------------------------------------------------------------------- --
 -- AppConfiguration
 
+data PrintConfigMode = Full | Minimal | Diff
+
+printConfigModeToText ∷ PrintConfigMode → T.Text
+printConfigModeToText Full = "full"
+printConfigModeToText Minimal = "minimal"
+printConfigModeToText Diff = "diff"
+
+printConfigModeFromText ∷ T.Text → Either String PrintConfigMode
+printConfigModeFromText t = case CI.mk t of
+    "full" → Right Full
+    "minimal" → Right Minimal
+    "diff" → Right Diff
+    x → Left $ "unknow print configuration mode: " <> sshow x
+
+instance ToJSON PrintConfigMode where
+    toJSON = toJSON ∘ printConfigModeToText
+    {-# INLINE toJSON #-}
+
+instance FromJSON PrintConfigMode where
+    parseJSON = withText "PrintConfigMode"
+        $ either fail return ∘ printConfigModeFromText
+    {-# INLINE parseJSON #-}
+
 -- | An /internal/ data type that is used during configuration parsing to
 -- represent the overall application configuration which includes
 --
@@ -314,7 +339,7 @@ programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
 -- line options but not through configuration files.
 --
 data AppConfiguration a = AppConfiguration
-    { _printConfig ∷ !Bool
+    { _printConfig ∷ !(Maybe PrintConfigMode)
     , _configFilesConfig ∷ !ConfigFilesConfig
     , _configFiles ∷ ![ConfigFile]
     , _mainConfig ∷ !a
@@ -356,15 +381,25 @@ pAppConfiguration mainParser = AppConfiguration
     <*> many pConfigFile
     <*> mainParser
   where
-    pPrintConfig = O.switch
-        % O.long "print-config"
-        ⊕ O.help "Print the parsed configuration to standard out and exit"
-        ⊕ O.showDefault
-
     pConfigFile = ConfigFileRequired ∘ T.pack <$> O.strOption
         % O.long "config-file"
         ⊕ O.metavar "FILE"
         ⊕ O.help "Configuration file in YAML or JSON format. If more than a single config file option is present files are loaded in the order in which they appear on the command line."
+
+    pPrintConfig
+        = Just <$> pPrintConfigOption
+        <|> Just <$> pPrintConfigFlag
+        <|> pure Nothing
+
+    pPrintConfigFlag = O.flag' Full
+        % O.long "print-config"
+        ⊕ O.help "Print the parsed configuration to standard out and exit. This is an alias for --print-config-as=full"
+
+    pPrintConfigOption = O.option (eitherReader $ printConfigModeFromText . T.pack)
+        % O.long "print-config-as"
+        ⊕ O.help "Print the parsed configuration to standard out and exit"
+        ⊕ O.completeWith ["full", "minimal", "diff", "Full", "Minimal", "Diff"]
+        ⊕ O.metavar "full|minimal|diff"
 
 -- -------------------------------------------------------------------------- --
 -- Main Configuration without Package Info
@@ -613,11 +648,25 @@ runInternal appInfo maybePkgInfo mainFunction = do
     -- Validate final configuration
     validateConfig appInfo $ _mainConfig appConf
 
-    if _printConfig appConf
-        then B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ appConf
-        else mainFunction ∘ _mainConfig $ appConf
+    case _printConfig appConf of
+        Nothing → mainFunction ∘ _mainConfig $ appConf
+        Just Full → B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ appConf
+        Just Minimal → B8.putStrLn
+            ∘ Yaml.encode
+            ∘ resolve resolveOnlyRight
+            ∘ diff (toJSON $ _piDefaultConfiguration appInfo)
+            ∘ toJSON
+            ∘ _mainConfig
+            $ appConf
+        Just Diff → B8.putStrLn
+            ∘ Yaml.encode
+            ∘ diff (toJSON $ _piDefaultConfiguration appInfo)
+            ∘ toJSON
+            ∘ _mainConfig
+            $ appConf
   where
-    parserPrefs = O.prefs O.disambiguate
+    parserPrefs = O.prefs mempty
+
 
 -- | Parse the command line arguments.
 --
