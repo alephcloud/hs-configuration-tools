@@ -366,7 +366,7 @@ mainConfig = lens _mainConfig $ \s a → s { _mainConfig = a }
 --
 -- 2. 'ConfigFiles' options are all @--config-file@ options.
 --
--- 3. Other /meta/ options, such as @--print-config@.
+-- 3. Other /meta/ options, such as @--print-config@ and @--printconfig-as@.
 --
 -- 4. Options for the actual user /configuration/. The user configuration
 --    is represented as an update function that yields a configuration
@@ -410,19 +410,32 @@ pAppConfiguration mainParser = AppConfiguration
 -- In addition to the options defined by the given options parser the following
 -- options are recognized:
 --
--- [@--config-file, -c@]
+-- [@--config-file@]
 --     Parse the given file path as a (partial) configuration in YAML or JSON
 --     format.
 --
--- [@--print-config, -p@]
+-- [@--print-config@]
 --     Print the final parsed configuration to standard out and exit.
 --
--- [@--help, -h@]
+-- [@--print-config-as (full|minimal|diff)@]
+--     Configures the application and prints the configuration in YAML format to
+--     standard out and exits. The printed configuration is exactly the
+--     configuration that otherwise would be used to run the application.
+--
+--     Arguments:
+--
+--     *   @full@: print the complete configuration. Same as @--print-config@.
+--     *   @minimal@: print a minimal configuration that contains only those
+--         settings that are different from the default setting.
+--     *   @diff@: print a YAML document that shows the difference between the
+--         default configuration and the actual configuration.
+--
+-- [@--help, -h, -?@]
 --     Print a help message and exit.
 --
--- As long as the package wasn't build with @-f-remote-configs@ the following
--- two options are available. They affect how configuration files
--- are loaded from remote URLs.
+-- If the package is build with @-f+remote-configs@ the following two options
+-- are available. They affect how configuration files are loaded from remote
+-- URLs.
 --
 -- [@--config-https-insecure=true|false@]
 --     Bypass certificate validation for all HTTPS
@@ -472,9 +485,9 @@ pPkgInfo (sinfo, detailedInfo, version, license) =
 --
 -- @(info message, detailed info message, version string, license text)@
 --
--- See the documentation of "Configuration.Utils.Setup" for a way
--- how to generate this information automatically from the package
--- description during the build process.
+-- See the documentation of "Configuration.Utils.Setup" for a way how to
+-- generate this information automatically from the package description during
+-- the build process.
 --
 type PkgInfo =
     ( String
@@ -500,7 +513,20 @@ type PkgInfo =
 -- [@--print-config, -p@]
 --     Print the final parsed configuration to standard out and exit.
 --
--- [@--help, -h@]
+-- [@--print-config-as (full|minimal|diff)@]
+--     Configures the application and prints the configuration in YAML format to
+--     standard out and exits. The printed configuration is exactly the
+--     configuration that otherwise would be used to run the application.
+--
+--     Arguments:
+--
+--     *   @full@: print the complete configuration. Same as @--print-config@.
+--     *   @minimal@: print a minimal configuration that contains only those
+--         settings that are different from the default setting.
+--     *   @diff@: print a YAML document that shows the difference between the
+--         default configuration and the actual configuration.
+--
+-- [@--help, -h, -?@]
 --     Print a help message and exit.
 --
 -- [@--version, -v@]
@@ -515,9 +541,9 @@ type PkgInfo =
 -- [@--license@]
 --     Print the text of the license of the application and exit.
 --
--- As long as the package wasn't build with @-f-remote-configs@ the following
--- two options are available. They affect how configuration files
--- are loaded from remote URLs.
+-- If the package is build with @-f+remote-configs@ the following two options
+-- are available. They affect how configuration files are loaded from remote
+-- URLs.
 --
 -- [@--config-https-insecure=true|false@]
 --     Bypass certificate validation for all HTTPS

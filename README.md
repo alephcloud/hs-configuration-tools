@@ -95,7 +95,7 @@ mainly through nested records.
 In addition to the user defined command line options the following
 options are recognized by the application:
 
-*   `--config-file, -c`
+*   `--config-file`
     parses the given file as a --possibly partial-- configuration in YAML or
     JSON format. The file location can be provided either as a local file
     system path or as a remote HTTP or HTTPS URL. In addition a list of static
@@ -107,17 +107,29 @@ options are recognized by the application:
     precedence over earlier settings. Files from static locations are
     loaded before files that are specified on the command line.
 
-*   `print-config, -p`
+*   `print-config`
     configures the application and prints the configuration in YAML format
     to standard out and exits. The printed configuration is exactly the
     configuration that otherwise would be used to run the application.
 
-*   `--help, -h`
+*   `print-config-as (full|minimal|diff)`
+    Configures the application and prints the configuration in YAML format
+    to standard out and exits. The printed configuration is exactly the
+    configuration that otherwise would be used to run the application.
+
+    Arguments:
+
+    *   `full`: print the complete configuration. Same as `--print-config`.
+    *   `minimal`: print a minimal configuration that contains only those
+        settings that are different from the default setting.
+    *   `diff`: print a YAML document that shows the difference between the
+        default configuration and the actual configuration.
+
+*   `--help, -h, -?`
     prints a help message and exits.
 
-As long as the package wasn't build with `-f-remote-configs` the following
-two options are available. They affect how configuration files
-are loaded from remote URLs.
+If the package is build with `-f+remote-configs` the following two options are
+available. They affect how configuration files are loaded from remote URLs.
 
 *   `--config-https-insecure=true|false`
     Bypass certificate validation for all HTTPS
