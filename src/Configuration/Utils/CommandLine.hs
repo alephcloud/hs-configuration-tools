@@ -224,7 +224,7 @@ boolOption_ mods = flag' True mods <|> flag' False nomods
 -- | An option parser for flags that are enabled via the flag name prefixed
 -- with @--enable-@ and disabled via the flag name prefix @--disable-@. The
 -- prefixes are applied to all long option names. Short option names are parsed
--- unchanged and and cause the flag to be enabled.
+-- unchanged and cause the flag to be enabled.
 --
 -- This resembles the style of flags that is used for instances with Cabal.
 --
@@ -258,6 +258,8 @@ enableDisableFlag mods = flag' True enmods <|> flag' False dismods
         }
     enmods = O.Mod (mapEnFlags ∘ f) d o
 
+-- | An option that expects a file name.
+--
 fileOption
     ∷ O.Mod O.OptionFields String
     → O.Parser FilePath
@@ -266,6 +268,8 @@ fileOption mods = O.strOption
     ⊕ O.action "file"
     ⊕ mods
 
+-- | Create an either-reader from a 'ReadP' parser.
+--
 eitherReadP
     ∷ T.Text
     → P.ReadP a
@@ -277,9 +281,13 @@ eitherReadP label p s =
         [] → Left $ "eitherReadP: no parse for " ⊕ label ⊕ " of " ⊕ s
         _ → Left $ "eitherReadP: ambigous parse for " ⊕ label ⊕ " of " ⊕ s
 
+-- | An option that expects a JSON value as argument.
+--
 jsonOption ∷ FromJSON a ⇒ Mod OptionFields a → O.Parser a
 jsonOption = O.option jsonReader
 
+-- | An option reader for a JSON value.
+--
 jsonReader ∷ FromJSON a ⇒ ReadM a
 jsonReader = eitherReader $ eitherDecode' ∘ BL8.pack
 
