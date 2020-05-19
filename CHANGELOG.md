@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+#### New
+
+* The command line option `--print-config-as` was added, that takes the values
+  `full`, `minimal`, and `diff` and print either the full configuration, a
+  minimal configuration that contains only changes that are different from the
+  default configuration, or it print a YAML document that shows the difference
+  between the actual configuration and the default configuration.
+
+* The helper functions `jsonOption` and `jsonReader` for building command line
+  parsers have been added.
+
 #### Removed
 
 * The function `fmapL` is removed from `Configuration.Utils.Internal`. Instead
