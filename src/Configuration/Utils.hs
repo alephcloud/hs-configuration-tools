@@ -599,7 +599,11 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
 
     -- the 'O.helper' option from optparse-applicative is hidden by default
     -- which seems a bit weired. This option doesn't hide the access to help.
+#if MIN_VERSION_optparse_applicative(0,16,0)
+    nonHiddenHelper = abortOption (ShowHelpText Nothing)
+#else
     nonHiddenHelper = abortOption ShowHelpText
+#endif
         % long "help"
         ⊕ short 'h'
         ⊕ short '?'
