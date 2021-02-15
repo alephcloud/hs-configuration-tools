@@ -235,19 +235,22 @@ trim :: String -> String
 trim = f . f
   where f = reverse . dropWhile isSpace
 
+#if defined (MIN_VERSION_Cabal) && MIN_VERSION_Cabal(3,4,0)
+getVCS :: IO (Maybe KnownRepoType)
+#else
 getVCS :: IO (Maybe RepoType)
+#endif
 getVCS = getCurrentDirectory >>= getVcsOfDir
-
-getVcsOfDir :: FilePath -> IO (Maybe RepoType)
-getVcsOfDir d = do
-    canonicDir <- canonicalizePath d
-    doesDirectoryExist (canonicDir </> ".hg") >>= \x0 -> if x0
-    then return (Just Mercurial)
-    else doesDirectoryExist (canonicDir </> ".git") >>= \x1 -> if x1
-        then return $ Just Git
-        else if isDrive canonicDir
-            then return Nothing
-            else getVcsOfDir (takeDirectory canonicDir)
+  where
+    getVcsOfDir d = do
+        canonicDir <- canonicalizePath d
+        doesDirectoryExist (canonicDir </> ".hg") >>= \x0 -> if x0
+        then return (Just Mercurial)
+        else doesDirectoryExist (canonicDir </> ".git") >>= \x1 -> if x1
+            then return $ Just Git
+            else if isDrive canonicDir
+                then return Nothing
+                else getVcsOfDir (takeDirectory canonicDir)
 
 pkgInfoModule :: String -> Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
 pkgInfoModule moduleName cName pkgDesc bInfo = do
