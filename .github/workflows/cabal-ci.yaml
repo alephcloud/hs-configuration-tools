@@ -11,9 +11,14 @@ jobs:
       fail-fast: false
       matrix:
         ghc: ['8.6.5', '8.8.4', '8.10.4']
-        cabal: ['3.4.0.0']
+        cabal: ['3.2.0.0']
         os: ['ubuntu-18.04', 'ubuntu-20.04', 'macOS-latest']
         remoteConfigs: ['-remote-configs', '+remote-configs']
+        include:
+        - ghc: '8.10.4'
+          os: 'ubuntu-20.04'
+          remoteConfigs: '+remote-configs'
+          cabal: '3.4.0.0'
 
     steps:
 
