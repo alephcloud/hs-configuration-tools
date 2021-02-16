@@ -1,7 +1,7 @@
 cabal-version: 2.2
 
 name: configuration-tools
-version: 0.5.0
+version: 0.6.0
 synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -33,13 +33,13 @@ author: Lars Kuhtz <lakuhtz@gmail.com>
 maintainer: Lars Kuhtz <lakuhtz@gmail.com>
 copyright:
     (c) 2019-2020 Colin Woodbury <colin@fosskers.ca>,
-    (c) 2015-2020 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2015-2021 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
 category: Configuration, Console
 build-type: Custom
 tested-with:
-      GHC==8.10.1
-    , GHC==8.8.3
+      GHC==8.10.4
+    , GHC==8.8.4
     , GHC==8.6.5
 
 extra-doc-files:
