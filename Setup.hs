@@ -111,8 +111,11 @@ import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Setup
 import Distribution.Text
-import Distribution.Types.LocalBuildInfo
 import Distribution.Types.UnqualComponentName
+
+#if MIN_VERSION_Cabal(3,6,0)
+import Distribution.Utils.Path
+#endif
 
 #if MIN_VERSION_Cabal(3,2,0)
 import Distribution.Utils.ShortText
@@ -373,12 +376,19 @@ pkgInfoModule moduleName cName pkgDesc bInfo = do
 
 licenseFilesText :: PackageDescription -> IO B.ByteString
 licenseFilesText pkgDesc =
-    B.intercalate "\n------------------------------------------------------------\n" <$> mapM fileText
+    B.intercalate "\n------------------------------------------------------------\n" <$> mapM fileTextStr
         (licenseFiles pkgDesc)
   where
     fileText file = doesFileExist file >>= \x -> if x
         then B.readFile file
         else return ""
+
+#if MIN_VERSION_Cabal(3,6,0)
+    fileTextStr = fileText . getSymbolicPath
+#else
+    fileTextStr = fileText
+#endif
+
 
 hgInfo :: IO (String, String, String)
 hgInfo = do
