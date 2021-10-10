@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -38,7 +39,11 @@ import Control.Applicative
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Foldable
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap as HM
+#else
 import qualified Data.HashMap.Strict as HM
+#endif
 import qualified Data.Vector as V
 
 import GHC.Generics

@@ -68,7 +68,12 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Char
 import Data.Foldable
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.Key as K
+import qualified Data.Aeson.KeyMap as H
+#else
 import qualified Data.HashMap.Strict as H
+#endif
 import Data.Maybe
 import Data.Monoid.Unicode
 import Data.String
@@ -80,6 +85,17 @@ import Prelude hiding (any, concatMap, mapM_)
 #ifdef REMOTE_CONFIGS
 import Configuration.Utils.Internal.HttpsCertPolicy
 import Configuration.Utils.Operators
+#endif
+
+-- -------------------------------------------------------------------------- --
+-- Compatibility
+
+#if MIN_VERSION_aeson(2,0,0)
+fromText ∷ T.Text → Key
+fromText = K.fromText
+#else
+fromText ∷ T.Text → T.Text
+fromText = id
 #endif
 
 -- | A JSON 'Value' parser for a property of a given
@@ -115,7 +131,7 @@ setProperty
     → (Value → Parser b) -- ^ the JSON 'Value' parser that is used to parse the value of the property
     → Object -- ^ the parsed JSON 'Value' 'Object'
     → Parser (a → a)
-setProperty s k p o = case H.lookup k o of
+setProperty s k p o = case H.lookup (fromText k) o of
     Nothing → pure id
     Just v → set s <$> p v
 
@@ -183,7 +199,7 @@ updateProperty
     → (Value → Parser (b → b))
     → Object
     → Parser (a → a)
-updateProperty s k p o = case H.lookup k o of
+updateProperty s k p o = case H.lookup (fromText k) o of
     Nothing → pure id
     Just v → over s <$> p v
 {-# INLINE updateProperty #-}
@@ -229,7 +245,7 @@ infix 6 %.:
     → T.Text
     → Object
     → Parser (a → a)
-(!..:) l property o = set l <$> (o .: property)
+(!..:) l property o = set l <$> (o .: fromText property)
 {-# INLINE (!..:) #-}
 
 -- -------------------------------------------------------------------------- --
@@ -278,5 +294,5 @@ pConfigFilesConfig = pure id
 dropAndUncaml ∷ Int → String → String
 dropAndUncaml _ "" = ""
 dropAndUncaml i l = case drop i l of
-    [] -> l
-    (h:t) -> toLower h : concatMap (\x → if isUpper x then "-" ⊕ [toLower x] else [x]) t
+    [] → l
+    (h:t) → toLower h : concatMap (\x → if isUpper x then "-" ⊕ [toLower x] else [x]) t
