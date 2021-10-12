@@ -33,11 +33,6 @@ jobs:
     - name: Configure project
       run: |
         cat > cabal.project.local <<EOF
-        source-repository-package
-          type: git
-          location: https://github.com/larskuhtz/yaml.git
-          tag: 9d32ba1e371f0de82f448410177fbd194d020568
-          subdir: yaml
         package configuration-tools
           documentation: True
           benchmarks: True
@@ -51,11 +46,17 @@ jobs:
       run: |
         cat >> cabal.project.local <<EOF
         constraints: aeson >=2.0
+        constraints: yaml >=0.11.7.0
         allow-newer: *
         source-repository-package
           type: git
           location: https://github.com/haskell/aeson
           tag: bfc8de2a155fb6725701ec692e8a6db3986cfb36
+        source-repository-package
+          type: git
+          location: https://github.com/snoyberg/yaml.git
+          tag: c4392f3855002ab0bbf9bc16e1e32034254234a7
+          subdir: yaml
         repository head.hackage.ghc.haskell.org
            url: https://ghc.gitlab.haskell.org/head.hackage/
            secure: True
@@ -76,7 +77,7 @@ jobs:
           ~/.cabal/packages
           ~/.cabal/store
           dist-newstyle
-        key: ${{ matrix.os }}-${{ matrix.ghc }}-1-cabal
+        key: ${{ matrix.os }}-${{ matrix.ghc }}-2-cabal
 
     # Build
     - name: Update package database
