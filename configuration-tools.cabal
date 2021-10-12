@@ -1,7 +1,7 @@
 cabal-version: 2.2
 
 name: configuration-tools
-version: 0.6.0
+version: 0.6.1
 synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations

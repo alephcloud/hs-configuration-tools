@@ -1,5 +1,10 @@
 # configuration-tools
 
+## 0.6.1 (2021-10-12)
+
+* Support GHC-9.2
+* Support aeson >=2.0
+
 ## 0.6.0 (2021-02-16)
 
 #### New
