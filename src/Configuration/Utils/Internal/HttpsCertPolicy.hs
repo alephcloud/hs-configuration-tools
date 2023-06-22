@@ -38,7 +38,6 @@ import Configuration.Utils.Validation
 
 import Control.Exception (Exception, Handler(..), catches, throwIO)
 import Control.Monad.State
-import Control.Monad.Writer
 
 import Data.Bifunctor
 import qualified Data.ByteString.Base64 as B64
