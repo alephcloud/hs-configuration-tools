@@ -1,5 +1,15 @@
 # configuration-tools
 
+## 0.7.0 (2022-06-22)
+
+The version bump is due to the update of the dependency on optparse-applicative,
+which could imply breaking changes for users.
+
+* Support GHC-9.6.
+* Require optparse-applicative >=0.18.
+* Require prettyprinter package and drop dependency on deprecated ansi-wl-pprint.
+* Replace dependency on cryptonite package by crypton.
+
 ## 0.6.1 (2021-10-12)
 
 * Support GHC-9.2

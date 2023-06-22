@@ -1,7 +1,7 @@
-cabal-version: 2.2
+cabal-version: 3.0
 
 name: configuration-tools
-version: 0.6.1
+version: 0.7.0
 synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -33,12 +33,15 @@ author: Lars Kuhtz <lakuhtz@gmail.com>
 maintainer: Lars Kuhtz <lakuhtz@gmail.com>
 copyright:
     (c) 2019-2020 Colin Woodbury <colin@fosskers.ca>,
-    (c) 2015-2021 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2015-2023 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
 category: Configuration, Console
 build-type: Custom
 tested-with:
-      GHC==9.0.1
+    , GHC==9.6
+    , GHC==9.4
+    , GHC==9.2
+    , GHC==9.0.1
     , GHC==8.10.7
     , GHC==8.8.4
 
@@ -123,7 +126,10 @@ library
     if flag(remote-configs)
         build-depends:
             base64-bytestring >= 1.0
-          , connection >= 0.2
+          , crypton-connection >= 0.3
+          , crypton-x509 >= 1.5
+          , crypton-x509-system >= 1.5
+          , crypton-x509-validation >= 1.5.1
           , data-default >= 0.5
           , enclosed-exceptions >= 1.0
           , http-client >= 0.4.30
@@ -131,9 +137,6 @@ library
           , http-types >= 0.8
           , monad-control >= 1.0
           , tls >= 1.2
-          , x509 >= 1.5
-          , x509-system >= 1.5
-          , x509-validation >= 1.5.1
 
     if flag(remote-configs)
         cpp-options: -DREMOTE_CONFIGS
@@ -172,9 +175,9 @@ test-suite url-example-test
             enclosed-exceptions >= 1.0
           , http-types >= 0.8
           , monad-control >= 1.0
-          , wai >= 3.0
-          , warp >= 3.0
-          , warp-tls >= 3.0
+          , wai >= 3.2
+          , warp >= 3.3
+          , warp-tls >= 3.4
           , network >= 2.8
 
         cpp-options: -DREMOTE_CONFIGS
