@@ -56,7 +56,6 @@ import Configuration.Utils.Internal
 import Configuration.Utils.Operators
 
 import Control.Applicative
-import Control.Monad.Writer hiding (mapM_)
 
 import Data.Aeson
 import qualified Data.ByteString.Lazy.Char8 as BL8
