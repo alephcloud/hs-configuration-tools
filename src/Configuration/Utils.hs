@@ -153,11 +153,7 @@ import qualified Options.Applicative.Types as O
 import qualified Options.Applicative as O
 
 import Prelude hiding (any, concatMap, mapM_)
-#if MIN_VERSION_base(4,13,0)
 import Prelude.Unicode hiding ((×))
-#else
-import Prelude.Unicode
-#endif
 
 import System.IO
 
@@ -602,11 +598,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
 
     -- the 'O.helper' option from optparse-applicative is hidden by default
     -- which seems a bit weired. This option doesn't hide the access to help.
-#if MIN_VERSION_optparse_applicative(0,16,0)
     nonHiddenHelper = abortOption (ShowHelpText Nothing)
-#else
-    nonHiddenHelper = abortOption ShowHelpText
-#endif
         % long "help"
         ⊕ short 'h'
         ⊕ short '?'

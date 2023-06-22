@@ -6,9 +6,12 @@ The version bump is due to the update of the dependency on optparse-applicative,
 which could imply breaking changes for users.
 
 * Support GHC-9.6.
+* Require Cabal >=3.6.
+* Drop support for GHC <8.10.
 * Require optparse-applicative >=0.18.
 * Require prettyprinter package and drop dependency on deprecated ansi-wl-pprint.
 * Replace dependency on cryptonite package by crypton.
+* Raise some outdated lower dependency bounds.
 
 ## 0.6.1 (2021-10-12)
 

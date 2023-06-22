@@ -35,11 +35,7 @@ import qualified Data.Text.IO as T
 
 import Example hiding (main)
 
-#if MIN_VERSION_base(4,13,0)
 import Prelude.Unicode hiding ((×))
-#else
-import Prelude.Unicode
-#endif
 
 import PkgInfo
 
