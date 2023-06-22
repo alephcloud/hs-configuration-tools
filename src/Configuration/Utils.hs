@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
 {-# OPTIONS_HADDOCK show-extensions #-}
@@ -132,8 +133,10 @@ import Configuration.Utils.Monoid
 import Configuration.Utils.Operators
 import Configuration.Utils.Validation
 
-import Control.Monad.Except hiding (mapM_)
-import Control.Monad.Writer hiding (mapM_)
+import Control.Monad (void, when)
+import Control.Monad.Except (MonadError, throwError)
+import Control.Monad.Writer (execWriterT, runWriterT)
+import Control.Monad.IO.Class (MonadIO)
 
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.CaseInsensitive as CI
@@ -158,7 +161,7 @@ import Prelude.Unicode
 
 import System.IO
 
-import qualified Text.PrettyPrint.ANSI.Leijen as P
+import qualified Prettyprinter as P
 
 #ifdef REMOTE_CONFIGS
 import Control.Monad.Trans.Control
@@ -589,7 +592,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
     $ O.progDesc _piDescription
     ⊕ O.fullDesc
     ⊕ maybe mempty O.header _piHelpHeader
-    ⊕ O.footerDoc (Just $ defaultFooter ⊕ maybe mempty P.text _piHelpFooter)
+    ⊕ O.footerDoc (Just $ defaultFooter ⊕ maybe mempty P.pretty _piHelpFooter)
   where
     optionParser =
         -- these are identity parsers that are only applied for their side effects
@@ -626,25 +629,26 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
         , ""
         ]
 
+    a </> b = a <> P.softline <> b
+
     staticFiles
         | null _piConfigurationFiles = Nothing
         | otherwise = Just $ \n → P.hang 3 $ P.vsep
-            [ P.int n ⊕ "." P.</> par "Configuration files at the following locations:"
+            [ P.pretty @Int n ⊕ "." </> par "Configuration files at the following locations:"
             , P.vsep $ map (\f → "* " ⊕ printConfigFile f) _piConfigurationFiles
             ]
     cmdFiles = Just $ \n → P.hang 3 $ P.fillSep
-        [ P.int n ⊕ "." P.</> par "Configuration files from locations provided through"
+        [ P.pretty n ⊕ "." </> par "Configuration files from locations provided through"
         , par "--config-file options in the order as they appear."
         ]
     cmdOptions = Just $ \n → P.hang 3
-        $ P.int n ⊕ "." P.</> par "Command line options."
+        $ P.pretty n ⊕ "." </> par "Command line options."
 
-    printConfigFile f = P.text (T.unpack $ getConfigFile f) P.<+> case f of
-        ConfigFileRequired _ → P.text "(required)"
-        ConfigFileOptional _ → P.text "(optional)"
+    printConfigFile f = P.pretty (getConfigFile f) P.<+> case f of
+        ConfigFileRequired _ → "(required)"
+        ConfigFileOptional _ → "(optional)"
 
-    par ∷ String → P.Doc
-    par = P.fillSep ∘ map P.string ∘ words
+    par = P.fillSep ∘ map P.pretty ∘ words
 
 -- | Internal main function
 --
