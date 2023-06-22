@@ -40,11 +40,7 @@ import Control.Monad.Writer
 
 import Data.Monoid.Unicode
 
-#if MIN_VERSION_base(4,13,0)
 import Prelude.Unicode hiding ((×))
-#else
-import Prelude.Unicode
-#endif
 
 -- This assumes usage of cabal with custom Setup.hs
 --

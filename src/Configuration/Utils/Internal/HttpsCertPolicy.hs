@@ -4,10 +4,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UnicodeSyntax #-}
 
-#ifndef MIN_VERSION_http_client
-#define MIN_VERSION_http_client(x,y,z) 1
-#endif
-
 -- |
 -- Module: Configuration.Utils.Internal.HttpsCertPolicy
 -- Description: HTTPS certificate validation policy
@@ -64,11 +60,7 @@ import qualified Data.X509.Validation as TLS
 import qualified Options.Applicative as O
 
 import Prelude hiding (any, concatMap, mapM_)
-#if MIN_VERSION_base(4,13,0)
 import Prelude.Unicode hiding ((×))
-#else
-import Prelude.Unicode
-#endif
 
 import qualified Network.Connection as HTTP
 import qualified Network.HTTP.Client as HTTP
@@ -163,15 +155,6 @@ httpWithValidationPolicy request policy = do
         [ Handler $ \(e ∷ TLS.TLSException) → do
             cert ← readIORef certVar
             handleTlsException request cert e
-#if ! MIN_VERSION_http_client(0,5,0)
-        , Handler $ \httpEx → case httpEx of
-            HTTP.TlsException tlsEx → case fromException tlsEx of
-                Nothing → throwIO httpEx
-                Just e → do
-                    cert ← readIORef certVar
-                    handleTlsException request cert e
-            _ → throwIO httpEx
-#endif
         ]
 
 -- -------------------------------------------------------------------------- --

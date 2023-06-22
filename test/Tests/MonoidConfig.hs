@@ -31,11 +31,7 @@ import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 
-#if MIN_VERSION_base(4,13,0)
 import Prelude.Unicode hiding ((×))
-#else
-import Prelude.Unicode
-#endif
 
 -- -------------------------------------------------------------------------- --
 -- Test cases

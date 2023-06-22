@@ -111,15 +111,8 @@ import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Setup
 import Distribution.Text
-import Distribution.Types.UnqualComponentName
-
-#if MIN_VERSION_Cabal(3,6,0)
 import Distribution.Utils.Path
-#endif
-
-#if MIN_VERSION_Cabal(3,2,0)
 import Distribution.Utils.ShortText
-#endif
 
 import System.Process
 
@@ -169,13 +162,8 @@ mkPkgInfoModules hooks = hooks
 prettyLicense :: I.InstalledPackageInfo -> String
 prettyLicense = either prettyShow prettyShow . I.license
 
-#if MIN_VERSION_Cabal(3,2,0)
 ft :: ShortText -> String
 ft = fromShortText
-#else
-ft :: String -> String
-ft = id
-#endif
 
 -- -------------------------------------------------------------------------- --
 -- Cabal 2.0
@@ -238,11 +226,7 @@ trim :: String -> String
 trim = f . f
   where f = reverse . dropWhile isSpace
 
-#if defined (MIN_VERSION_Cabal) && MIN_VERSION_Cabal(3,4,0)
 getVCS :: IO (Maybe KnownRepoType)
-#else
-getVCS :: IO (Maybe RepoType)
-#endif
 getVCS = getCurrentDirectory >>= getVcsOfDir
   where
     getVcsOfDir d = do
@@ -382,12 +366,7 @@ licenseFilesText pkgDesc =
     fileText file = doesFileExist file >>= \x -> if x
         then B.readFile file
         else return ""
-
-#if MIN_VERSION_Cabal(3,6,0)
     fileTextStr = fileText . getSymbolicPath
-#else
-    fileTextStr = fileText
-#endif
 
 
 hgInfo :: IO (String, String, String)

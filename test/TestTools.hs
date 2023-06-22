@@ -61,11 +61,7 @@ import qualified Data.Yaml as Yaml
 
 import Distribution.Simple.Utils (withTempFile)
 
-#if MIN_VERSION_base(4,13,0)
 import Prelude.Unicode hiding ((×))
-#else
-import Prelude.Unicode
-#endif
 
 import System.Environment
 import System.IO
