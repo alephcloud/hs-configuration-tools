@@ -1,25 +1,25 @@
-cabal-version: 3.6
+cabal-version: 3.0
 
 name: configuration-tools
 version: 0.7.0
 synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
-    .
+
     This package provides a collection of utils on top of the packages
     <http://hackage.haskell.org/package/optparse-applicative optparse-applicative>,
     <http://hackage.haskell.org/package/aeson aeson>, and
     <http://hackage.haskell.org/package/yaml yaml> for configuring libraries and
     applications in a convenient and composable way.
-    .
+
     The main features are
-    .
+
     1. configuration management through integration of command line option
        parsing and configuration files and
-    .
+
     2. a @Setup.hs@ file that generates a @PkgInfo@ module for each component
        of a package that provides information about the package and the build.
-    .
+
     Documentation on how to use this package can be found in the
     <https://github.com/alephcloud/hs-configuration-tools/blob/master/README.md README>
     and in the API documentation of the modules "Configuration.Utils" and
@@ -50,7 +50,7 @@ extra-doc-files:
 
 custom-setup
     setup-depends:
-        Cabal >= 3.6,
+        Cabal >= 3.6 && < 100,
         base >= 4.14 && < 5.0,
         bytestring >= 0.10.0.2,
         directory >= 1.2.1.0,
