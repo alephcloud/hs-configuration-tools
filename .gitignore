@@ -3,3 +3,4 @@ dist
 .*.swp
 .hdevtools.sock
 .stack-work/*
+dist-newstyle/
