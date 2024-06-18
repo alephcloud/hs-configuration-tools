@@ -17,6 +17,7 @@
 --
 module Configuration.Utils.Validation
 ( ConfigValidation
+, ConfigValidation'
 
 -- * Networking
 , validateHttpOrHttpsUrl
@@ -85,7 +86,8 @@ import System.Directory
 -- | A validation function. The type in the 'MonadWriter' is excpected to
 -- be a 'Foldable' structure for collecting warnings.
 --
-type ConfigValidation a f = ∀ m . (MonadIO m, Functor m, Applicative m, MonadError T.Text m, MonadWriter (f T.Text) m) ⇒ a → m ()
+type ConfigValidation a f = ConfigValidation' a f ()
+type ConfigValidation' a f r = ∀ m . (MonadIO m, Functor m, Applicative m, MonadError T.Text m, MonadWriter (f T.Text) m) ⇒ a → m r
 
 -- -------------------------------------------------------------------------- --
 -- Networking
@@ -506,4 +508,3 @@ validateRange
     → m ()
 validateRange configName (lower,upper) x = unless (x ≥ lower ∧ x ≤ upper) ∘ throwError $
     "value for " ⊕ configName ⊕ " must be within the range of (" ⊕ sshow lower ⊕ ", " ⊕ sshow upper ⊕ "), but was " ⊕ sshow x
-
