@@ -676,7 +676,7 @@ runInternal appInfo maybePkgInfo mainFunction = do
         (_configFiles cliAppConf)
 
     -- Validate final configuration
-    validatedConf <- validateConfig appInfo $ _mainConfig appConf
+    validatedConf ← validateConfig appInfo $ _mainConfig appConf
 
     case _printConfig appConf of
         Nothing → mainFunction ∘ _mainConfig $ validatedConf <$ appConf
