@@ -21,6 +21,8 @@ module Configuration.Utils.Internal
 , view
 , Lens'
 , Lens
+, Setter'
+, Setter
 , Iso'
 , Iso
 , iso
@@ -70,15 +72,29 @@ type Lens s t a b = ∀ f . Functor f ⇒ (a → f b) → s → f t
 --
 type Lens' s a = Lens s s a a
 
+-- | This is almost the same type as the type from the lens library with the same name.
+--
+-- In case it is already import from the lens package this should be hidden
+-- from the import.
+--
+type Setter s t a b = (a -> Identity b) -> s -> Identity t
+
+-- | This is almost the same type as the type from the lens library with the same name.
+--
+-- In case it is already import from the lens package this should be hidden
+-- from the import.
+--
+type Setter' s a = Setter s s a a
+
 lens ∷ (s → a) → (s → b → t) → Lens s t a b
 lens getter setter lGetter s = setter s `fmap` lGetter (getter s)
 {-# INLINE lens #-}
 
-over ∷ ((a → Identity b) → s → Identity t) → (a → b) → s → t
+over ∷ Setter s t a b → (a → b) → s → t
 over s f = runIdentity . s (Identity . f)
 {-# INLINE over #-}
 
-set ∷ ((a → Identity b) → s → Identity t) → b → s → t
+set ∷ Setter s t a b → b → s → t
 set s a = runIdentity . s (const $ Identity a)
 {-# INLINE set #-}
 
@@ -123,4 +139,3 @@ errorT
     → m a
 errorT = exceptT (\e → error ∘ T.unpack $ "Error: " ⊕ e) return
 {-# INLINE errorT #-}
-
