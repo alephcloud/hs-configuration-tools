@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -135,7 +136,7 @@ import Configuration.Utils.Validation
 
 import Control.Monad (void, when)
 import Control.Monad.Except (MonadError, throwError)
-import Control.Monad.Writer (execWriterT, runWriterT)
+import Control.Monad.Writer (runWriterT)
 import Control.Monad.IO.Class (MonadIO)
 
 import qualified Data.ByteString.Char8 as B8
@@ -170,13 +171,13 @@ import Control.Monad.Trans.Control
 -- this type is to avoid @ImpredicativeTypes@ when storing the function
 -- in the 'ProgramInfoValidate' record.
 --
-newtype ConfigValidationFunction a f = ConfigValidationFunction
-    { runConfigValidation ∷ ConfigValidation a f
+newtype ConfigValidationFunction a f r = ConfigValidationFunction
+    { runConfigValidation ∷ ConfigValidation' a f r
     }
 
 type ProgramInfo a = ProgramInfoValidate a []
 
-data ProgramInfoValidate a f = ProgramInfo
+data ProgramInfoValidate' a f r = ProgramInfo
     { _piDescription ∷ !String
       -- ^ Program Description
     , _piHelpHeader ∷ !(Maybe String)
@@ -187,7 +188,7 @@ data ProgramInfoValidate a f = ProgramInfo
       -- ^ options parser for configuration
     , _piDefaultConfiguration ∷ !a
       -- ^ default configuration
-    , _piValidateConfiguration ∷ !(ConfigValidationFunction a f)
+    , _piValidateConfiguration ∷ !(ConfigValidationFunction a f r)
       -- ^ a validation function. The 'Right' result is interpreted as a 'Foldable'
       -- structure of warnings.
     , _piConfigurationFiles ∷ ![ConfigFile]
@@ -195,33 +196,35 @@ data ProgramInfoValidate a f = ProgramInfo
       -- before any command line argument is evaluated.
     }
 
+type ProgramInfoValidate a f = ProgramInfoValidate' a f a
+
 -- | Program Description
 --
-piDescription ∷ Lens' (ProgramInfoValidate a f) String
+piDescription ∷ Lens' (ProgramInfoValidate' a f r) String
 piDescription = lens _piDescription $ \s a → s { _piDescription = a }
 {-# INLINE piDescription #-}
 
 -- | Help header
 --
-piHelpHeader ∷ Lens' (ProgramInfoValidate a f) (Maybe String)
+piHelpHeader ∷ Lens' (ProgramInfoValidate' a f r) (Maybe String)
 piHelpHeader = lens _piHelpHeader $ \s a → s { _piHelpHeader = a }
 {-# INLINE piHelpHeader #-}
 
 -- | Help footer
 --
-piHelpFooter ∷ Lens' (ProgramInfoValidate a f) (Maybe String)
+piHelpFooter ∷ Lens' (ProgramInfoValidate' a f r) (Maybe String)
 piHelpFooter = lens _piHelpFooter $ \s a → s { _piHelpFooter = a }
 {-# INLINE piHelpFooter #-}
 
 -- | Options parser for configuration
 --
-piOptionParser ∷ Lens' (ProgramInfoValidate a f) (MParser a)
+piOptionParser ∷ Lens' (ProgramInfoValidate' a f r) (MParser a)
 piOptionParser = lens _piOptionParser $ \s a → s { _piOptionParser = a }
 {-# INLINE piOptionParser #-}
 
 -- | Default configuration
 --
-piDefaultConfiguration ∷ Lens' (ProgramInfoValidate a f) a
+piDefaultConfiguration ∷ Lens' (ProgramInfoValidate' a f r) a
 piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultConfiguration = a }
 {-# INLINE piDefaultConfiguration #-}
 
@@ -229,7 +232,7 @@ piDefaultConfiguration = lens _piDefaultConfiguration $ \s a → s { _piDefaultC
 --
 -- The 'Right' result is interpreted as a 'Foldable' structure of warnings.
 --
-piValidateConfiguration ∷ Lens' (ProgramInfoValidate a f) (ConfigValidationFunction a f)
+piValidateConfiguration ∷ Lens' (ProgramInfoValidate' a f r) (ConfigValidationFunction a f r)
 piValidateConfiguration = lens _piValidateConfiguration $ \s a → s { _piValidateConfiguration = a }
 {-# INLINE piValidateConfiguration #-}
 
@@ -246,10 +249,10 @@ piConfigurationFiles = lens _piConfigurationFiles $ \s a → s { _piConfiguratio
 --
 piOptionParserAndDefaultConfiguration
     ∷ Lens
-        (ProgramInfoValidate a b)
-        (ProgramInfoValidate c d)
-        (MParser a, a, ConfigValidationFunction a b)
-        (MParser c, c, ConfigValidationFunction c d)
+        (ProgramInfoValidate' a b r)
+        (ProgramInfoValidate' c d r')
+        (MParser a, a, ConfigValidationFunction a b r)
+        (MParser c, c, ConfigValidationFunction c d r')
 piOptionParserAndDefaultConfiguration = lens g $ \s (a,b,c) → ProgramInfo
     { _piDescription = _piDescription s
     , _piHelpHeader = _piHelpHeader s
@@ -277,7 +280,7 @@ programInfo
         -- ^ default configuration
     → ProgramInfo a
 programInfo desc parser defaultConfig =
-    programInfoValidate desc parser defaultConfig $ const (return ())
+    programInfoValidate desc parser defaultConfig $ return
 
 -- | Smart constructor for 'ProgramInfo'.
 --
@@ -287,8 +290,8 @@ programInfoValidate
     ∷ String
     → MParser a
     → a
-    → ConfigValidation a f
-    → ProgramInfoValidate a f
+    → ConfigValidation' a f r
+    → ProgramInfoValidate' a f r
 programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
     { _piDescription = desc
     , _piHelpHeader = Nothing
@@ -343,6 +346,7 @@ data AppConfiguration a = AppConfiguration
     , _configFiles ∷ ![ConfigFile]
     , _mainConfig ∷ !a
     }
+    deriving Functor
 
 -- | A list of configuration file locations. Configuration file locations are
 -- set either statically in the code or are provided dynamically on the command
@@ -446,10 +450,10 @@ pAppConfiguration mainParser = AppConfiguration
 --
 runWithConfiguration
     ∷ (FromJSON (a → a), ToJSON a, Foldable f, Monoid (f T.Text))
-    ⇒ ProgramInfoValidate a f
+    ⇒ ProgramInfoValidate' a f r
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
-    → (a → IO ())
+    → (r → IO ())
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
@@ -574,8 +578,8 @@ runWithPkgInfoConfiguration appInfo pkgInfo =
 -- Internal main function
 
 mainOptions
-    ∷ ∀ a f . FromJSON (a → a)
-    ⇒ ProgramInfoValidate a f
+    ∷ ∀ a f r . FromJSON (a → a)
+    ⇒ ProgramInfoValidate' a f r
         -- ^ Program Info value which may include a validation function
 
     → (∀ b . Maybe (MParser b))
@@ -646,7 +650,7 @@ mainOptions ProgramInfo{..} pkgInfoParser = O.info optionParser
 --
 runInternal
     ∷ (FromJSON (a → a), ToJSON a, Foldable f, Monoid (f T.Text))
-    ⇒ ProgramInfoValidate a f
+    ⇒ ProgramInfoValidate' a f r
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
     → (∀ b . Maybe (MParser b))
@@ -655,7 +659,7 @@ runInternal
         -- See the documentation of "Configuration.Utils.Setup" for a way
         -- how to generate this information automatically from the package
         -- description during the build process.
-    → (a → IO ())
+    → (r → IO ())
         -- ^ computation that is given the configuration that is parsed from
         -- the command line.
     → IO ()
@@ -672,10 +676,10 @@ runInternal appInfo maybePkgInfo mainFunction = do
         (_configFiles cliAppConf)
 
     -- Validate final configuration
-    validateConfig appInfo $ _mainConfig appConf
+    validatedConf ← validateConfig appInfo $ _mainConfig appConf
 
     case _printConfig appConf of
-        Nothing → mainFunction ∘ _mainConfig $ appConf
+        Nothing → mainFunction ∘ _mainConfig $ validatedConf <$ appConf
         Just Full → B8.putStrLn ∘ Yaml.encode ∘ _mainConfig $ appConf
         Just Minimal → B8.putStrLn
             ∘ Yaml.encode
@@ -752,12 +756,13 @@ parseConfiguration appName appInfo args = do
 --
 validateConfig
     ∷ (Foldable f, Monoid (f T.Text))
-    ⇒ ProgramInfoValidate a f
+    ⇒ ProgramInfoValidate' a f r
     → a
-    → IO ()
+    → IO r
 validateConfig appInfo conf = do
-    warnings ← execWriterT ∘ exceptT (error ∘ T.unpack) return $
+    (r, warnings) ← runWriterT ∘ exceptT (error ∘ T.unpack) return $
         runConfigValidation (view piValidateConfiguration appInfo) conf
     when (any (const True) warnings) $ do
         T.hPutStrLn stderr "WARNINGS:"
         mapM_ (\w → T.hPutStrLn stderr $ "warning: " ⊕ w) warnings
+    return r
