@@ -189,7 +189,7 @@ handleTlsException
     → Maybe (TLS.SignedExact TLS.Certificate)
     → TLS.TLSException
     → IO a
-handleTlsException request cert e@(TLS.HandshakeFailed (TLS.Error_Protocol (msg, _b, _alert)))
+handleTlsException request cert e@(TLS.HandshakeFailed (TLS.Error_Protocol msg _))
     | "certificate rejected: [SelfSigned]" `L.isPrefixOf` msg = throwIO ∘ VerboseTlsException
         $ "The server uses a self-signed certificate. If you are sure that no-one"
         ⊕ " is intercepting the connection and this is the correct certificate you"
