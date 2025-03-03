@@ -126,7 +126,7 @@ fromText = id
 -- >             e → fail $ "unrecognized user " ⊕ e
 --
 setProperty
-    ∷ Lens' a b -- ^ a lens into the target that is updated by the parser
+    ∷ Setter' a b -- ^ a lens into the target that is updated by the parser
     → T.Text -- ^ the JSON property name
     → (Value → Parser b) -- ^ the JSON 'Value' parser that is used to parse the value of the property
     → Object -- ^ the parsed JSON 'Value' 'Object'
@@ -158,7 +158,7 @@ setProperty s k p o = case H.lookup (fromText k) o of
 -- >         <$< user ..: "user" % o
 -- >         <*< pwd ..: "pwd" % o
 --
-(..:) ∷ FromJSON b ⇒ Lens' a b → T.Text → Object → Parser (a → a)
+(..:) ∷ FromJSON b ⇒ Setter' a b → T.Text → Object → Parser (a → a)
 (..:) s k = setProperty s k parseJSON
 infix 6 ..:
 {-# INLINE (..:) #-}
@@ -194,7 +194,7 @@ infix 6 ..:
 -- >         <*< setProperty domain "domain" parseJSON o
 --
 updateProperty
-    ∷ Lens' a b
+    ∷ Setter' a b
     → T.Text
     → (Value → Parser (b → b))
     → Object
@@ -230,7 +230,7 @@ updateProperty s k p o = case H.lookup (fromText k) o of
 -- >         <$< auth %.: "auth" % o
 -- >         <*< domain ..: "domain" % o
 --
-(%.:) ∷ FromJSON (b → b) ⇒ Lens' a b → T.Text → Object → Parser (a → a)
+(%.:) ∷ FromJSON (b → b) ⇒ Setter' a b → T.Text → Object → Parser (a → a)
 (%.:) s k = updateProperty s k parseJSON
 infix 6 %.:
 {-# INLINE (%.:) #-}
