@@ -1,5 +1,11 @@
 # configuration-tools
 
+## 0.7.1 (2025-03-04)
+
+* Support lastest GHC (9.12)
+* Use setters instead of lenses in ..: and %.:
+* Allow validation functions to return new values
+
 ## 0.7.0 (2022-06-22)
 
 The version bump is due to the update of the dependency on optparse-applicative,
