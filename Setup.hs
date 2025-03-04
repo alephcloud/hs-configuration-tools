@@ -110,6 +110,7 @@ import Distribution.Simple.BuildPaths
 import Distribution.Simple.LocalBuildInfo
 import Distribution.Simple.PackageIndex
 import Distribution.Simple.Setup
+import Distribution.Simple.Utils (createDirectoryIfMissingVerbose)
 import Distribution.Text
 import Distribution.Utils.Path
 import Distribution.Utils.ShortText
@@ -128,10 +129,17 @@ import Data.Monoid
 import Prelude hiding (readFile, writeFile)
 
 import System.Directory
-    (canonicalizePath, createDirectoryIfMissing, doesDirectoryExist,
-    doesFileExist, getCurrentDirectory)
+    ( canonicalizePath
+    , doesDirectoryExist
+    , doesFileExist
+    , getCurrentDirectory
+    )
 import System.Exit (ExitCode(ExitSuccess))
+#if MIN_VERSION_Cabal(3,14,0)
+import System.FilePath (isDrive, takeDirectory)
+#else
 import System.FilePath (isDrive, takeDirectory, (</>))
+#endif
 
 -- | Include this function when your setup doesn't contain any
 -- extra functionality.
@@ -162,6 +170,11 @@ mkPkgInfoModules hooks = hooks
 prettyLicense :: I.InstalledPackageInfo -> String
 prettyLicense = either prettyShow prettyShow . I.license
 
+#if !MIN_VERSION_Cabal(3,14,0)
+interpretSymbolicPath :: Maybe () -> FilePath -> FilePath
+interpretSymbolicPath _ p = p
+#endif
+
 -- -------------------------------------------------------------------------- --
 -- Cabal 2.0
 
@@ -173,28 +186,31 @@ mkPkgInfoModulesPostConf
     -> LocalBuildInfo
     -> IO ()
 mkPkgInfoModulesPostConf hook args flags pkgDesc bInfo = do
-    mapM_ (updatePkgInfoModule pkgDesc bInfo) $ Graph.toList $ componentGraph bInfo
+    mapM_ (updatePkgInfoModule pkgDesc bInfo flags) $ Graph.toList $ componentGraph bInfo
     hook args flags pkgDesc bInfo
 
-updatePkgInfoModule :: PackageDescription -> LocalBuildInfo -> ComponentLocalBuildInfo -> IO ()
-updatePkgInfoModule pkgDesc bInfo clbInfo = do
-    createDirectoryIfMissing True dirName
+updatePkgInfoModule
+    :: PackageDescription
+    -> LocalBuildInfo
+    -> ConfigFlags
+    -> ComponentLocalBuildInfo
+    -> IO ()
+updatePkgInfoModule pkgDesc bInfo flags clbInfo = do
+    createDirectoryIfMissingVerbose verbosity True dirName
     moduleBytes <- pkgInfoModule moduleName cName pkgDesc bInfo
     updateFile fileName moduleBytes
 
     -- legacy module
     legacyModuleBytes <- pkgInfoModule legacyModuleName cName pkgDesc bInfo
     updateFile legacyFileName legacyModuleBytes
-
   where
-    dirName = autogenComponentModulesDir bInfo clbInfo
+    verbosity = fromFlag $ configVerbosity flags
+    dirName = interpretSymbolicPath Nothing $ autogenComponentModulesDir bInfo clbInfo
     cName = unUnqualComponentName <$> componentNameString (componentLocalName clbInfo)
-
     moduleName = pkgInfoModuleName
-    fileName = dirName ++ "/" ++ moduleName ++ ".hs"
-
+    fileName = dirName </> moduleName <> ".hs"
     legacyModuleName = legacyPkgInfoModuleName cName
-    legacyFileName = dirName ++ "/" ++ legacyModuleName ++ ".hs"
+    legacyFileName = dirName </> legacyModuleName <> ".hs"
 
 -- -------------------------------------------------------------------------- --
 -- Generate PkgInfo Module
@@ -214,7 +230,7 @@ updateFile fileName content = do
 
 legacyPkgInfoModuleName :: Maybe String -> String
 legacyPkgInfoModuleName Nothing = "PkgInfo"
-legacyPkgInfoModuleName (Just cn) = "PkgInfo_" ++ map tr cn
+legacyPkgInfoModuleName (Just cn) = "PkgInfo_" <> map tr cn
   where
     tr '-' = '_'
     tr c = c
@@ -236,7 +252,12 @@ getVCS = getCurrentDirectory >>= getVcsOfDir
                 then return Nothing
                 else getVcsOfDir (takeDirectory canonicDir)
 
-pkgInfoModule :: String -> Maybe String -> PackageDescription -> LocalBuildInfo -> IO B.ByteString
+pkgInfoModule
+    :: String
+    -> Maybe String
+    -> PackageDescription
+    -> LocalBuildInfo
+    -> IO B.ByteString
 pkgInfoModule moduleName cName pkgDesc bInfo = do
     (tag, revision, branch) <- getVCS >>= \case
         Just Mercurial -> hgInfo
