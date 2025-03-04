@@ -52,7 +52,6 @@ import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Data.Typeable
 import qualified Data.X509 as TLS
 import qualified Data.X509.Validation as TLS
 
@@ -80,7 +79,7 @@ data HttpsCertPolicy = HttpsCertPolicy
     , _certPolicyHostFingerprints ∷ !(HM.HashMap TLS.ServiceID TLS.Fingerprint)
         -- ^ a whitelist for services with trusted certificates
     }
-    deriving (Show, Eq, Typeable)
+    deriving (Show, Eq)
 
 certPolicyInsecure ∷ Lens' HttpsCertPolicy Bool
 certPolicyInsecure = lens _certPolicyInsecure $ \s a → s { _certPolicyInsecure = a }
@@ -177,7 +176,7 @@ httpWithValidationPolicy request policy = do
 -- In particular exceptions should include rejected certificates.
 --
 newtype VerboseTlsException = VerboseTlsException T.Text
-    deriving (Eq, Ord, Typeable)
+    deriving (Eq, Ord)
 
 instance Show VerboseTlsException where
     show (VerboseTlsException msg) = "TLS exception: " ⊕ T.unpack msg

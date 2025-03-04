@@ -50,7 +50,6 @@ import Data.Bifunctor
 import qualified Data.ByteString.Char8 as B8
 import Data.Monoid.Unicode
 import qualified Data.Text as T
-import Data.Typeable
 import qualified Data.Yaml as Yaml
 
 import GHC.Generics
@@ -155,7 +154,7 @@ data ConfigFileFormat
     = Yaml
     | Json
     | Other
-    deriving (Show, Read, Eq, Ord, Enum, Bounded, Typeable, Generic)
+    deriving (Show, Read, Eq, Ord, Enum, Bounded, Generic)
 
 instance NFData ConfigFileFormat
 
