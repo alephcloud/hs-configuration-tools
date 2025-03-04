@@ -78,7 +78,6 @@ import Data.Maybe
 import Data.Monoid.Unicode
 import Data.String
 import qualified Data.Text as T
-import Data.Typeable
 
 import Prelude hiding (any, concatMap, mapM_)
 
@@ -254,7 +253,7 @@ infix 6 %.:
 data ConfigFile
     = ConfigFileRequired { getConfigFile ∷ !T.Text }
     | ConfigFileOptional { getConfigFile ∷ !T.Text }
-    deriving (Show, Read, Eq, Ord, Typeable)
+    deriving (Show, Read, Eq, Ord)
 
 -- | An /internal/ type for the meta configuration that specifies how the
 -- configuration files are loaded and parsed.
@@ -263,7 +262,7 @@ data ConfigFile
 data ConfigFilesConfig = ConfigFilesConfig
     { _cfcHttpsPolicy ∷ !HttpsCertPolicy
     }
-    deriving (Show, Eq, Typeable)
+    deriving (Show, Eq)
 
 cfcHttpsPolicy ∷ Lens' ConfigFilesConfig HttpsCertPolicy
 cfcHttpsPolicy = lens _cfcHttpsPolicy $ \a b → a { _cfcHttpsPolicy = b }
