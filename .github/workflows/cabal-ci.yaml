@@ -14,6 +14,12 @@ jobs:
         cabal: ['latest']
         os: ['ubuntu-22.04', 'ubuntu-24.04', 'macOS-latest']
         remoteConfigs: ['-remote-configs', '+remote-configs']
+        include:
+        - ghc: '9.6'
+          cabal: '3.8'
+          os: 'ubuntu-22.04'
+          remoteConfigs: '-remote-configs'
+
 
     steps:
 
