@@ -1,7 +1,7 @@
 cabal-version: 3.0
 
 name: configuration-tools
-version: 0.7.0
+version: 0.7.1
 synopsis: Tools for specifying and parsing configurations
 description:
     Tools for specifying and parsing configurations
@@ -30,19 +30,20 @@ bug-reports: https://github.com/alephcloud/hs-configuration-tools/issues
 license: MIT
 license-file: LICENSE
 author: Lars Kuhtz <lakuhtz@gmail.com>
-maintainer: Lars Kuhtz <lakuhtz@gmail.com>
+maintainer: Lars Kuhtz <lakuhtz@gmail.com>, Edmund Noble <edmundnoble@gmail.com>
 copyright:
+    (c) 2024-2025 Edmund Noble <edmundnoble@gmail.com>,
     (c) 2019-2020 Colin Woodbury <colin@fosskers.ca>,
-    (c) 2015-2023 Lars Kuhtz <lakuhtz@gmail.com>,
+    (c) 2015-2025 Lars Kuhtz <lakuhtz@gmail.com>,
     (c) 2014-2015 AlephCloud, Inc.
 category: Configuration, Console
 build-type: Custom
 tested-with:
+    , GHC==9.12
+    , GHC==9.10
+    , GHC==9.8
     , GHC==9.6
     , GHC==9.4
-    , GHC==9.2
-    , GHC==9.0.1
-    , GHC==8.10.7
 
 extra-doc-files:
     README.md,

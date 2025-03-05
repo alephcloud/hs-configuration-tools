@@ -57,6 +57,7 @@ jobs:
 
     # Restore dist-newstyle
     - name: Cache dist-newstyle
+      id: dist-cache-restore
       uses: actions/cache@v4
       with:
         path: |
@@ -64,7 +65,6 @@ jobs:
         key: dist-${{ matrix.os }}-${{ matrix.ghc }}-${{ hashFiles('**/*.cabal', '**/cabal.project', '**/cabal.project.local') }}
         restore-keys: |
           dist-${{ matrix.os }}-${{ matrix.ghc }}-
-        save-always: true
 
     # Build
     - name: Update package database
@@ -85,7 +85,7 @@ jobs:
     # Save packages
     - name: Save cache for ~/.cabal/packages and ~/.cabal/store
       uses: actions/cache/save@v4
-      if: always()
+      if: always() && steps.deps-cache-restore.outputs.cache-hit != 'true'
       with:
         path: |
           ~/.cabal/packages
@@ -98,4 +98,13 @@ jobs:
     # Tests
     - name: Run Tests
       run: cabal test
+
+    # Safe dist
+    - name: Save cache dist-newstyle
+      uses: actions/cache/save@v4
+      if: always() && steps.dist-cache-restore.outputs.cache-hit != 'true'
+      with:
+        path: |
+          dist-newstyle
+        key: ${{ steps.dist-cache-restore.outputs.cache-primary-key }}
 

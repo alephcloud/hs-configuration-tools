@@ -280,7 +280,27 @@ programInfo
         -- ^ default configuration
     → ProgramInfo a
 programInfo desc parser defaultConfig =
-    programInfoValidate desc parser defaultConfig $ return
+    programInfoValidate desc parser defaultConfig $ const (return ())
+
+-- | Smart constructor for 'ProgramInfo'.
+--
+-- 'piHelpHeader' and 'piHelpFooter' are set to 'Nothing'.
+--
+programInfoValidate'
+    ∷ String
+    → MParser a
+    → a
+    → ConfigValidation' a f r
+    → ProgramInfoValidate' a f r
+programInfoValidate' desc parser defaultConfig valFunc = ProgramInfo
+    { _piDescription = desc
+    , _piHelpHeader = Nothing
+    , _piHelpFooter = Nothing
+    , _piOptionParser = parser
+    , _piDefaultConfiguration = defaultConfig
+    , _piValidateConfiguration = ConfigValidationFunction valFunc
+    , _piConfigurationFiles = []
+    }
 
 -- | Smart constructor for 'ProgramInfo'.
 --
@@ -290,17 +310,10 @@ programInfoValidate
     ∷ String
     → MParser a
     → a
-    → ConfigValidation' a f r
-    → ProgramInfoValidate' a f r
-programInfoValidate desc parser defaultConfig valFunc = ProgramInfo
-    { _piDescription = desc
-    , _piHelpHeader = Nothing
-    , _piHelpFooter = Nothing
-    , _piOptionParser = parser
-    , _piDefaultConfiguration = defaultConfig
-    , _piValidateConfiguration = ConfigValidationFunction valFunc
-    , _piConfigurationFiles = []
-    }
+    → ConfigValidation a f
+    → ProgramInfoValidate a f
+programInfoValidate desc parser defaultConfig valFunc =
+    programInfoValidate' desc parser defaultConfig $ \c -> valFunc c >> return c
 
 -- -------------------------------------------------------------------------- --
 -- AppConfiguration
@@ -718,7 +731,7 @@ parseConfiguration
         )
     ⇒ T.Text
         -- ^ program name (used in error messages)
-    → ProgramInfoValidate a f
+    → ProgramInfoValidate' a f r
         -- ^ program info value; use 'programInfo' to construct a value of this
         -- type
     → [String]
